@@ -1,0 +1,748 @@
+﻿@model IEnumerable<SycamoreHockeyLeaguePortal.Models.Standings>
+@inject SycamoreHockeyLeaguePortal.Data.ApplicationDbContext _context
+
+@{
+    ViewData["Title"] = "Standings";
+
+    string GetName(Team team)
+    {
+        var teamsInSameCity = _context.Team
+            .Where(t => t.City == team.City);
+
+        if (teamsInSameCity.Count() > 1)
+            return team.AlternateName;
+
+        return team.City;
+    }
+
+    string GetStreak(Standings teamStats)
+    {
+        if (teamStats.Streak != 0)
+        {
+            string type = (teamStats.Streak > 0) ? "W" : "L";
+            int duration = Math.Abs(teamStats.Streak);
+            return $"{type} {duration}";
+        }
+
+        return "--";
+    }
+
+    string GetStreakColor(Standings teamStats)
+    {
+        if (teamStats.Streak > 0)
+            return "text-success";
+
+        if (teamStats.Streak < 0)
+            return "text-danger";
+
+        return "text-dark";
+    }
+}
+
+<h1>@ViewBag.Title</h1>
+
+<form asp-action="Index" method="get">
+    <p>
+        Season:
+        @Html.DropDownList("season", (IEnumerable<SelectListItem>)ViewBag.Seasons, new { onchange = "submit()" })
+
+        View by:
+        @Html.DropDownList("viewBy", (IEnumerable<SelectListItem>)ViewBag.SortOptions, new { onchange = "submit()" })
+    </p>
+</form>
+
+@if (ViewBag.ViewBy == "division")
+{
+    var conferences = _context.Standings
+        .Where(s => s.Season.Year == Model.FirstOrDefault().Season.Year)
+        .Select(s => s.Conference.Name)
+        .Distinct();
+
+    foreach (var conference in conferences)
+    {
+        <h3>@conference</h3>
+
+        var divisions = _context.Standings
+            .Where(s => s.Season.Year == Model.FirstOrDefault().Season.Year &&
+                        s.Conference.Name == conference)
+            .Select(s => s.Division.Name)
+            .Distinct();
+
+        foreach (var division in divisions)
+        {
+            <h5>@division</h5>
+
+            var teams = Model
+                .Where(s => s.Season.Year == Model.FirstOrDefault().Season.Year &&
+                            s.Conference.Name == conference &&
+                            s.Division.Name == division);
+
+            <table class="table standings">
+                <thead>
+                    <tr>
+                        @if (Model.FirstOrDefault().Season.Year < 2024)
+                        {
+                            <th>
+                                #
+                            </th>
+                            <th>
+                                @Html.DisplayNameFor(model => model.PlayoffStatus)
+                            </th>
+                            <th colspan="2">
+                                @Html.DisplayNameFor(model => model.Team)
+                            </th>
+                            <th>
+                                @Html.DisplayNameFor(model => model.GamesPlayed)
+                            </th>
+                            <th>
+                                @Html.DisplayNameFor(model => model.Record_2021Format)
+                            </th>
+                            <th>
+                                @Html.DisplayNameFor(model => model.GoalRatio)
+                            </th>
+                            <th>
+                                @Html.DisplayNameFor(model => model.Points)
+                            </th>
+                            <th>
+                                @Html.DisplayNameFor(model => model.MaximumPossiblePoints)
+                            </th>
+                            <th>
+                                @Html.DisplayNameFor(model => model.PointsPct)
+                            </th>
+                            <th>
+                                @Html.DisplayNameFor(model => model.Streak)
+                            </th>
+                            <th>
+                                @Html.DisplayNameFor(model => model.RegulationWins)
+                            </th>
+                            <th>
+                                @Html.DisplayNameFor(model => model.RegPlusOTWins)
+                            </th>
+                            <th>
+                                @Html.DisplayNameFor(model => model.RecordVsDivision_2021Format)
+                            </th>
+                            @if (ViewBag.Season > 2021) 
+                            {
+                                <th>
+                                    @Html.DisplayNameFor(model => model.RecordVsConference_2021Format)
+                                </th>
+                            }
+                            @if (ViewBag.Season == 2021)
+                            {
+                                <th>
+                                    Inter-Division
+                                </th>
+                            }
+                            else
+                            {
+                                <th>
+                                    Inter-Conf
+                                </th>
+                            }
+                            <th></th>
+                        }
+                        else
+                        {
+                            <th>
+                                #
+                            </th>
+                            <th>
+                                @Html.DisplayNameFor(model => model.PlayoffStatus)
+                            </th>
+                            <th colspan="2">
+                                @Html.DisplayNameFor(model => model.Team)
+                            </th>
+                            <th>
+                                @Html.DisplayNameFor(model => model.GamesPlayed)
+                            </th>
+                            <th>
+                                @Html.DisplayNameFor(model => model.Record_2024Format)
+                            </th>
+                            <th>
+                                @Html.DisplayNameFor(model => model.WinPct)
+                            </th>
+                            <th>
+                                @Html.DisplayNameFor(model => model.GamesBehind)
+                            </th>
+                            <th>
+                                @Html.DisplayNameFor(model => model.GoalRatio)
+                            </th>
+                            <th>
+                                @Html.DisplayNameFor(model => model.Streak)
+                            </th>
+                            <th>
+                                @Html.DisplayNameFor(model => model.RegulationWins)
+                            </th>
+                            <th>
+                                @Html.DisplayNameFor(model => model.RegPlusOTWins)
+                            </th>
+                            <th>
+                                @Html.DisplayNameFor(model => model.RecordVsDivision_2024Format)
+                            </th>
+                            <th>
+                                @Html.DisplayNameFor(model => model.RecordVsConference_2024Format)
+                            </th>
+                            <th>
+                                @Html.DisplayNameFor(model => model.InterConfRecord_2024Format)
+                            </th>
+                            <th></th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @{
+                        int rank = 1;
+
+                        foreach (var item in teams)
+                        {
+                            <tr>
+                                @if (item.Season.Year < 2024)
+                                {
+                                    <th>
+                                        @rank
+                                    </th>
+                                    <td>
+                                        @Html.DisplayFor(modelItem => item.PlayoffStatus)
+                                    </td>
+                                    <td class="team-logo">
+                                        <img src="~/@item.Team.LogoPath" width="25" height="25" />
+                                    </td>
+                                    <td class="team-name">
+                                        @GetName(item.Team)
+                                    </td>
+                                    <td>
+                                        @Html.DisplayFor(modelItem => item.GamesPlayed)
+                                    </td>
+                                    <td>
+                                        @Html.DisplayFor(modelItem => item.Record_2021Format)
+                                    </td>
+                                    <td>
+                                        @Html.DisplayFor(modelItem => item.GoalRatio)
+                                    </td>
+                                    <th>
+                                        @Html.DisplayFor(modelItem => item.Points)
+                                    </th>
+                                    <td>
+                                        @Html.DisplayFor(modelItem => item.MaximumPossiblePoints)
+                                    </td>
+                                    <td>
+                                        @Html.DisplayFor(modelItem => item.PointsPct)
+                                    </td>
+                                    <td class="@GetStreakColor(item)">
+                                        @GetStreak(item)
+                                    </td>
+                                    <td>
+                                        @Html.DisplayFor(modelItem => item.RegulationWins)
+                                    </td>
+                                    <td>
+                                        @Html.DisplayFor(modelItem => item.RegPlusOTWins)
+                                    </td>
+                                    <td>
+                                        @Html.DisplayFor(modelItem => item.RecordVsDivision_2021Format)
+                                    </td>
+                                    @if (ViewBag.Season > 2021)
+                                    {
+                                        <td>
+                                            @Html.DisplayFor(modelItem => item.RecordVsConference_2021Format)
+                                        </td>
+                                    }
+                                    <td>
+                                        @Html.DisplayFor(modelItem => item.InterConfRecord_2021Format)
+                                    </td>
+                                    <td>
+                                        <a asp-action="PlayoffStatus" asp-route-id="@item.Id">Playoff Status</a>
+                                    </td>
+                                }
+                                else
+                                {
+                                    <th>
+                                        @rank
+                                    </th>
+                                    <td>
+                                        @Html.DisplayFor(modelItem => item.PlayoffStatus)
+                                    </td>
+                                    <td class="team-logo">
+                                        <img src="~/@item.Team.LogoPath" width="25" height="25" />
+                                    </td>
+                                    <td class="team-name">
+                                        @GetName(item.Team)
+                                    </td>
+                                    <td>
+                                        @Html.DisplayFor(modelItem => item.GamesPlayed)
+                                    </td>
+                                    <td>
+                                        @Html.DisplayFor(modelItem => item.Record_2024Format)
+                                    </td>
+                                    <th>
+                                        @Html.DisplayFor(modelItem => item.WinPct)
+                                    </th>
+                                    <td>
+                                        @Html.DisplayFor(modelItem => item.GamesBehind)
+                                    </td>
+                                    <td>
+                                        @Html.DisplayFor(modelItem => item.GoalRatio)
+                                    </td>
+                                    <td>
+                                        @GetStreak(item)
+                                    </td>
+                                    <td>
+                                        @Html.DisplayFor(modelItem => item.RegulationWins)
+                                    </td>
+                                    <td>
+                                        @Html.DisplayFor(modelItem => item.RegPlusOTWins)
+                                    </td>
+                                    <td>
+                                        @Html.DisplayFor(modelItem => item.RecordVsDivision_2024Format)
+                                    </td>
+                                    <td>
+                                        @Html.DisplayFor(modelItem => item.RecordVsConference_2024Format)
+                                    </td>
+                                    <td>
+                                        @Html.DisplayFor(modelItem => item.InterConfRecord_2024Format)
+                                    </td>
+                                }
+                            </tr>
+
+                            rank++;
+                        }
+                    }
+                </tbody>
+            </table>
+        }
+    }
+}
+else if (ViewBag.ViewBy == "conference")
+{
+    var conferences = _context.Standings
+        .Where(s => s.Season.Year == Model.FirstOrDefault().Season.Year)
+        .Select(s => s.Conference.Name)
+        .Distinct();
+
+    foreach (var conference in conferences)
+    {
+        <h3>@conference</h3>
+
+        var teams = Model
+            .Where(s => s.Conference.Name == conference);
+
+        <table class="table standings">
+            <thead>
+                <tr>
+                    @if (Model.FirstOrDefault().Season.Year < 2024)
+                    {
+                        <th>
+                            #
+                        </th>
+                        <th>
+                            @Html.DisplayNameFor(model => model.PlayoffStatus)
+                        </th>
+                        <th colspan="2">
+                            @Html.DisplayNameFor(model => model.Team)
+                        </th>
+                        <th>
+                            @Html.DisplayNameFor(model => model.GamesPlayed)
+                        </th>
+                        <th>
+                            @Html.DisplayNameFor(model => model.Record_2021Format)
+                        </th>
+                        <th>
+                            @Html.DisplayNameFor(model => model.GoalRatio)
+                        </th>
+                        <th>
+                            @Html.DisplayNameFor(model => model.Points)
+                        </th>
+                        <th>
+                            @Html.DisplayNameFor(model => model.MaximumPossiblePoints)
+                        </th>
+                        <th>
+                            @Html.DisplayNameFor(model => model.PointsPct)
+                        </th>
+                        <th>
+                            @Html.DisplayNameFor(model => model.Streak)
+                        </th>
+                        <th>
+                            @Html.DisplayNameFor(model => model.RegulationWins)
+                        </th>
+                        <th>
+                            @Html.DisplayNameFor(model => model.RegPlusOTWins)
+                        </th>
+                        <th>
+                            @Html.DisplayNameFor(model => model.RecordVsDivision_2021Format)
+                        </th>
+                        @if (ViewBag.Season > 2021)
+                        {
+                            <th>
+                                @Html.DisplayNameFor(model => model.RecordVsConference_2021Format)
+                            </th>
+                        }
+                        <th>
+                            @Html.DisplayNameFor(model => model.InterConfRecord_2021Format)
+                        </th>
+                        <th></th>
+                    }
+                    else
+                    {
+                        <th>
+                            #
+                        </th>
+                        <th>
+                            @Html.DisplayNameFor(model => model.PlayoffStatus)
+                        </th>
+                        <th colspan="2">
+                            @Html.DisplayNameFor(model => model.Team)
+                        </th>
+                        <th>
+                            @Html.DisplayNameFor(model => model.GamesPlayed)
+                        </th>
+                        <th>
+                            @Html.DisplayNameFor(model => model.Record_2024Format)
+                        </th>
+                        <th>
+                            @Html.DisplayNameFor(model => model.WinPct)
+                        </th>
+                        <th>
+                            @Html.DisplayNameFor(model => model.GamesBehind)
+                        </th>
+                        <th>
+                            @Html.DisplayNameFor(model => model.GoalRatio)
+                        </th>
+                        <th>
+                            @Html.DisplayNameFor(model => model.Streak)
+                        </th>
+                        <th>
+                            @Html.DisplayNameFor(model => model.RegulationWins)
+                        </th>
+                        <th>
+                            @Html.DisplayNameFor(model => model.RegPlusOTWins)
+                        </th>
+                        <th>
+                            @Html.DisplayNameFor(model => model.RecordVsDivision_2024Format)
+                        </th>
+                        <th>
+                            @Html.DisplayNameFor(model => model.RecordVsConference_2024Format)
+                        </th>
+                        <th>
+                            @Html.DisplayNameFor(model => model.InterConfRecord_2024Format)
+                        </th>
+                        <th></th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @{
+                    int rank = 1;
+
+                    foreach (var item in teams)
+                    {
+                        <tr>
+                            @if (item.Season.Year < 2024)
+                            {
+                                <th>
+                                    @rank
+                                </th>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.PlayoffStatus)
+                                </td>
+                                <td class="team-logo">
+                                    <img src="~/@item.Team.LogoPath" width="25" height="25" />
+                                </td>
+                                <td class="team-name">
+                                    @GetName(item.Team)
+                                </td>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.GamesPlayed)
+                                </td>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.Record_2021Format)
+                                </td>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.GoalRatio)
+                                </td>
+                                <th>
+                                    @Html.DisplayFor(modelItem => item.Points)
+                                </th>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.MaximumPossiblePoints)
+                                </td>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.PointsPct)
+                                </td>
+                                <td class="@GetStreakColor(item)">
+                                    @GetStreak(item)
+                                </td>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.RegulationWins)
+                                </td>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.RegPlusOTWins)
+                                </td>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.RecordVsDivision_2021Format)
+                                </td>
+                                @if (ViewBag.Season > 2021)
+                                {
+                                    <td>
+                                        @Html.DisplayFor(modelItem => item.RecordVsConference_2021Format)
+                                    </td>
+                                }
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.InterConfRecord_2021Format)
+                                </td>
+                                <td>
+                                    <a asp-action="PlayoffStatus" asp-route-id="@item.Id">Playoff Status</a>
+                                </td>
+                            }
+                            else
+                            {
+                                <th>
+                                    @rank
+                                </th>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.PlayoffStatus)
+                                </td>
+                                <td class="team-logo">
+                                    <img src="~/@item.Team.LogoPath" width="25" height="25" />
+                                </td>
+                                <td class="team-name">
+                                    @GetName(item.Team)
+                                </td>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.GamesPlayed)
+                                </td>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.Record_2024Format)
+                                </td>
+                                <th>
+                                    @Html.DisplayFor(modelItem => item.WinPct)
+                                </th>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.GamesBehind)
+                                </td>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.GoalRatio)
+                                </td>
+                                <td>
+                                    @GetStreak(item)
+                                </td>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.RegulationWins)
+                                </td>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.RegPlusOTWins)
+                                </td>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.RecordVsDivision_2024Format)
+                                </td>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.RecordVsConference_2024Format)
+                                </td>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.InterConfRecord_2024Format)
+                                </td>
+                            }
+                        </tr>
+
+                        rank++;
+                    }
+                }
+            </tbody>
+        </table>
+    }
+}
+else
+{
+    <table class="table standings">
+        <thead>
+            <tr>
+                @if (Model.FirstOrDefault().Season.Year < 2024)
+                {
+                    <th>
+                        #
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.PlayoffStatus)
+                    </th>
+                    <th colspan="2">
+                        @Html.DisplayNameFor(model => model.Team)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.GamesPlayed)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.Record_2021Format)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.GoalRatio)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.Points)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.PointsPct)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.Streak)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.RegulationWins)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.RegPlusOTWins)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.RecordVsDivision_2021Format)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.RecordVsConference_2021Format)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.InterConfRecord_2021Format)
+                    </th>
+                }
+                else
+                {
+                    <th>
+                        #
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.PlayoffStatus)
+                    </th>
+                    <th colspan="2">
+                        @Html.DisplayNameFor(model => model.Team)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.GamesPlayed)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.Record_2024Format)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.WinPct)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.GamesBehind)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.GoalRatio)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.Streak)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.RecordVsDivision_2024Format)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.RecordVsConference_2024Format)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.InterConfRecord_2024Format)
+                    </th>
+                }
+            </tr>
+        </thead>
+        <tbody>
+            @{
+                int rank = 1;
+
+                foreach (var item in Model)
+                {
+                    <tr>
+                        @if (item.Season.Year < 2024)
+                        {
+                            <th>
+                                @rank
+                            </th>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.PlayoffStatus)
+                            </td>
+                            <td class="team-logo">
+                                <img src="~/@item.Team.LogoPath" width="25" height="25" />
+                            </td>
+                            <td class="team-name">
+                                @GetName(item.Team)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.GamesPlayed)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.Record_2021Format)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.GoalRatio)
+                            </td>
+                            <th>
+                                @Html.DisplayFor(modelItem => item.Points)
+                            </th>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.PointsPct)
+                            </td>
+                            <td class="@GetStreakColor(item)">
+                                @GetStreak(item)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.RegulationWins)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.RegPlusOTWins)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.RecordVsDivision_2021Format)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.RecordVsConference_2021Format)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.InterConfRecord_2021Format)
+                            </td>
+                        }
+                        else
+                        {
+                            <th>
+                                @rank
+                            </th>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.PlayoffStatus)
+                            </td>
+                            <td class="team-logo">
+                                <img src="~/@item.Team.LogoPath" width="25" height="25" />
+                            </td>
+                            <td class="team-name">
+                                @GetName(item.Team)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.GamesPlayed)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.Record_2024Format)
+                            </td>
+                            <th>
+                                @Html.DisplayFor(modelItem => item.WinPct)
+                            </th>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.GamesBehind)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.GoalRatio)
+                            </td>
+                            <td>
+                                @GetStreak(item)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.RecordVsDivision_2024Format)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.RecordVsConference_2024Format)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.InterConfRecord_2024Format)
+                            </td>
+                        }
+                    </tr>
+
+                    rank++;
+                }
+            }
+        </tbody>
+    </table>
+
+}

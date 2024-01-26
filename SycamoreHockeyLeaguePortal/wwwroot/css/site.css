@@ -1,0 +1,143 @@
+html {
+  font-size: 14px;
+}
+
+@media (min-width: 768px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
+  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+}
+
+html {
+  position: relative;
+  min-height: 100%;
+}
+
+body {
+  margin-bottom: 60px;
+}
+
+img {
+    margin: auto;
+}
+
+.card {
+    margin: 10px;
+    padding: 10px;
+}
+
+.game-date {
+    background-image: linear-gradient(to right, #cccccc, rgba(0, 0, 0, 0));
+    text-align: center;
+    width: 50px;
+}
+
+.game-date .month {
+    font-size: 10pt;
+}
+
+.game-date .day {
+    font-size: 14pt;
+}
+
+.game-date .year {
+    font-size: 9pt;
+}
+
+.game-date .date {
+    margin-top: 50%;
+    margin-bottom: 50%;
+}
+
+.score-card {
+    width: 125px;
+    height: 100px;
+}
+
+.score-card .container {
+    margin: 0;
+    width: 90%;
+}
+
+.score-card .row, .score-card .col {
+    text-align: center;
+}
+
+.score-card img {
+    width: 20px;
+    height: 20px;
+}
+
+.score-card .score {
+    font-size: 16pt;
+}
+
+.score-card .status {
+    font-size: 10pt;
+    background-color: #f2f2f2;
+    text-align: center;
+}
+
+.schedule th, .schedule td {
+    text-align: center;
+}
+
+.schedule-team-name {
+    width: 175px;
+}
+
+.schedule-team-logo {
+    width: 30px;
+    height: 30px;
+}
+
+.schedule-score {
+    font-size: 18pt;
+    width: 60px;
+}
+
+.game {
+    text-align: center;
+    vertical-align: middle;
+}
+
+.game .logo {
+    width: 100px;
+    height: 100px;
+}
+
+.game .score {
+    font-size: 50pt;
+}
+
+.game .away-team {
+    text-align: right;
+}
+
+.game .home-team {
+    text-align: left;
+}
+
+.game .status {
+    font-size: 16pt;
+}
+
+.standings {
+    text-align: center;
+}
+
+.standings .team-logo {
+    width: 45px;
+    height: 45px;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.standings .team-name {
+    text-align: left;
+    width: 140px;
+}

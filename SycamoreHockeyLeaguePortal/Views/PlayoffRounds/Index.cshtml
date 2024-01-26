@@ -1,0 +1,54 @@
+﻿@model IEnumerable<SycamoreHockeyLeaguePortal.Models.PlayoffRound>
+
+@{
+    ViewData["Title"] = "Playoff Rounds";
+}
+
+<h1>@ViewBag.Title</h1>
+
+<form asp-action="Index" method="get">
+    <p>
+        Season:
+        @Html.DropDownList("season", (IEnumerable<SelectListItem>)ViewBag.Seasons, new { onchange = "submit()" })
+
+        <br /><br />
+        <a class="btn btn-primary" asp-action="Create">New Playoff Round</a>
+    </p>
+</form>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Season)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Index)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Name)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model) {
+            <tr>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Season.Year)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Index)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Name)
+                </td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
+                    <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
+                    <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

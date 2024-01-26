@@ -1,0 +1,59 @@
+﻿@model SycamoreHockeyLeaguePortal.Models.PlayoffSeries
+
+@{
+    ViewData["Title"] = "Edit";
+}
+
+<h1>Edit</h1>
+
+<h4>PlayoffSeries</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Edit">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="Id" />
+            <div class="form-group">
+                <label asp-for="SeasonId" class="control-label"></label>
+                <select asp-for="SeasonId" class="form-control" asp-items="ViewBag.SeasonId"></select>
+                <span asp-validation-for="SeasonId" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="RoundId" class="control-label"></label>
+                <select asp-for="RoundId" class="form-control" asp-items="ViewBag.RoundId"></select>
+                <span asp-validation-for="RoundId" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Team1Id" class="control-label"></label>
+                <select asp-for="Team1Id" class="form-control" asp-items="ViewBag.Team1Id"></select>
+                <span asp-validation-for="Team1Id" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Team1Wins" class="control-label"></label>
+                <input asp-for="Team1Wins" class="form-control" />
+                <span asp-validation-for="Team1Wins" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Team2Id" class="control-label"></label>
+                <select asp-for="Team2Id" class="form-control" asp-items="ViewBag.Team2Id"></select>
+                <span asp-validation-for="Team2Id" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Team2Wins" class="control-label"></label>
+                <input asp-for="Team2Wins" class="form-control" />
+                <span asp-validation-for="Team2Wins" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Save" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

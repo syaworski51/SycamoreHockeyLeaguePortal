@@ -1,0 +1,347 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Sycamore Hockey League</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/SycamoreHockeyLeaguePortal.styles.css" asp-append-version="true" />
+</head>
+<body>
+    <header>
+        <div class="container-fluid">
+            @if (ViewData["Title"] == "Home Page")
+            {
+                <div class="row flex-row flex-nowrap overflow-scroll">
+                    <div class="game-date">
+                        <div class="date">
+                            <div class="month">Apr</div>
+                            <div class="day">11</div>
+                            <div class="year">2024</div>
+                        </div>
+                    </div>
+                    <div class="col-sm-1 card container score-card">
+                        <div class="row">
+                            <div class="col">
+                                <img src="~/logos/teams/carolina-hurricanes.png" />
+                            </div>
+                            <div class="col">
+                                <img src="~/logos/teams/tampa-bay-lightning.png" />
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col score">
+                                -
+                            </div>
+                            <div class="col score">
+                                -
+                            </div>
+                        </div>
+                        <div class="row-cols-2 status">
+                            Not started
+                        </div>
+                    </div>
+                    <div class="col-sm-1 card container score-card">
+                        <div class="row">
+                            <div class="col">
+                                <img src="~/logos/teams/colorado-avalanche.png" />
+                            </div>
+                            <div class="col">
+                                <img src="~/logos/teams/minnesota-wild.png" />
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col score">
+                                -
+                            </div>
+                            <div class="col score">
+                                -
+                            </div>
+                        </div>
+                        <div class="row-cols-2 status">
+                            Not started
+                        </div>
+                    </div>
+                    <div class="col-sm-1 card container score-card">
+                        <div class="row">
+                            <div class="col">
+                                <img src="~/logos/teams/pittsburgh-penguins.png" />
+                            </div>
+                            <div class="col">
+                                <img src="~/logos/teams/new-york-rangers.png" />
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col score">
+                                -
+                            </div>
+                            <div class="col score">
+                                -
+                            </div>
+                        </div>
+                        <div class="row-cols-2 status">
+                            Not started
+                        </div>
+                    </div>
+                    <div class="col-sm-1 card container score-card">
+                        <div class="row">
+                            <div class="col">
+                                <img src="~/logos/teams/los-angeles-kings.png" />
+                            </div>
+                            <div class="col">
+                                <img src="~/logos/teams/anaheim-ducks.png" />
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col score">
+                                -
+                            </div>
+                            <div class="col score">
+                                -
+                            </div>
+                        </div>
+                        <div class="row-cols-2 status">
+                            Not started
+                        </div>
+                    </div>
+                    <div class="col-sm-1 card container score-card">
+                        <div class="row">
+                            <div class="col">
+                                <img src="~/logos/teams/buffalo-sabres.png" />
+                            </div>
+                            <div class="col">
+                                <img src="~/logos/teams/boston-bruins.png" />
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col score">
+                                -
+                            </div>
+                            <div class="col score">
+                                -
+                            </div>
+                        </div>
+                        <div class="row-cols-2 status">
+                            Not started
+                        </div>
+                    </div>
+                    <div class="col-sm-1 card container score-card">
+                        <div class="row">
+                            <div class="col">
+                                <img src="~/logos/teams/winnipeg-jets.png" />
+                            </div>
+                            <div class="col">
+                                <img src="~/logos/teams/vancouver-canucks.png" />
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col score">
+                                -
+                            </div>
+                            <div class="col score">
+                                -
+                            </div>
+                        </div>
+                        <div class="row-cols-2 status">
+                            Not started
+                        </div>
+                    </div>
+                    <div class="game-date">
+                        <div class="date">
+                            <div class="month">Apr</div>
+                            <div class="day">12</div>
+                            <div class="year">2024</div>
+                        </div>
+                    </div>
+                    <div class="col-sm-1 card container score-card">
+                        <div class="row">
+                            <div class="col">
+                                <img src="~/logos/teams/ottawa-senators.png" />
+                            </div>
+                            <div class="col">
+                                <img src="~/logos/teams/toronto-maple-leafs.png" />
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col score">
+                                -
+                            </div>
+                            <div class="col score">
+                                -
+                            </div>
+                        </div>
+                        <div class="row-cols-2 status">
+                            Not started
+                        </div>
+                    </div>
+                    <div class="col-sm-1 card container score-card">
+                        <div class="row">
+                            <div class="col">
+                                <img src="~/logos/teams/calgary-flames.png" />
+                            </div>
+                            <div class="col">
+                                <img src="~/logos/teams/edmonton-oilers.png" />
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col score">
+                                -
+                            </div>
+                            <div class="col score">
+                                -
+                            </div>
+                        </div>
+                        <div class="row-cols-2 status">
+                            Not started
+                        </div>
+                    </div>
+                    <div class="col-sm-1 card container score-card">
+                        <div class="row">
+                            <div class="col">
+                                <img src="~/logos/teams/new-york-islanders.png" />
+                            </div>
+                            <div class="col">
+                                <img src="~/logos/teams/philadelphia-flyers.png" />
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col score">
+                                -
+                            </div>
+                            <div class="col score">
+                                -
+                            </div>
+                        </div>
+                        <div class="row-cols-2 status">
+                            Not started
+                        </div>
+                    </div>
+                    <div class="col-sm-1 card container score-card">
+                        <div class="row">
+                            <div class="col">
+                                <img src="~/logos/teams/dallas-stars.png" />
+                            </div>
+                            <div class="col">
+                                <img src="~/logos/teams/st-louis-blues.png" />
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col score">
+                                -
+                            </div>
+                            <div class="col score">
+                                -
+                            </div>
+                        </div>
+                        <div class="row-cols-2 status">
+                            Not started
+                        </div>
+                    </div>
+                    <div class="col-sm-1 card container score-card">
+                        <div class="row">
+                            <div class="col">
+                                <img src="~/logos/teams/san-jose-sharks.png" />
+                            </div>
+                            <div class="col">
+                                <img src="~/logos/teams/vegas-golden-knights.png" />
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col score">
+                                -
+                            </div>
+                            <div class="col score">
+                                -
+                            </div>
+                        </div>
+                        <div class="row-cols-2 status">
+                            Not started
+                        </div>
+                    </div>
+                    <div class="col-sm-1 card container score-card">
+                        <div class="row">
+                            <div class="col">
+                                <img src="~/logos/teams/washington-capitals.png" />
+                            </div>
+                            <div class="col">
+                                <img src="~/logos/teams/florida-panthers.png" />
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col score">
+                                -
+                            </div>
+                            <div class="col score">
+                                -
+                            </div>
+                        </div>
+                        <div class="row-cols-2 status">
+                            Not started
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+        
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+            <div class="container-fluid">
+                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">SHL</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+                        aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                    <ul class="navbar-nav flex-grow-1">
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-controller="Schedule" asp-action="Index" asp-route-season="2024">Schedule</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-controller="Standings" asp-action="Index" asp-route-season="2024" asp-route-viewBy="division">Standings</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-controller="Schedule" asp-action="Playoffs" asp-route-season="2021" asp-route-round="1">Playoffs</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-controller="PlayoffRounds" asp-action="Index" asp-route-season="2024">Playoff Rounds</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-controller="Seasons" asp-action="Index">Seasons</a>
+                        </li>
+                        <!--
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-controller="Alignments" asp-action="Index" asp-route-season="2024">Alignments</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-controller="Conferences" asp-action="Index">Conferences</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-controller="Divisions" asp-action="Index">Divisions</a>
+                            </li>
+                        -->
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-controller="Teams" asp-action="Index">Teams</a>
+                        </li>
+                    </ul>
+                    <partial name="_LoginPartial" />
+                </div>
+            </div>
+        </nav>
+    </header>
+    <div class="container">
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+    </div>
+
+    <footer class="border-top footer text-muted">
+        <div class="container">
+            &copy; @DateTime.Now.Year Sycamore Hockey League. All rights reserved.
+        </div>
+    </footer>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

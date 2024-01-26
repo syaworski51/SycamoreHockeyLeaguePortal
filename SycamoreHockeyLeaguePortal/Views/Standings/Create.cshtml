@@ -1,0 +1,121 @@
+﻿@model SycamoreHockeyLeaguePortal.Models.Standings
+
+@{
+    ViewData["Title"] = "Create";
+}
+
+<h1>Create</h1>
+
+<h4>Standings</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                <label asp-for="SeasonId" class="control-label"></label>
+                <select asp-for="SeasonId" class ="form-control" asp-items="ViewBag.SeasonId"></select>
+            </div>
+            <div class="form-group">
+                <label asp-for="TeamId" class="control-label"></label>
+                <select asp-for="TeamId" class ="form-control" asp-items="ViewBag.TeamId"></select>
+            </div>
+            <div class="form-group">
+                <label asp-for="PlayoffStatus" class="control-label"></label>
+                <input asp-for="PlayoffStatus" class="form-control" />
+                <span asp-validation-for="PlayoffStatus" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Wins" class="control-label"></label>
+                <input asp-for="Wins" class="form-control" />
+                <span asp-validation-for="Wins" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Losses" class="control-label"></label>
+                <input asp-for="Losses" class="form-control" />
+                <span asp-validation-for="Losses" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="OTLosses" class="control-label"></label>
+                <input asp-for="OTLosses" class="form-control" />
+                <span asp-validation-for="OTLosses" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="GamesBehind" class="control-label"></label>
+                <input asp-for="GamesBehind" class="form-control" />
+                <span asp-validation-for="GamesBehind" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="GoalsFor" class="control-label"></label>
+                <input asp-for="GoalsFor" class="form-control" />
+                <span asp-validation-for="GoalsFor" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="GoalsAgainst" class="control-label"></label>
+                <input asp-for="GoalsAgainst" class="form-control" />
+                <span asp-validation-for="GoalsAgainst" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Streak" class="control-label"></label>
+                <input asp-for="Streak" class="form-control" />
+                <span asp-validation-for="Streak" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="WinsVsDivision" class="control-label"></label>
+                <input asp-for="WinsVsDivision" class="form-control" />
+                <span asp-validation-for="WinsVsDivision" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="LossesVsDivision" class="control-label"></label>
+                <input asp-for="LossesVsDivision" class="form-control" />
+                <span asp-validation-for="LossesVsDivision" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="OTLossesVsDivision" class="control-label"></label>
+                <input asp-for="OTLossesVsDivision" class="form-control" />
+                <span asp-validation-for="OTLossesVsDivision" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="WinsVsConference" class="control-label"></label>
+                <input asp-for="WinsVsConference" class="form-control" />
+                <span asp-validation-for="WinsVsConference" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="LossesVsConference" class="control-label"></label>
+                <input asp-for="LossesVsConference" class="form-control" />
+                <span asp-validation-for="LossesVsConference" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="OTLossesVsConference" class="control-label"></label>
+                <input asp-for="OTLossesVsConference" class="form-control" />
+                <span asp-validation-for="OTLossesVsConference" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="InterConfWins" class="control-label"></label>
+                <input asp-for="InterConfWins" class="form-control" />
+                <span asp-validation-for="InterConfWins" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="InterConfLosses" class="control-label"></label>
+                <input asp-for="InterConfLosses" class="form-control" />
+                <span asp-validation-for="InterConfLosses" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="InterConfOTLosses" class="control-label"></label>
+                <input asp-for="InterConfOTLosses" class="form-control" />
+                <span asp-validation-for="InterConfOTLosses" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Create" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

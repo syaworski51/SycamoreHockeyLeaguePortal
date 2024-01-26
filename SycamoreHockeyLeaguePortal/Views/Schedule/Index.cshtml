@@ -1,0 +1,90 @@
+﻿@model IEnumerable<SycamoreHockeyLeaguePortal.Models.Schedule>
+@inject SycamoreHockeyLeaguePortal.Data.ApplicationDbContext _context
+
+@{
+    ViewData["Title"] = $"{ViewBag.Season} Schedule";
+
+    string GetName(Team team)
+    {
+        var teamsInSameCity = _context.Team
+            .Where(t => t.City == team.City);
+
+        if (teamsInSameCity.Count() > 1)
+            return team.AlternateName;
+
+        return team.City;
+    }
+}
+
+<h1>@ViewBag.Title</h1>
+
+<form asp-action="Index" method="get">
+    <p>
+        Season:
+        @Html.DropDownList("season", (IEnumerable<SelectListItem>)ViewBag.Seasons, new { onchange = "submit()" })
+
+        Team:
+        @Html.DropDownList("team", (IEnumerable<SelectListItem>)ViewBag.Teams, "All Teams", new { onchange = "submit()" })
+
+        <br /><br />
+        <a class="btn btn-primary" asp-action="Create">New Game</a>
+    </p>
+</form>
+
+<table class="table schedule">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Date)
+            </th>
+            <th colspan="2">
+                @Html.DisplayNameFor(model => model.AwayTeam)
+            </th>
+            <th colspan="2">
+                Scores
+            </th>
+            <th colspan="2">
+                @Html.DisplayNameFor(model => model.HomeTeam)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Status)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model) {
+            <tr style="vertical-align: middle;">
+                <td>
+                    @string.Format("{0}", item.Date.ToLongDateString())
+                </td>
+                <td class="schedule-team-name" style="text-align: right;">
+                    @GetName(item.AwayTeam)
+                </td>
+                <td>
+                    <img class="schedule-team-logo" src="~/@item.AwayTeam.LogoPath" />
+                </td>
+                <td class="schedule-score">
+                    @Html.DisplayFor(modelItem => item.AwayScore)
+                </td>
+                <td class="schedule-score">
+                    @Html.DisplayFor(modelItem => item.HomeScore)
+                </td>
+                <td>
+                    <img class="schedule-team-logo" src="~/@item.HomeTeam.LogoPath" />
+                </td>
+                <td class="schedule-team-name" style="text-align: left;">
+                    @GetName(item.HomeTeam)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Status)
+                </td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
+                    <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
+                    <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

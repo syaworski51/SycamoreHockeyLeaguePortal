@@ -1,0 +1,50 @@
+﻿@model SycamoreHockeyLeaguePortal.Models.Team
+
+@{
+    ViewData["Title"] = Model.FullName;
+}
+
+<div class="container">
+    <div class="row">
+        <div class="col-sm-1">
+            <img src="~/@Model.LogoPath" title="@Model.FullName logo" alt="@Model.FullName logo" width="70" height="70" />
+        </div>
+        <div class="col" style="margin: auto;">
+            <h1>@Model.FullName</h1>
+        </div>
+    </div>
+</div>
+
+<div>
+    <hr />
+    <dl class="row">
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.Code)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.Code)
+        </dd>
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.City)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.City)
+        </dd>
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.Name)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.Name)
+        </dd>
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.LogoPath)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.LogoPath)
+        </dd>
+    </dl>
+</div>
+<div>
+    <a asp-action="Edit" asp-route-id="@Model?.Id">Edit</a> |
+    <a asp-action="Index">Back to List</a>
+</div>

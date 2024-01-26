@@ -1,0 +1,65 @@
+﻿@model SycamoreHockeyLeaguePortal.Models.Schedule
+@inject SycamoreHockeyLeaguePortal.Data.ApplicationDbContext _context
+
+@{
+    ViewData["Title"] = "Details";
+}
+
+<div class="container game">
+    <div class="row">
+        <div class="col-12" id="game-notes">
+            @Html.DisplayFor(model => model.Notes)
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-3 away-team">
+            <h5>@Html.DisplayFor(model => model.AwayTeam.City)</h5>
+            <h1>@Html.DisplayFor(model => model.AwayTeam.Name)</h1>
+        </div>
+        <div class="col-2">
+            <img class="logo" src="~/@Model.AwayTeam.LogoPath" />
+        </div>
+        <div class="col score" id="away-score">
+            @Html.DisplayFor(model => model.AwayScore)
+        </div>
+        <div class="col score" id="home-score">
+            @Html.DisplayFor(model => model.HomeScore)
+        </div>
+        <div class="col-2">
+            <img class="logo" src="~/@Model.HomeTeam.LogoPath" />
+        </div>
+        <div class="col-3 home-team">
+            <h5>@Html.DisplayFor(model => model.HomeTeam.City)</h5>
+            <h1>@Html.DisplayFor(model => model.HomeTeam.Name)</h1>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-12" id="game-status">
+            <div class="status">@Html.DisplayFor(model => model.Status)</div>
+        </div>
+    </div>
+</div>
+
+<div class="container game-controls">
+    <div class="row">
+        <div class="col" id="away-team-controls">
+            <button type="button" class="btn btn-primary" onclick="">+1</button><br />
+            <button type="button" class="btn btn-primary" asp-action="RemoveAwayGoal" asp-route-gameId="@Model.Id">-1</button>
+        </div>
+        <div class="col" id="time-controls">
+
+        </div>
+        <div class="col" id="home-team-controls">
+            <button type="button" class="btn btn-primary" asp-action="HomeGoal" asp-route-gameId="@Model.Id">+1</button><br />
+            <button type="button" class="btn btn-primary" asp-action="RemoveHomeGoal" asp-route-gameId="@Model.Id">-1</button>
+        </div>
+    </div>
+</div>
+
+<hr />
+
+
+<div>
+    <a asp-action="Edit" asp-route-id="@Model?.Id">Edit</a> |
+    <a asp-action="Index" asp-route-season="@Model.Date.Year">Back to Schedule</a>
+</div>
