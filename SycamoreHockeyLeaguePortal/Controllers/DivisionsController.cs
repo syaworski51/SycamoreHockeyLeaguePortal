@@ -22,9 +22,10 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         // GET: Divisions
         public async Task<IActionResult> Index()
         {
-              return _context.Division != null ? 
-                          View(await _context.Division.ToListAsync()) :
-                          Problem("Entity set 'ApplicationDbContext.Division'  is null.");
+            var divisions = _context.Division
+                .OrderBy(d => d.Name);
+
+            return View(await divisions.AsNoTracking().ToListAsync());
         }
 
         // GET: Divisions/Details/5

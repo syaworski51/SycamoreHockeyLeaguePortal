@@ -19,7 +19,7 @@
                     <option value="z">Clinched President's Trophy</option>
                     <option value="y">Clinched division</option>
                     <option value="x">Clinched playoff spot</option>
-                    <option value="" selected>Not clinched</option>
+                    <option value="">Not clinched</option>
                     <option value="e">Eliminated</option>
                 }
                 else
@@ -29,13 +29,13 @@
                     <option value="Y">Clinched division</option>
                     <option value="X">Clinched home-ice advantage</option>
                     <option value="x">Clinched playoff spot</option>
-                    <option value="" selected>Not clinched</option>
+                    <option value="">Not clinched</option>
                     <option value="e">Eliminated</option>
                 }
             </select>
         </div>
         <div class="form-group">
-            <input type="submit" value="Submit" class="btn btn-primary" />
+            <input type="submit" value="Submit" class="btn btn-primary" asp-route-viewBy="@ViewBag.ViewBy" />
         </div>
     </form>
 </div>

@@ -25,5 +25,14 @@ namespace SycamoreHockeyLeaguePortal.Models
 
         [Display(Name = "Logo Path")]
         public string? LogoPath { get; set; }
+
+        [Display(Name = "Primary Color")]
+        public string PrimaryColor { get; set; }
+
+        [Display(Name = "Secondary Color")]
+        public string? SecondaryColor { get; set; }
+
+        [Display(Name = "Tertiary Color")]
+        public string? TertiaryColor { get; set; }
     }
 }

@@ -54,6 +54,9 @@ namespace SycamoreHockeyLeaguePortal.Models
         [Display(Name = "Live?")]
         public bool IsLive { get; set; }
 
+        [Display(Name = "Finalized?")]
+        public bool IsFinalized { get; set; }
+
         [Display(Name = "Notes")]
         public string? Notes { get; set; }
 

@@ -6,7 +6,7 @@ namespace SycamoreHockeyLeaguePortal.Models
     /// <summary>
     ///     Represents a playoff round won by the champion of its season.
     /// </summary>
-    [Table("Rounds")]
+    [Table("ChampionsRounds")]
     public class ChampionsRound
     {
         [Key]
@@ -16,7 +16,7 @@ namespace SycamoreHockeyLeaguePortal.Models
         public Guid ChampionId { get; set; }
 
         [Display(Name = "Champion")]
-        public Team Champion { get; set; }
+        public Champion Champion { get; set; }
 
         [Display(Name = "Round")]
         public int RoundIndex { get; set; }

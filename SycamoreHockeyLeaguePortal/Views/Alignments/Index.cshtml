@@ -1,7 +1,16 @@
 ﻿@model IEnumerable<SycamoreHockeyLeaguePortal.Models.Alignment>
 
 @{
-    ViewData["Title"] = "Alignments";
+    ViewData["Title"] = $"{ViewBag.Season} Division Alignments";
+
+    var conferences = Model
+        .Select(a => a.Conference)
+        .Distinct();
+
+    string ExtractNameFromDivision(string divisionName)
+    {
+        return divisionName.Replace(" Division", "");
+    }
 }
 
 <h1>@ViewBag.Title</h1>
@@ -16,45 +25,48 @@
     </p>
 </form>
 
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.Season)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Conference)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Division)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Team)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var item in Model) {
-            <tr>
-                <td>
-                    @Html.DisplayFor(modelItem => item.Season.Year)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.Conference.Name)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.Division.Name)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.Team.FullName)
-                </td>
-                <td>
-                    <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
-                    <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
-                    <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
-                </td>
-            </tr>
-        }
-    </tbody>
-</table>
+<div class="alignments">
+    @foreach (var conference in conferences)
+    {
+        var divisions = Model
+            .Where(c => c.ConferenceId == conference.Id)
+            .Select(c => c.Division)
+            .Distinct();
+
+        <h3>@conference.Name</h3>
+        <div class="container conference">
+            <div class="row">
+                @foreach (var division in divisions)
+                {
+                    var teams = Model
+                    .Where(d => d.DivisionId == division.Id)
+                    .Select(d => d.Team)
+                    .Distinct();
+
+                    <div class="col-3 card division">
+                        <h4>@ExtractNameFromDivision(division.Name)</h4>
+
+                        <div class="container">
+                            <div class="row">
+                                <div class="col container">
+                                    @foreach (var team in teams)
+                                    {
+                                        <div class="row team-info">
+                                            <div class="col-4">
+                                                <img src="~/@team.LogoPath" title="@team.FullName" alt="@team.Code" />
+                                            </div>
+                                            <div class="col">
+                                                <h6>@team.City</h6>
+                                                <h3 class="alignment-team-name">@team.Name</h3>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>

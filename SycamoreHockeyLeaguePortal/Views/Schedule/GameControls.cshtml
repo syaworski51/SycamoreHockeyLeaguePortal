@@ -1,0 +1,99 @@
+﻿@model SycamoreHockeyLeaguePortal.Models.Schedule
+
+@{
+    ViewData["Title"] = "Game Controls";
+}
+
+<div class="container game">
+    <div class="row">
+        <div class="col-12" id="game-notes">
+            @Html.DisplayFor(model => model.Notes)
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-3 away-team">
+            <h5>@Html.DisplayFor(model => model.AwayTeam.City)</h5>
+            <h1 class="team-name">@Html.DisplayFor(model => model.AwayTeam.Name)</h1>
+        </div>
+        <div class="col-2 team-logo">
+            <img class="logo" src="~/@Model.AwayTeam.LogoPath" />
+        </div>
+        <div class="col score" id="away-score">
+            @(Model.Status != "Not started" ? Html.DisplayFor(model => model.AwayScore) : "-")
+        </div>
+        <div class="col score" id="home-score">
+            @(Model.Status != "Not started" ? Html.DisplayFor(model => model.HomeScore) : "-")
+        </div>
+        <div class="col-2 team-logo">
+            <img class="logo" src="~/@Model.HomeTeam.LogoPath" />
+        </div>
+        <div class="col-3 home-team">
+            <h5>@Html.DisplayFor(model => model.HomeTeam.City)</h5>
+            <h1 class="team-name">@Html.DisplayFor(model => model.HomeTeam.Name)</h1>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-12" id="game-status">
+            <div class="status">@Html.DisplayFor(model => model.Status)</div>
+        </div>
+    </div>
+</div>
+<hr />
+
+<div class="row">
+    <form asp-action="Edit">
+        <div class="col-md-4 container">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="Id" />
+            <input type="hidden" asp-for="SeasonId" />
+            <input type="hidden" asp-for="PlayoffRoundId" />
+            <input type="hidden" asp-for="Date" />
+            <input type="hidden" asp-for="Type" />
+            <input type="hidden" asp-for="AwayTeamId" />
+            <input type="hidden" asp-for="HomeTeamId" />
+            <input type="hidden" asp-for="GameIndex" />
+            <div class="row">
+                <div class="col form-group">
+                    <label asp-for="AwayScore" class="control-label"></label>
+                    <input asp-for="AwayScore" class="form-control" />
+                    <span asp-validation-for="AwayScore" class="text-danger"></span>
+                </div>
+                <div class="col form-group">
+                    <label asp-for="Period" class="control-label"></label>
+                    <input asp-for="Period" class="form-control" />
+                    <span asp-validation-for="Period" class="text-danger"></span>
+                </div>
+                <div class="col form-group">
+                    <label asp-for="HomeScore" class="control-label"></label>
+                    <input asp-for="HomeScore" class="form-control" />
+                    <span asp-validation-for="HomeScore" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col form-group form-check">
+                    <label class="form-check-label">
+                        <input class="form-check-input" asp-for="IsLive" /> @Html.DisplayNameFor(model => model.IsLive)
+                    </label>
+                </div>
+                <div class="col form-group form-check">
+                    <label class="form-check-label">
+                        <input class="form-check-input" asp-for="IsFinalized" /> @Html.DisplayNameFor(model => model.IsFinalized)
+                    </label>
+                </div>
+                <div class="col form-group">
+                    <label asp-for="Notes" class="control-label"></label>
+                    <input asp-for="Notes" class="form-control" />
+                    <span asp-validation-for="Notes" class="text-danger"></span>
+                </div>
+                <div class="col form-group">
+                    <input type="submit" value="Save" class="btn btn-secondary" asp-route-finalized="false" />
+                    <input type="submit" value="Finalize" class="btn btn-primary" asp-route-finalized="true" />
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

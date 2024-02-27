@@ -1,8 +1,401 @@
 ﻿@{
     ViewData["Title"] = "Home Page";
+
+    IQueryable<Standings> atlanticStandings = ViewBag.AtlanticStandings;
+    IQueryable<Standings> northeastStandings = ViewBag.NortheastStandings;
+    IQueryable<Standings> southeastStandings = ViewBag.SoutheastStandings;
+
+    IQueryable<Standings> centralStandings = ViewBag.CentralStandings;
+    IQueryable<Standings> northwestStandings = ViewBag.NorthwestStandings;
+    IQueryable<Standings> pacificStandings = ViewBag.PacificStandings;
 }
 
-<div class="text-center">
-    <h1 class="display-4">Sycamore Hockey League</h1>
-    <p>Welcome to the official website of the Sycamore Hockey League!</p>
+<div class="container" id="home-page">
+    <h1 class="text-center display-4">Sycamore Hockey League</h1>
+
+    <div class="row">
+        <div class="col-7 card">
+            <h4>Schedule</h4>
+            <h6>April 11, 2024</h6>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th colspan="2">Away Team</th>
+                        <th colspan="2">Scores</th>
+                        <th colspan="2">Home Team</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="text-align: right;">
+                            Carolina
+                        </td>
+                        <td>
+                            <img src="~/logos/teams/carolina-hurricanes.png" />
+                        </td>
+                        <td colspan="2" style="font-size: 14pt;">
+                            @@
+                        </td>
+                        <td>
+                            <img src="~/logos/teams/tampa-bay-lightning.png" />
+                        </td>
+                        <td style="text-align: left;">
+                            Tampa Bay
+                        </td>
+                        <td>
+                            Not started
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="text-align: right;">
+                            Colorado
+                        </td>
+                        <td>
+                            <img src="~/logos/teams/colorado-avalanche.png" />
+                        </td>
+                        <td colspan="2" style="font-size: 14pt;">
+                            @@
+                        </td>
+                        <td>
+                            <img src="~/logos/teams/minnesota-wild.png" />
+                        </td>
+                        <td style="text-align: left;">
+                            Minnesota
+                        </td>
+                        <td>
+                            Not started
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="text-align: right;">
+                            Pittsburgh
+                        </td>
+                        <td>
+                            <img src="~/logos/teams/pittsburgh-penguins.png" />
+                        </td>
+                        <td colspan="2" style="font-size: 14pt;">
+                            @@
+                        </td>
+                        <td>
+                            <img src="~/logos/teams/new-york-rangers.png" />
+                        </td>
+                        <td style="text-align: left;">
+                            NY Rangers
+                        </td>
+                        <td>
+                            Not started
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="text-align: right;">
+                            Los Angeles
+                        </td>
+                        <td>
+                            <img src="~/logos/teams/los-angeles-kings.png" />
+                        </td>
+                        <td colspan="2" style="font-size: 14pt;">
+                            @@
+                        </td>
+                        <td>
+                            <img src="~/logos/teams/anaheim-ducks.png" />
+                        </td>
+                        <td style="text-align: left;">
+                            Anaheim
+                        </td>
+                        <td>
+                            Not started
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="text-align: right;">
+                            Buffalo
+                        </td>
+                        <td>
+                            <img src="~/logos/teams/buffalo-sabres.png" />
+                        </td>
+                        <td colspan="2" style="font-size: 14pt;">
+                            @@
+                        </td>
+                        <td>
+                            <img src="~/logos/teams/boston-bruins.png" />
+                        </td>
+                        <td style="text-align: left;">
+                            Boston
+                        </td>
+                        <td>
+                            Not started
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="text-align: right;">
+                            Winnipeg
+                        </td>
+                        <td>
+                            <img src="~/logos/teams/winnipeg-jets.png" />
+                        </td>
+                        <td colspan="2" style="font-size: 14pt;">
+                            @@
+                        </td>
+                        <td>
+                            <img src="~/logos/teams/vancouver-canucks.png" />
+                        </td>
+                        <td style="text-align: left;">
+                            Vancouver
+                        </td>
+                        <td>
+                            Not started
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="col-4 card">
+            <h4>Standings</h4>
+            <ul class="nav nav-pills nav-fill" id="conference-tabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="east-tab" data-bs-toggle="tab" data-bs-target="#east" type="button" role="tab" aria-controls="east" aria-selected="true">EAST</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="west-tab" data-bs-toggle="tab" data-bs-target="#west" type="button" role="tab" aria-controls="west" aria-selected="false">WEST</button>
+                </li>
+            </ul>
+            <div class="tab-content" id="conference-tab-content">
+                <div class="tab-pane fade show active" id="east" role="tabpanel" aria-labelledby="east-tab">
+                    <ul class="nav nav-pills nav-fill" id="eastern-division-tabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="atl-tab" data-bs-toggle="tab" data-bs-target="#atl" type="button" role="tab" aria-controls="atl" aria-selected="true">ATL</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="ne-tab" data-bs-toggle="tab" data-bs-target="#ne" type="button" role="tab" aria-controls="ne" aria-selected="false">NE</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="se-tab" data-bs-toggle="tab" data-bs-target="#se" type="button" role="tab" aria-controls="se" aria-selected="false">SE</button>
+                        </li>
+                    </ul>
+                    <div class="tab-content" id="eastern-division-tab-content">
+                        <div class="tab-pane fade show active" id="atl" role="tabpanel" aria-labelledby="atl-tab">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th colspan="2">Atlantic</th>
+                                        <th>W-L</th>
+                                        <th>W%</th>
+                                        <th>GB</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var team in atlanticStandings)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <img src="~/@team.Team.LogoPath" title="@team.Team.FullName" />
+                                            </td>
+                                            <td title="@team.Team.FullName">
+                                                @team.Team.Code
+                                            </td>
+                                            <td class="team-stats">
+                                                @team.Record_2024Format
+                                            </td>
+                                            <th class="team-stats">
+                                                @team.WinPct
+                                            </th>
+                                            <td class="team-stats">
+                                                @(team.DivisionGamesBehind > 0 ? team.DivisionGamesBehind : "--")
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="tab-pane fade" id="ne" role="tabpanel" aria-labelledby="ne-tab">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th colspan="2">Northeast</th>
+                                        <th>W-L</th>
+                                        <th>W%</th>
+                                        <th>GB</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var team in northeastStandings)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <img src="~/@team.Team.LogoPath" title="@team.Team.FullName" />
+                                            </td>
+                                            <td title="@team.Team.FullName">
+                                                @team.Team.Code
+                                            </td>
+                                            <td class="team-stats">
+                                                @team.Record_2024Format
+                                            </td>
+                                            <th class="team-stats">
+                                                @team.WinPct
+                                            </th>
+                                            <td class="team-stats">
+                                                @(team.DivisionGamesBehind > 0 ? team.DivisionGamesBehind : "--")
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="tab-pane fade" id="se" role="tabpanel" aria-labelledby="se-tab">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th colspan="2">Southeast</th>
+                                        <th>W-L</th>
+                                        <th>W%</th>
+                                        <th>GB</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var team in southeastStandings)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <img src="~/@team.Team.LogoPath" title="@team.Team.FullName" />
+                                            </td>
+                                            <td title="@team.Team.FullName">
+                                                @team.Team.Code
+                                            </td>
+                                            <td class="team-stats">
+                                                @team.Record_2024Format
+                                            </td>
+                                            <th class="team-stats">
+                                                @team.WinPct
+                                            </th>
+                                            <td class="team-stats">
+                                                @(team.DivisionGamesBehind > 0 ? team.DivisionGamesBehind : "--")
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="west" role="tabpanel" aria-labelledby="west-tab">
+                    <ul class="nav nav-pills nav-fill" id="western-division-tabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="cen-tab" data-bs-toggle="tab" data-bs-target="#cen" type="button" role="tab" aria-controls="cen" aria-selected="true">CEN</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="nw-tab" data-bs-toggle="tab" data-bs-target="#nw" type="button" role="tab" aria-controls="nw" aria-selected="false">NW</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="pac-tab" data-bs-toggle="tab" data-bs-target="#pac" type="button" role="tab" aria-controls="pac" aria-selected="false">PAC</button>
+                        </li>
+                    </ul>
+                    <div class="tab-content" id="western-division-tab-content">
+                        <div class="tab-pane fade show active" id="cen" role="tabpanel" aria-labelledby="cen-tab">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th colspan="2">Central</th>
+                                        <th>W-L</th>
+                                        <th>W%</th>
+                                        <th>GB</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var team in centralStandings)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <img src="~/@team.Team.LogoPath" title="@team.Team.FullName" />
+                                            </td>
+                                            <td title="@team.Team.FullName">
+                                                @team.Team.Code
+                                            </td>
+                                            <td class="team-stats">
+                                                @team.Record_2024Format
+                                            </td>
+                                            <th class="team-stats">
+                                                @team.WinPct
+                                            </th>
+                                            <td class="team-stats">
+                                                @(team.DivisionGamesBehind > 0 ? team.DivisionGamesBehind : "--")
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="tab-pane fade" id="nw" role="tabpanel" aria-labelledby="nw-tab">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th colspan="2">Northwest</th>
+                                        <th>W-L</th>
+                                        <th>W%</th>
+                                        <th>GB</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var team in northwestStandings)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <img src="~/@team.Team.LogoPath" title="@team.Team.FullName" />
+                                            </td>
+                                            <td title="@team.Team.FullName">
+                                                @team.Team.Code
+                                            </td>
+                                            <td class="team-stats">
+                                                @team.Record_2024Format
+                                            </td>
+                                            <th class="team-stats">
+                                                @team.WinPct
+                                            </th>
+                                            <td class="team-stats">
+                                                @(team.DivisionGamesBehind > 0 ? team.DivisionGamesBehind : "--")
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="tab-pane fade" id="pac" role="tabpanel" aria-labelledby="pac-tab">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th colspan="2">Pacific</th>
+                                        <th>W-L</th>
+                                        <th>W%</th>
+                                        <th>GB</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var team in pacificStandings)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <img src="~/@team.Team.LogoPath" title="@team.Team.FullName" />
+                                            </td>
+                                            <td title="@team.Team.FullName">
+                                                @team.Team.Code
+                                            </td>
+                                            <td class="team-stats">
+                                                @team.Record_2024Format
+                                            </td>
+                                            <th class="team-stats">
+                                                @team.WinPct
+                                            </th>
+                                            <td class="team-stats">
+                                                @(team.DivisionGamesBehind > 0 ? team.DivisionGamesBehind : "--")
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>

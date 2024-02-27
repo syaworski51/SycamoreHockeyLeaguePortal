@@ -98,8 +98,8 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             if (complete)
             {
                 _context.Add(playoffSeries);
-                
                 await _context.SaveChangesAsync();
+
                 await GenerateSchedule(playoffSeries);
 
                 return RedirectToAction("Playoffs", "Schedule", new { season = playoffSeries.Season.Year, round = playoffSeries.Round.Index });

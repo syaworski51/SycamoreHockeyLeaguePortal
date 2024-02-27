@@ -20,5 +20,10 @@ namespace SycamoreHockeyLeaguePortal.Data
         public DbSet<SycamoreHockeyLeaguePortal.Models.StandingsSortOption> StandingsSortOption { get; set; } = default!;
         public DbSet<SycamoreHockeyLeaguePortal.Models.PlayoffRound> PlayoffRound { get; set; } = default!;
         public DbSet<SycamoreHockeyLeaguePortal.Models.PlayoffSeries> PlayoffSeries { get; set; } = default!;
+        public DbSet<SycamoreHockeyLeaguePortal.Models.Champion> Champion { get; set; } = default!;
+        public DbSet<SycamoreHockeyLeaguePortal.Models.ChampionsRound> ChampionsRound { get; set; } = default!;
+        public DbSet<SycamoreHockeyLeaguePortal.Models.ProgramFlag> ProgramFlag { get; set; } = default!;
+        public DbSet<SycamoreHockeyLeaguePortal.Models.PlayoffStatus> PlayoffStatus { get; set; } = default!;
+        public DbSet<SycamoreHockeyLeaguePortal.Models.GameType> GameType { get; set; } = default!;
     }
 }

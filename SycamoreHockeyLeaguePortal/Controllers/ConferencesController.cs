@@ -22,9 +22,10 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         // GET: Conferences
         public async Task<IActionResult> Index()
         {
-              return _context.Conference != null ? 
-                          View(await _context.Conference.ToListAsync()) :
-                          Problem("Entity set 'ApplicationDbContext.Conference'  is null.");
+            var conferences = _context.Conference
+                .OrderBy(c => c.Name);
+
+            return View(await conferences.AsNoTracking().ToListAsync());
         }
 
         // GET: Conferences/Details/5

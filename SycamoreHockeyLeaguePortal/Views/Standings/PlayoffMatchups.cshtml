@@ -1,0 +1,53 @@
+﻿@model List<List<Standings[]>>
+
+@{
+    ViewData["Title"] = "Playoff Matchups";
+
+    var conferences = ViewBag.Conferences;
+    int conferenceIndex = 0;
+}
+
+<h1>If the playoffs started today...</h1>
+
+<div class="container text-center align-content-center">
+    @foreach (var conference in Model)
+    {
+        <div class="row d-flex justify-content-center">
+            <h3 class="conference">@conferences[conferenceIndex].Name</h3>
+            @for (int matchupIndex = 0; matchupIndex < conference.Count; matchupIndex++)
+            {
+                int higherSeed = matchupIndex + 1;
+                int lowerSeed = (conference.Count * 2) - matchupIndex;
+
+                <div class="col-2 card container playoff-matchup">
+                    <div class="row">
+                        <div class="col">
+                            <div class="seed-number">@higherSeed</div>
+                            <img class="team-logo" src="~/@conference[matchupIndex][0].Team.LogoPath" title="@conference[matchupIndex][0].Team.FullName" />
+                        </div>
+                        <div class="col">
+                            <div class="seed-number">@lowerSeed</div>
+                            <img class="team-logo" src="~/@conference[matchupIndex][1].Team.LogoPath" title="@conference[matchupIndex][1].Team.FullName" />
+                        </div>
+                    </div>
+                    <div class="row teams">
+                        <div class="col">
+                            <h6>@conference[matchupIndex][0].Team.City</h6>
+                            <h3>@conference[matchupIndex][0].Team.Name</h3>
+                            <span class="vs">vs</span>
+                            <h6>@conference[matchupIndex][1].Team.City</h6>
+                            <h3>@conference[matchupIndex][1].Team.Name</h3>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <a asp-action="HeadToHeadComparison" asp-route-season="@conference[matchupIndex][0].Season.Year" asp-route-team1Code="@conference[matchupIndex][0].Team.Code" asp-route-team2Code="@conference[matchupIndex][1].Team.Code">Head-to-Head</a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        conferenceIndex++;
+    }
+</div>

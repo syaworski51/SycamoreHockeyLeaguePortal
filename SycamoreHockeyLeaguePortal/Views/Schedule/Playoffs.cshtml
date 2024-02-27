@@ -42,7 +42,7 @@
 <table class="table schedule">
     <thead>
         <tr>
-            <th>
+            <th class="date">
                 @Html.DisplayNameFor(model => model.Date)
             </th>
             <th colspan="2">
@@ -54,7 +54,7 @@
             <th colspan="2">
                 @Html.DisplayNameFor(model => model.HomeTeam)
             </th>
-            <th>
+            <th class="status">
                 @Html.DisplayNameFor(model => model.Status)
             </th>
             <th></th>
@@ -74,10 +74,10 @@
                     <img class="schedule-team-logo" src="~/@item.AwayTeam.LogoPath" />
                 </td>
                 <td class="schedule-score">
-                    @(item.AwayScore != null ? Html.DisplayFor(modelItem => item.AwayScore) : "-")
+                    @(item.Status != "Not started" ? Html.DisplayFor(modelItem => item.AwayScore) : "-")
                 </td>
                 <td class="schedule-score">
-                    @(item.HomeScore != null ? Html.DisplayFor(modelItem => item.HomeScore) : "-")
+                    @(item.Status != "Not started" ? Html.DisplayFor(modelItem => item.HomeScore) : "-")
                 </td>
                 <td>
                     <img class="schedule-team-logo" src="~/@item.HomeTeam.LogoPath" />
@@ -89,8 +89,8 @@
                     @Html.DisplayFor(modelItem => item.Status)
                 </td>
                 <td>
-                    <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
-                    <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
+                    <a asp-action="GameControls" asp-route-id="@item.Id">Game Controls</a> |
+                    <a asp-action="GameCenter" asp-route-id="@item.Id">Game Center</a> |
                     <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
                 </td>
             </tr>

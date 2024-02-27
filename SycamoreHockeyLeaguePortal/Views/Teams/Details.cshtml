@@ -1,7 +1,99 @@
 ﻿@model SycamoreHockeyLeaguePortal.Models.Team
+@inject SycamoreHockeyLeaguePortal.Data.ApplicationDbContext _context
 
 @{
     ViewData["Title"] = Model.FullName;
+
+    var teamId = Model.Id;
+    var schedule = ViewBag.Schedule;
+
+    string GetDayOfWeek(DateTime date)
+    {
+        return date.ToString("dddd");
+    }
+
+    string GetMonth(DateTime date)
+    {
+        return date.ToString("MMMM");
+    }
+
+    string GetDateString(DateTime date)
+    {
+        return $"{GetDayOfWeek(date)}, {GetMonth(date)} {date.Day}";
+    }
+
+    string GetOpponent(Schedule game)
+    {
+        if (game.AwayTeamId == teamId)
+            return $"@ {game.HomeTeam.FullName}";
+
+        return game.AwayTeam.FullName;
+    }
+
+    string GetOpponentLogoPath(Schedule game)
+    {
+        if (game.AwayTeamId == teamId)
+            return game.HomeTeam.LogoPath!;
+
+        return game.AwayTeam.LogoPath!;
+    }
+
+    string GetResult(Schedule game)
+    {
+        if (!game.IsLive && game.Period >= 3)
+        {
+            if (game.HomeTeamId == teamId)
+                return (game.HomeScore > game.AwayScore) ? "W" : "L";
+            else
+                return (game.AwayScore > game.HomeScore) ? "W" : "L";
+        }
+
+        return "";
+    }
+
+    string GetResultColor(Schedule game)
+    {
+        var result = GetResult(game);
+
+        switch (result)
+        {
+            case "W":
+                return "win";
+
+            case "L":
+                return "loss";
+
+            default:
+                return "text-black";
+        }
+    }
+
+    string GetScoreString(Schedule game)
+    {
+        string scoreString = "";
+
+        if (!game.IsLive && game.Period >= 3)
+        {
+            scoreString = (game.HomeTeamId == teamId) ?
+                $"{game.HomeScore} - {game.AwayScore}" :
+                $"{game.AwayScore} - {game.HomeScore}";
+
+            if (game.Period > 3)
+            {
+                if (game.Period == 4)
+                    scoreString += " (OT)";
+                else
+                {
+                    if (game.Type == "Regular Season")
+                        scoreString += " (SO)";
+                    else
+                        scoreString += $" ({game.Period - 3}OT)";
+                }
+            }
+        }
+
+        return scoreString;
+    }
 }
 
 <div class="container">
@@ -15,36 +107,65 @@
     </div>
 </div>
 
-<div>
-    <hr />
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Code)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Code)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.City)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.City)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Name)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Name)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.LogoPath)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.LogoPath)
-        </dd>
-    </dl>
-</div>
-<div>
-    <a asp-action="Edit" asp-route-id="@Model?.Id">Edit</a> |
-    <a asp-action="Index">Back to List</a>
+<hr />
+<div style="width: 750px; margin: auto;">
+    <h3>@ViewBag.Season @ViewBag.GameType</h3>
+    <form asp-action="Details" method="get" style="width: 750px; margin: auto;">
+        <div class="container">
+            <div class="row">
+                <div class="col">
+                    Season:<br />
+                    @Html.DropDownList("season", (IEnumerable<SelectListItem>)ViewBag.Seasons, new { onchange = "submit()" })
+                </div>
+                <div class="col">
+                    Type:<br />
+                    @Html.DropDownList("gameType", (IEnumerable<SelectListItem>)ViewBag.GameTypes, new { onchange = "submit()" })
+                </div>
+                <div class="col">
+                    Opponent:<br />
+                    @Html.DropDownList("opponent", (IEnumerable<SelectListItem>)ViewBag.Opponents, "All Teams", new { onchange = "submit()" })
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <table class="table team-schedule">
+        <thead>
+            <tr>
+                <th>
+                    Date
+                </th>
+                <th colspan="2">
+                    Opponent
+                </th>
+                <th colspan="2">
+                    Result
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var game in schedule)
+            {
+                var isAwayGame = game.AwayTeamId == teamId ? "away-game" : "";
+
+                <tr class="@isAwayGame">
+                    <td>
+                        @GetDateString(game.Date)
+                    </td>
+                    <td class="opponent-name">
+                        @GetOpponent(game)
+                    </td>
+                    <td class="opponent-logo">
+                        <img class="schedule-team-logo" src="~/@GetOpponentLogoPath(game)" />
+                    </td>
+                    <td class="@GetResultColor(game) result">
+                        @GetResult(game)
+                    </td>
+                    <td class="score">
+                        @GetScoreString(game)
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
 </div>

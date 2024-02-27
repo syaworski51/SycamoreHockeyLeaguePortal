@@ -1,0 +1,71 @@
+﻿@{
+    ViewData["Title"] = "Head-to-Head Comparison";
+
+    Standings team1 = ViewBag.Team1;
+    Standings team2 = ViewBag.Team2;
+
+    const int TEAM1 = 0;
+    const int TEAM2 = 1;
+
+    int[] h2hSeries = ViewBag.H2HSeries;
+    int[] h2hGoalsFor = ViewBag.H2HGoalsFor;
+    int[] h2hGFInWins = ViewBag.H2HGFInWins;
+    int[] h2hWinPoints = ViewBag.H2HWinPoints;
+    double[] h2hGFPerGame = ViewBag.H2HGFPerGame;
+    double[] h2hGAPerGame = ViewBag.H2HGAPerGame;
+}
+
+<h1>@ViewBag.Title</h1>
+
+<div class="container h2h-logos">
+    <div class="row">
+        <div class="col" id="team1-logo">
+            <img src="~/@team1.Team.LogoPath" width="150" height="150" />
+        </div>
+        <div class="col" id="team2-logo">
+            <img src="~/@team2.Team.LogoPath" width="150" height="150" />
+        </div>
+    </div>
+</div>
+
+<table class="table h2h-stats">
+    <thead>
+        <tr>
+            <th class="team">@team1.Team.FullName</th>
+            <th>Metric</th>
+            <th class="team">@team2.Team.FullName</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>@h2hSeries[TEAM1]</td>
+            <th>SERIES</th>
+            <td>@h2hSeries[TEAM2]</td>
+        </tr>
+        <tr>
+            <td>@h2hWinPoints[TEAM1]</td>
+            <th>WIN POINTS</th>
+            <td>@h2hWinPoints[TEAM2]</td>
+        </tr>
+        <tr>
+            <td>@h2hGoalsFor[TEAM1]</td>
+            <th>GOALS FOR</th>
+            <td>@h2hGoalsFor[TEAM2]</td>
+        </tr>
+        <tr>
+            <td>@h2hGFInWins[TEAM1]</td>
+            <th>GF IN WINS</th>
+            <td>@h2hGFInWins[TEAM2]</td>
+        </tr>
+        <tr>
+            <td>@string.Format("{0:F2}", h2hGFPerGame[TEAM1])</td>
+            <th>GF / GAME</th>
+            <td>@string.Format("{0:F2}", h2hGFPerGame[TEAM2])</td>
+        </tr>
+        <tr>
+            <td>@string.Format("{0:F2}", h2hGAPerGame[TEAM1])</td>
+            <th>GA / GAME</th>
+            <td>@string.Format("{0:F2}", h2hGAPerGame[TEAM2])</td>
+        </tr>
+    </tbody>
+</table>

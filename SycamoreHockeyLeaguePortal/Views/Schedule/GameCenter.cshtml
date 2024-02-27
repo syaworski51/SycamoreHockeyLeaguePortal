@@ -1,0 +1,41 @@
+﻿@model SycamoreHockeyLeaguePortal.Models.Schedule
+@inject SycamoreHockeyLeaguePortal.Data.ApplicationDbContext _context
+
+@{
+    ViewData["Title"] = $"{Model.Date.ToShortDateString()} - {Model.AwayTeam.Code} @ {Model.HomeTeam.Code}";
+}
+
+<div class="container game">
+    <div class="row">
+        <div class="col-12" id="game-notes">
+            @Html.DisplayFor(model => model.Notes)
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-3 away-team">
+            <h5>@Html.DisplayFor(model => model.AwayTeam.City)</h5>
+            <h1 class="team-name">@Html.DisplayFor(model => model.AwayTeam.Name)</h1>
+        </div>
+        <div class="col-2 team-logo">
+            <img class="logo" src="~/@Model.AwayTeam.LogoPath" />
+        </div>
+        <div class="col score" id="away-score">
+            @(Model.Status != "Not started" ? Html.DisplayFor(model => model.AwayScore) : "-")
+        </div>
+        <div class="col score" id="home-score">
+            @(Model.Status != "Not started" ? Html.DisplayFor(model => model.HomeScore) : "-")
+        </div>
+        <div class="col-2 team-logo">
+            <img class="logo" src="~/@Model.HomeTeam.LogoPath" />
+        </div>
+        <div class="col-3 home-team">
+            <h5>@Html.DisplayFor(model => model.HomeTeam.City)</h5>
+            <h1 class="team-name">@Html.DisplayFor(model => model.HomeTeam.Name)</h1>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-12" id="game-status">
+            <div class="status">@Html.DisplayFor(model => model.Status)</div>
+        </div>
+    </div>
+</div>

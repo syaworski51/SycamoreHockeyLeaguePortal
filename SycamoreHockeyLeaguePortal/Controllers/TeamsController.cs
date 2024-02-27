@@ -26,11 +26,35 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 .OrderBy(t => t.City)
                 .ThenBy(t => t.Name);
 
+            List<int> mostRecentSeasons = new List<int>();
+            foreach (var team in teams)
+            {
+                try
+                {
+                    var mostRecentSeason = _context.Standings
+                    .Include(s => s.Season)
+                    .Include(s => s.Conference)
+                    .Include(s => s.Division)
+                    .Include(s => s.Team)
+                    .Where(s => s.TeamId == team.Id)
+                    .Select(s => s.Season.Year)
+                    .Max();
+
+                    mostRecentSeasons.Add(mostRecentSeason);
+                }
+                catch (InvalidOperationException ex)
+                {
+                    mostRecentSeasons.Add(0);
+                }
+            }
+            ViewBag.MostRecentSeasons = mostRecentSeasons;
+
             return View(await teams.AsNoTracking().ToListAsync());
         }
 
         // GET: Teams/Details/5
-        public async Task<IActionResult> Details(Guid? id)
+        [Route("Teams/{id}")]
+        public async Task<IActionResult> Details(string? id, int season, string gameType, string? opponent)
         {
             if (id == null || _context.Team == null)
             {
@@ -38,11 +62,73 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             }
 
             var team = await _context.Team
-                .FirstOrDefaultAsync(m => m.Id == id);
+                .FirstOrDefaultAsync(m => m.Code == id);
+
             if (team == null)
             {
                 return NotFound();
             }
+
+            var seasons = _context.Standings
+                .Include(s => s.Season)
+                .Include(s => s.Conference)
+                .Include(s => s.Division)
+                .Include(s => s.Team)
+                .Where(s => s.Team.Code == id)
+                .Select(s => s.Season)
+                .OrderByDescending(s => s.Year);
+            ViewData["Seasons"] = new SelectList(seasons, "Year", "Year");
+            ViewBag.Season = season;
+
+            var gameTypes = _context.GameType
+                .OrderBy(t => t.Index);
+            ViewData["GameTypes"] = new SelectList(gameTypes, "ParameterValue", "Name");
+
+            switch (gameType)
+            {
+                case "regular-season":
+                    gameType = "Regular Season";
+                    break;
+
+                case "playoffs":
+                    gameType = "Playoffs";
+                    break;
+            }
+            ViewBag.GameType = gameType;
+
+            var opponents = _context.Alignment
+                .Include(a => a.Season)
+                .Include(a => a.Conference)
+                .Include(a => a.Division)
+                .Include(a => a.Team)
+                .Where(a => a.Season.Year == season &&
+                            a.Team.Code != id)
+                .Select(a => a.Team)
+                .OrderBy(t => t.City)
+                .ThenBy(t => t.Name);
+            ViewBag.Opponents = new SelectList(opponents, "Code", "FullName");
+
+            IQueryable<Schedule> schedule = _context.Schedule
+                .Include(s => s.Season)
+                .Include(s => s.PlayoffRound)
+                .Include(s => s.AwayTeam)
+                .Include(s => s.HomeTeam)
+                .Where(s => s.Season.Year == season &&
+                            s.Type == gameType &&
+                            (s.AwayTeam.Code == id ||
+                             s.HomeTeam.Code == id))
+                .OrderBy(s => s.Date)
+                .ThenBy(s => s.GameIndex);
+
+            if (opponent != null)
+            {
+                schedule = schedule
+                    .Where(s => s.AwayTeam.Code == opponent ||
+                                s.HomeTeam.Code == opponent);
+            }
+            ViewBag.Opponent = opponent;
+
+            ViewData["Schedule"] = schedule;
 
             return View(team);
         }

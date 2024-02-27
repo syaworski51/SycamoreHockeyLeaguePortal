@@ -17,7 +17,7 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "7.0.13")
+                .HasAnnotation("ProductVersion", "7.0.15")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -255,6 +255,57 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
                     b.ToTable("Alignments");
                 });
 
+            modelBuilder.Entity("SycamoreHockeyLeaguePortal.Models.Champion", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("SeasonId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("TeamId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SeasonId");
+
+                    b.HasIndex("TeamId");
+
+                    b.ToTable("Champions");
+                });
+
+            modelBuilder.Entity("SycamoreHockeyLeaguePortal.Models.ChampionsRound", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("BestOf")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("ChampionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("OpponentId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("RoundIndex")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SeriesLength")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ChampionId");
+
+                    b.HasIndex("OpponentId");
+
+                    b.ToTable("ChampionsRounds");
+                });
+
             modelBuilder.Entity("SycamoreHockeyLeaguePortal.Models.Conference", b =>
                 {
                     b.Property<Guid>("Id")
@@ -291,6 +342,28 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Divisions");
+                });
+
+            modelBuilder.Entity("SycamoreHockeyLeaguePortal.Models.GameType", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Index")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ParameterValue")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("GameTypes");
                 });
 
             modelBuilder.Entity("SycamoreHockeyLeaguePortal.Models.PlayoffRound", b =>
@@ -356,6 +429,52 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
                     b.ToTable("PlayoffSeries");
                 });
 
+            modelBuilder.Entity("SycamoreHockeyLeaguePortal.Models.PlayoffStatus", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("ActiveFrom")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("ActiveTo")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Index")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Symbol")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("PlayoffStatuses");
+                });
+
+            modelBuilder.Entity("SycamoreHockeyLeaguePortal.Models.ProgramFlag", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("State")
+                        .HasColumnType("bit");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ProgramFlags");
+                });
+
             modelBuilder.Entity("SycamoreHockeyLeaguePortal.Models.Schedule", b =>
                 {
                     b.Property<Guid>("Id")
@@ -379,6 +498,9 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
 
                     b.Property<Guid>("HomeTeamId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsFinalized")
+                        .HasColumnType("bit");
 
                     b.Property<bool>("IsLive")
                         .HasColumnType("bit");
@@ -435,14 +557,17 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<decimal>("ConferenceGamesBehind")
+                        .HasColumnType("decimal(2,1)");
+
                     b.Property<Guid?>("ConferenceId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<decimal>("DivisionGamesBehind")
+                        .HasColumnType("decimal(2,1)");
+
                     b.Property<Guid?>("DivisionId")
                         .HasColumnType("uniqueidentifier");
-
-                    b.Property<decimal>("GamesBehind")
-                        .HasColumnType("decimal(2,1)");
 
                     b.Property<int>("GamesPlayed")
                         .HasColumnType("int");
@@ -476,6 +601,9 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
 
                     b.Property<int>("InterConfWins")
                         .HasColumnType("int");
+
+                    b.Property<decimal>("LeagueGamesBehind")
+                        .HasColumnType("decimal(2,1)");
 
                     b.Property<int>("Losses")
                         .HasColumnType("int");
@@ -519,6 +647,15 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
                     b.Property<int>("Streak")
                         .HasColumnType("int");
 
+                    b.Property<int>("StreakGoalDifferential")
+                        .HasColumnType("int");
+
+                    b.Property<int>("StreakGoalsAgainst")
+                        .HasColumnType("int");
+
+                    b.Property<int>("StreakGoalsFor")
+                        .HasColumnType("int");
+
                     b.Property<Guid>("TeamId")
                         .HasColumnType("uniqueidentifier");
 
@@ -559,7 +696,13 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<int>("FirstYear")
+                        .HasColumnType("int");
+
                     b.Property<int>("Index")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("LastYear")
                         .HasColumnType("int");
 
                     b.Property<string>("Name")
@@ -597,6 +740,16 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PrimaryColor")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SecondaryColor")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("TertiaryColor")
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
@@ -684,6 +837,44 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
                     b.Navigation("Season");
 
                     b.Navigation("Team");
+                });
+
+            modelBuilder.Entity("SycamoreHockeyLeaguePortal.Models.Champion", b =>
+                {
+                    b.HasOne("SycamoreHockeyLeaguePortal.Models.Season", "Season")
+                        .WithMany()
+                        .HasForeignKey("SeasonId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SycamoreHockeyLeaguePortal.Models.Team", "Team")
+                        .WithMany()
+                        .HasForeignKey("TeamId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Season");
+
+                    b.Navigation("Team");
+                });
+
+            modelBuilder.Entity("SycamoreHockeyLeaguePortal.Models.ChampionsRound", b =>
+                {
+                    b.HasOne("SycamoreHockeyLeaguePortal.Models.Champion", "Champion")
+                        .WithMany()
+                        .HasForeignKey("ChampionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SycamoreHockeyLeaguePortal.Models.Team", "Opponent")
+                        .WithMany()
+                        .HasForeignKey("OpponentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Champion");
+
+                    b.Navigation("Opponent");
                 });
 
             modelBuilder.Entity("SycamoreHockeyLeaguePortal.Models.PlayoffRound", b =>

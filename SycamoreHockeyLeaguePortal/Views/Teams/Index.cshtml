@@ -3,6 +3,9 @@
 
 @{
     ViewData["Title"] = "Teams";
+
+    var mostRecentSeasons = ViewBag.MostRecentSeasons;
+    int index = 0;
 }
 
 <h1>@ViewBag.Title</h1>
@@ -16,9 +19,11 @@
                 {
                     <div class="col-md-2 card">
                         <img src="@item.LogoPath" title="@item.FullName logo" alt="@item.FullName logo" width="50" height="50" />
-                        <h6>@item.FullName</h6>
-                        <a class="btn btn-outline-primary" asp-action="Details" asp-route-id="@item.Id">Details</a>
+                        <h5 style="font-family: 'Druk Text';">@item.FullName</h5>
+                        <a class="btn btn-outline-primary" asp-action="Details" asp-route-id="@item.Code" asp-route-season="@mostRecentSeasons[index]" asp-route-gameType="regular-season">Details</a>
                     </div>
+
+                    index++;
                 }
             }
         </div>

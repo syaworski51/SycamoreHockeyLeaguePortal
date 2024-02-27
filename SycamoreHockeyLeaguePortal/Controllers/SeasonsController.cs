@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SycamoreHockeyLeaguePortal.Data;
 using SycamoreHockeyLeaguePortal.Models;
@@ -150,6 +145,16 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             var season = await _context.Season.FindAsync(id);
             if (season != null)
             {
+                var year = season.Year;
+                
+                await RemoveSchedule(year);
+                await RemoveStandings(year);
+                await RemoveAlignments(year);
+                await RemovePlayoffSeries(year);
+                await RemovePlayoffRounds(year);
+                await RemoveChampionsRounds(year);
+                await RemoveChampion(year);
+                
                 _context.Season.Remove(season);
             }
             
@@ -160,6 +165,105 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         private bool SeasonExists(Guid id)
         {
           return (_context.Season?.Any(e => e.Id == id)).GetValueOrDefault();
+        }
+
+        private async Task RemoveSchedule(int season)
+        {
+            var schedule = _context.Schedule
+                .Include(s => s.Season)
+                .Include(s => s.PlayoffRound)
+                .Include(s => s.AwayTeam)
+                .Include(s => s.HomeTeam)
+                .Where(s => s.Season.Year == season);
+            
+            foreach (var game in schedule)
+                _context.Schedule.Remove(game);
+
+            await _context.SaveChangesAsync();
+        }
+
+        private async Task RemoveStandings(int season)
+        {
+            var standings = _context.Standings
+                .Include(s => s.Season)
+                .Include(s => s.Conference)
+                .Include(s => s.Division)
+                .Include(s => s.Team)
+                .Where(s => s.Season.Year == season);
+            
+            foreach (var statLine in standings)
+                _context.Standings.Remove(statLine);
+
+            await _context.SaveChangesAsync();
+        }
+
+        private async Task RemoveAlignments(int season)
+        {
+            var alignments = _context.Alignment
+                .Include(s => s.Season)
+                .Include(s => s.Conference)
+                .Include(s => s.Division)
+                .Include(s => s.Team)
+                .Where(s => s.Season.Year == season);
+
+            foreach (var alignment in alignments)
+                _context.Alignment.Remove(alignment);
+
+            await _context.SaveChangesAsync();
+        }
+
+        private async Task RemovePlayoffSeries(int season)
+        {
+            var playoffSeries = _context.PlayoffSeries
+                .Include(s => s.Season)
+                .Include(s => s.Round)
+                .Include(s => s.Team1)
+                .Include(s => s.Team2)
+                .Where(s => s.Season.Year == season);
+
+            foreach (var series in playoffSeries)
+                _context.PlayoffSeries.Remove(series);
+
+            await _context.SaveChangesAsync();
+        }
+
+        private async Task RemovePlayoffRounds(int season)
+        {
+            var playoffRounds = _context.PlayoffRound
+                .Include(r => r.Season)
+                .Where(r => r.Season.Year == season);
+
+            foreach (var round in playoffRounds)
+                _context.PlayoffRound.Remove(round);
+
+            await _context.SaveChangesAsync();
+        }
+
+        private async Task RemoveChampionsRounds(int season)
+        {
+            var championsRounds = _context.ChampionsRound
+                .Include(r => r.Champion)
+                .Include(r => r.Opponent)
+                .Where(r => r.Champion.Season.Year == season);
+
+            foreach (var round in championsRounds)
+                _context.ChampionsRound.Remove(round);
+
+            await _context.SaveChangesAsync();
+        }
+
+        private async Task RemoveChampion(int season)
+        {
+            var champion = _context.Champion
+                .Include(c => c.Season)
+                .Include(c => c.Team)
+                .Where(c => c.Season.Year == season)
+                .FirstOrDefault();
+
+            if (champion != null)
+                _context.Champion.Remove(champion);
+
+            await _context.SaveChangesAsync();
         }
     }
 }

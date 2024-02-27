@@ -1,0 +1,52 @@
+﻿@model IEnumerable<SycamoreHockeyLeaguePortal.Models.Champion>
+
+@{
+    ViewData["Title"] = "Champions";
+}
+
+<h1>@ViewBag.Title</h1>
+
+<p>
+    <a class="btn btn-primary" asp-action="Create">New Champion</a>
+</p>
+
+<div class="text-center align-content-center">
+    <div class="container">
+        <div class="row d-flex justify-content-center">
+            @if (Model.Any())
+            {
+                int teamIndex = 0;
+                
+                foreach (var item in Model)
+                {
+                    <div class="col-md-2 card champion-card">
+                        <img class="champions-logo" src="@item.Team.LogoPath" title="@item.Team.FullName" alt="@item.Team.FullName logo" />
+                        <h4>@item.Season.Year</h4>
+                        <h6 class="champion">@item.Team.FullName</h6>
+
+                        @for (int roundIndex = 0; roundIndex < ViewBag.Rounds[teamIndex].Count; roundIndex++)
+                        {
+                            int roundNumber = (ViewBag.Rounds[teamIndex].Count - 1) - roundIndex;
+
+                            @if (roundIndex == 0)
+                            {
+                                <strong>
+                                    4-@(ViewBag.Rounds[teamIndex][roundIndex].SeriesLength - 4) vs <img class="champion-round-logo" src="~/@ViewBag.Rounds[teamIndex][roundIndex].Opponent.LogoPath" title="@ViewBag.Rounds[teamIndex][roundIndex].Opponent.FullName" /> @ViewBag.Rounds[teamIndex][roundIndex].Opponent.Code
+                                </strong>
+                            }
+                            else
+                            {
+                                <span>
+                                    4-@(ViewBag.Rounds[teamIndex][roundIndex].SeriesLength - 4) vs <img class="champion-round-logo" src="~/@ViewBag.Rounds[teamIndex][roundIndex].Opponent.LogoPath" title="@ViewBag.Rounds[teamIndex][roundIndex].Opponent.FullName" /> @ViewBag.Rounds[teamIndex][roundIndex].Opponent.Code
+                                </span>
+                            }
+                            <br />
+                        }
+                    </div>
+
+                    teamIndex++;
+                }
+            }
+        </div>
+    </div>
+</div>

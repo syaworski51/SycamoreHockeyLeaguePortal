@@ -17,5 +17,11 @@ namespace SycamoreHockeyLeaguePortal.Models
 
         [Display(Name = "Parameter")]
         public string Parameter { get; set; }
+
+        [Display(Name = "First Year")]
+        public int FirstYear { get; set; }
+
+        [Display(Name = "Last Year")]
+        public int? LastYear { get; set; }
     }
 }

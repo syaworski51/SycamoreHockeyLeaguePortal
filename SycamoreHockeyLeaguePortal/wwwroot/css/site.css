@@ -1,3 +1,43 @@
+@font-face {
+    font-family: "Aptos";
+    src: url('../fonts/APTOS.TTF') format('truetype');
+}
+
+@font-face {
+    font-family: "Druk Text";
+    src: url('../fonts/DRUKTEXT-MEDIUM-TRIAL.OTF') format('opentype');
+}
+
+@font-face {
+    font-family: "Druk Wide";
+    src: url('../fonts/DRUKWIDE-MEDIUM-TRIAL.OTF') format('opentype');
+}
+
+* {
+    font-family: "Aptos", sans-serif;
+    font-size: 12pt;
+}
+
+footer {
+    background-color: black;
+    color: #f2f2f2;
+}
+
+#content-area {
+    background-color: rgba(255, 255, 255, 0.8);
+    padding: 20px;
+}
+
+a {
+    padding: 5px;
+    text-decoration: none;
+    border-radius: 5px;
+}
+
+a:hover:not(.navbar-brand, .btn), .nav-item a:hover {
+    background-color: #808080;
+}
+
 html {
   font-size: 14px;
 }
@@ -17,8 +57,46 @@ html {
   min-height: 100%;
 }
 
+h1, h2, h3, h4, h5, h6 {
+    font-family: "Druk Wide";
+}
+
 body {
-  margin-bottom: 60px;
+    margin-bottom: 60px;
+    background-image: url('../images/action-photos/calgary-vs-nyrangers.png');
+    background-attachment: fixed;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+}
+
+#home-page img {
+    width: 25px;
+    height: 25px;
+}
+
+tbody tr {
+    vertical-align: middle;
+}
+
+th, td {
+    text-align: center;
+}
+
+#upcoming-games {
+    background-color: rgba(255, 255, 255, 0.5);
+}
+
+thead tr {
+    border-bottom: 2px solid black;
+}
+
+tbody tr {
+    border-bottom: 1px solid #b3b3b3;
+}
+
+tbody tr:hover {
+    background-color: #f2f2f2;
 }
 
 img {
@@ -28,10 +106,16 @@ img {
 .card {
     margin: 10px;
     padding: 10px;
+    vertical-align: top;
+    display: inline;
+}
+
+.card:hover:not(#home-page .card) {
+    box-shadow: 0 0 10px black;
 }
 
 .game-date {
-    background-image: linear-gradient(to right, #cccccc, rgba(0, 0, 0, 0));
+    background-image: linear-gradient(to right, #e6e6e6, rgba(0, 0, 0, 0));
     text-align: center;
     width: 50px;
 }
@@ -84,10 +168,15 @@ img {
 
 .schedule th, .schedule td {
     text-align: center;
+    vertical-align: middle;
+}
+
+.schedule td {
+    line-height: 10px;
 }
 
 .schedule-team-name {
-    width: 175px;
+    width: 225px;
 }
 
 .schedule-team-logo {
@@ -96,8 +185,32 @@ img {
 }
 
 .schedule-score {
-    font-size: 18pt;
-    width: 60px;
+    font-size: 20pt;
+    width: 70px;
+}
+
+.schedule-controls {
+    display: inline;
+    margin-top: 0;
+}
+
+.schedule .actions {
+    width: 400px;
+}
+
+.pagination {
+    margin: auto;
+    width: 80%;
+    height: 80%;
+}
+
+.schedule-controls .col {
+    margin: auto;
+}
+
+#date-range {
+    width: 225px;
+    text-align: center;
 }
 
 .game {
@@ -111,7 +224,7 @@ img {
 }
 
 .game .score {
-    font-size: 50pt;
+    font-size: 60pt;
 }
 
 .game .away-team {
@@ -122,8 +235,18 @@ img {
     text-align: left;
 }
 
+.game .away-team, .game .home-team {
+    margin-top: auto;
+    margin-bottom: auto;
+}
+
 .game .status {
     font-size: 16pt;
+}
+
+.game .team-logo {
+    display: inherit;
+    width: 175px;
 }
 
 .standings {
@@ -139,5 +262,230 @@ img {
 
 .standings .team-name {
     text-align: left;
-    width: 140px;
+    width: 220px;
+}
+
+.champion {
+    font-family: Aptos;
+    font-weight: bold;
+    font-size: 14pt;
+}
+
+.champion-card {
+    border-radius: 10px;
+    background-image: url('../images/stanley_cup.png');
+    background-color: rgba(242, 242, 242, 0.8);
+}
+
+.champions-logo {
+    margin: 5px;
+
+    width: 75px;
+    height: 75px;
+}
+
+.champion-round-logo {
+    width: 20px;
+    height: 20px;
+}
+
+.schedule .date {
+    width: 250px;
+}
+
+.schedule .status {
+    width: 115px;
+}
+
+.playoff-matchup {
+    text-align: center;
+}
+
+.playoff-matchup h3 {
+    font-family: "Druk Text";
+    margin-top: -8px;
+}
+
+.playoff-matchup .teams {
+    margin-top: 20px;
+}
+
+.playoff-matchup .seed-number {
+    margin-top: -5px;
+    margin-bottom: 5px;
+    font-family: "Druk Wide";
+}
+
+.playoff-matchup .vs {
+    font-family: "Druk Wide";
+    font-size: 8pt;
+}
+
+.playoff-matchup .team-logo {
+    width: 70px;
+    height: 70px;
+}
+
+.conference {
+    margin-top: 40px;
+    text-align: left;
+}
+
+#tiebreakers li:not(.group-record-tiebreakers li) {
+    margin-top: 10px;
+}
+
+.schedule {
+    text-align: center;
+}
+
+.schedule .col,
+.schedule .col-2,
+.schedule .col-5,
+.schedule .col-6,
+.schedule .col-8 {
+    margin: auto;
+}
+
+.schedule .team-logo {
+    width: 30px;
+    height: 30px;
+}
+
+.schedule .team-name {
+    text-align: left;
+    font-size: 14pt;
+}
+
+.schedule .score {
+    font-size: 20pt;
+    text-align: right;
+}
+
+.schedule-game-date {
+    margin-top: 30px;
+}
+
+.game-link {
+    font-weight: bold;
+    margin: 20px 10px;
+}
+
+.team-schedule {
+    width: 750px;
+    margin: auto;
+}
+
+.team-schedule .result, .team-schedule .score {
+    font-weight: bold;
+    font-size: 18pt;
+}
+
+.team-schedule .opponent-name {
+    width: 200px;
+    text-align: right;
+}
+
+.team-schedule .opponent-logo {
+    width: 30px;
+}
+
+.team-schedule .result {
+    width: 75px;
+}
+
+.team-schedule .score {
+    width: 160px;
+}
+
+.team-schedule td {
+    vertical-align: middle;
+}
+
+.team-schedule tbody tr {
+    line-height: 8px;
+}
+
+.away-game {
+    background-color: #bfbfbf;
+}
+
+.win {
+    color: green;
+}
+
+.loss {
+    color: red;
+}
+
+.alignments h3:not(.alignments .alignment-team-name) {
+    margin-top: 30px;
+}
+
+.alignments .conference {
+    margin-top: 0;
+}
+
+.alignments .conference .division img {
+    width: 60px;
+    height: 60px;
+}
+
+.alignments .conference .division .team-info {
+    margin-top: 15px;
+    margin-bottom: 15px;
+}
+
+.alignment-team-name {
+    font-family: "Druk Text";
+    margin-top: -5px;
+}
+
+#scheduling-formula h4 {
+    margin-top: 30px;
+}
+
+.fixed-column {
+    width: 58px;
+}
+
+.record-column {
+    width: 95px;
+}
+
+.game .team-name {
+    font-family: "Druk Text";
+}
+
+.h2h-logos .col {
+    text-align: center;
+}
+
+.h2h-stats .team {
+    width: 500px;
+}
+
+.h2h-stats tbody tr {
+    vertical-align: middle;
+}
+
+.h2h-stats tbody td {
+    font-family: "Druk Wide";
+    font-size: 18pt;
+}
+
+.nav-pills {
+    margin: 5px;
+}
+
+#home-page .team-stats {
+    width: 85px;
+}
+
+.badge {
+    margin-left: 10px;
+}
+
+.accordion {
+    margin-top: 60px;
 }

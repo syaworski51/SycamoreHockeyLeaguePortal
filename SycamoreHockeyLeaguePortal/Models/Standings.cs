@@ -48,10 +48,10 @@ namespace SycamoreHockeyLeaguePortal.Models
         [Display(Name = "OTL")]
         public int OTLosses { get; set; }
 
-        [Display(Name = "Record")]
+        [Display(Name = "W-L-OTL")]
         public string Record_2021Format => $"{Wins}-{Losses}-{OTLosses}";
         
-        [Display(Name = "Record")]
+        [Display(Name = "W-L")]
         public string Record_2024Format => $"{Wins}-{Losses}";
 
         [Display(Name = "RW")]
@@ -76,7 +76,15 @@ namespace SycamoreHockeyLeaguePortal.Models
 
         [Column(TypeName = "decimal(2,1)")]
         [Display(Name = "GB")]
-        public decimal GamesBehind { get; set; }
+        public decimal DivisionGamesBehind { get; set; }
+
+        [Column(TypeName = "decimal(2,1)")]
+        [Display(Name = "GB")]
+        public decimal ConferenceGamesBehind { get; set; }
+
+        [Column(TypeName = "decimal(2,1)")]
+        [Display(Name = "GB")]
+        public decimal LeagueGamesBehind { get; set; }
 
         [Display(Name = "GF")]
         public int GoalsFor { get; set; }
@@ -93,6 +101,18 @@ namespace SycamoreHockeyLeaguePortal.Models
         [Display(Name = "Streak")]
         public int Streak { get; set; }
 
+        [Display(Name = "SGF")]
+        public int StreakGoalsFor { get; set; }
+
+        [Display(Name = "SGA")]
+        public int StreakGoalsAgainst { get; set; }
+
+        [Display(Name = "SGD")]
+        public int StreakGoalDifferential { get; set; }
+
+        [Display(Name = "Stk. GF-GA (GD)")]
+        public string StreakGoalRatio => $"{StreakGoalsFor}-{StreakGoalsAgainst} (" + (StreakGoalDifferential > 0 ? "+" : "") + $"{StreakGoalDifferential})";
+
         public int GamesPlayedVsDivision { get; set; }
         
         public int WinsVsDivision { get; set; }
@@ -101,10 +121,10 @@ namespace SycamoreHockeyLeaguePortal.Models
         
         public int OTLossesVsDivision { get; set; }
 
-        [Display(Name = "vs. Division")]
+        [Display(Name = "vs. Div.")]
         public string RecordVsDivision_2021Format => $"{WinsVsDivision}-{LossesVsDivision}-{OTLossesVsDivision}";
 
-        [Display(Name = "vs. Division")]
+        [Display(Name = "vs. Div.")]
         public string RecordVsDivision_2024Format => $"{WinsVsDivision}-{LossesVsDivision}";
 
         [Column(TypeName = "decimal(4,1)")]
@@ -118,10 +138,10 @@ namespace SycamoreHockeyLeaguePortal.Models
         
         public int OTLossesVsConference { get; set; }
 
-        [Display(Name = "vs. Conference")]
+        [Display(Name = "vs. Conf.")]
         public string RecordVsConference_2021Format => $"{WinsVsConference}-{LossesVsConference}-{OTLossesVsConference}";
 
-        [Display(Name = "vs. Conference")]
+        [Display(Name = "vs. Conf.")]
         public string RecordVsConference_2024Format => $"{WinsVsConference}-{LossesVsConference}";
 
         [Column(TypeName = "decimal(4,1)")]
@@ -135,10 +155,10 @@ namespace SycamoreHockeyLeaguePortal.Models
         
         public int InterConfOTLosses { get; set; }
 
-        [Display(Name = "Inter-Division")]
+        [Display(Name = "East/West")]
         public string InterConfRecord_2021Format => $"{InterConfWins}-{InterConfLosses}-{InterConfOTLosses}";
 
-        [Display(Name = "Inter-Conf")]
+        [Display(Name = "East/West")]
         public string InterConfRecord_2024Format => $"{InterConfWins}-{InterConfLosses}";
 
         [Column(TypeName = "decimal(4,1)")]

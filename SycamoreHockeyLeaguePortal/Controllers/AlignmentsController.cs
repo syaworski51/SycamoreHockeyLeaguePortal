@@ -22,6 +22,8 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         // GET: Alignments
         public async Task<IActionResult> Index(int season)
         {
+            ViewBag.Season = season;
+            
             var seasons = _context.Season
                 .OrderByDescending(s => s.Year);
             ViewBag.Seasons = new SelectList(seasons, "Year", "Year");
@@ -66,7 +68,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         public IActionResult Create()
         {
             var seasons = _context.Season
-                .OrderBy(s => s.Year);
+                .OrderByDescending(s => s.Year);
 
             var conferences = _context.Conference
                 .OrderBy(c => c.Name);
