@@ -6,44 +6,14 @@
 let localDomain = "http://localhost:7210/";
 let liveDomain = "https://shl.azurewebsites.net/";
 
-function UpdateField(field, newValue) {
-    $(field).innerText = newValue;
+function UpdateAwayScore(newScore) {
+    $(".score #away-score").text = newScore;
 }
 
-function UpdateGameNotes(notes) {
-    fetch(localDomain + `Schedule/Details?id=${gameId}`)
-        .then(response => {
-            return response.json();
-        })
-        .then(data => {
-
-        })
-
-    UpdateField("#game-notes", notes);
+function UpdateHomeScore(newScore) {
+    $(".score #home-score").text = newScore;
 }
 
-function UpdateAwayScore(score, gameId) {
-    fetch(localDomain + `Schedule/Details?id=${gameId}`)
-        .then(response => {
-            return response.json();
-        })
-        .then(data => {
-            let awayScore = data["AwayScore"];
-            awayScore++;
-        })
-
-    UpdateField("#away-score", score);
+function UpdatePeriod(newPeriod) {
+    
 }
-
-function UpdateHomeScore(score) {
-    UpdateField("#home-score", score);
-}
-
-function UpdateStatus(status) {
-    UpdateField("#game-status", status);
-}
-
-$("#conference-tabs li").on("click", function () {
-    $(".nav .nav-pills li").removeClass("active");
-    $(this).addClass("active");
-});

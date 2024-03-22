@@ -71,7 +71,7 @@ namespace SycamoreHockeyLeaguePortal.Models
         public decimal WinPct { get; set; }
 
         [Column(TypeName = "decimal(4,1)")]
-        [Display(Name = "Pts. %")]
+        [Display(Name = "P%")]
         public decimal PointsPct { get; set; }
 
         [Column(TypeName = "decimal(2,1)")]

@@ -41,7 +41,7 @@
 <hr />
 
 <div class="row">
-    <form asp-action="Edit">
+    <form asp-action="GameControls">
         <div class="col-md-4 container">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <input type="hidden" asp-for="Id" />
@@ -55,17 +55,17 @@
             <div class="row">
                 <div class="col form-group">
                     <label asp-for="AwayScore" class="control-label"></label>
-                    <input asp-for="AwayScore" class="form-control" />
+                    <input asp-for="AwayScore" class="form-control" onchange="UpdateAwayScore($(this).val)" />
                     <span asp-validation-for="AwayScore" class="text-danger"></span>
                 </div>
                 <div class="col form-group">
                     <label asp-for="Period" class="control-label"></label>
-                    <input asp-for="Period" class="form-control" />
+                    <input asp-for="Period" class="form-control" onchange="UpdatePeriod($(this).val)" />
                     <span asp-validation-for="Period" class="text-danger"></span>
                 </div>
                 <div class="col form-group">
                     <label asp-for="HomeScore" class="control-label"></label>
-                    <input asp-for="HomeScore" class="form-control" />
+                    <input asp-for="HomeScore" class="form-control" onchange="UpdateHomeScore($(this).val)" />
                     <span asp-validation-for="HomeScore" class="text-danger"></span>
                 </div>
             </div>
@@ -81,12 +81,7 @@
                     </label>
                 </div>
                 <div class="col form-group">
-                    <label asp-for="Notes" class="control-label"></label>
-                    <input asp-for="Notes" class="form-control" />
-                    <span asp-validation-for="Notes" class="text-danger"></span>
-                </div>
-                <div class="col form-group">
-                    <input type="submit" value="Save" class="btn btn-secondary" asp-route-finalized="false" />
+                    <input type="submit" value="Update" class="btn btn-secondary" asp-route-finalized="false" />
                     <input type="submit" value="Finalize" class="btn btn-primary" asp-route-finalized="true" />
                 </div>
             </div>

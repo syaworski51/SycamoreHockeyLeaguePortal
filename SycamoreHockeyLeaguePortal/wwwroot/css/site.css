@@ -34,9 +34,18 @@ a {
     border-radius: 5px;
 }
 
-a:hover:not(.navbar-brand, .btn), .nav-item a:hover {
+.navbar a:hover:not(.navbar-brand) {
     background-color: #808080;
 }
+
+a:hover {
+    font-weight: bold;
+    background-color: none;
+}
+
+/*a:hover:not(.navbar-brand, .btn, .standings .team-link, .game-status-link, .change-playoff-status), .nav-item a:hover {
+    background-color: #808080;
+}*/
 
 html {
   font-size: 14px;
@@ -95,7 +104,7 @@ tbody tr {
     border-bottom: 1px solid #b3b3b3;
 }
 
-tbody tr:hover {
+tbody tr:hover:not(.no-games-today) {
     background-color: #f2f2f2;
 }
 
@@ -164,6 +173,10 @@ img {
     font-size: 10pt;
     background-color: #f2f2f2;
     text-align: center;
+}
+
+.game-status-link {
+    font-size: 10pt;
 }
 
 .schedule th, .schedule td {
@@ -475,7 +488,7 @@ img {
 }
 
 .nav-pills {
-    margin: 5px;
+    margin: 15px;
 }
 
 #home-page .team-stats {
@@ -488,4 +501,36 @@ img {
 
 .accordion {
     margin-top: 60px;
+}
+
+#team-schedule-options .col, #team-schedule-options .col-12 {
+    text-align: center;
+}
+
+#standings-options {
+    margin-top: 20px;
+}
+
+#standings-area h3 {
+    margin-top: 30px;
+}
+
+#standings-area h5 {
+    margin-top: 20px;
+}
+
+#playoff-bracket {
+    width: 100%;
+}
+
+.playoff-seeds {
+    width: 40%;
+}
+
+.change-playoff-status {
+    color: black;
+}
+
+#standings-links {
+    text-align: center;
 }

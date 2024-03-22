@@ -1,5 +1,9 @@
-﻿@{
+﻿@inject SycamoreHockeyLeaguePortal.Data.ApplicationDbContext _context
+
+@{
     ViewData["Title"] = "Home Page";
+    DateTime currentDate = ViewBag.CurrentDate;
+    List<Schedule> todaysGames = ViewBag.TodaysGames;
 
     IQueryable<Standings> atlanticStandings = ViewBag.AtlanticStandings;
     IQueryable<Standings> northeastStandings = ViewBag.NortheastStandings;
@@ -8,6 +12,17 @@
     IQueryable<Standings> centralStandings = ViewBag.CentralStandings;
     IQueryable<Standings> northwestStandings = ViewBag.NorthwestStandings;
     IQueryable<Standings> pacificStandings = ViewBag.PacificStandings;
+
+    string GetName(Team team)
+    {
+        var teamsInSameCity = _context.Team
+            .Where(t => t.City == team.City);
+
+        if (teamsInSameCity.Count() > 1)
+            return team.AlternateName!;
+
+        return team.City;
+    }
 }
 
 <div class="container" id="home-page">
@@ -16,7 +31,7 @@
     <div class="row">
         <div class="col-7 card">
             <h4>Schedule</h4>
-            <h6>April 11, 2024</h6>
+            <h6>@currentDate.ToString("MMMM d, yyyy")</h6>
             <table class="table">
                 <thead>
                     <tr>
@@ -27,126 +42,40 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td style="text-align: right;">
-                            Carolina
-                        </td>
-                        <td>
-                            <img src="~/logos/teams/carolina-hurricanes.png" />
-                        </td>
-                        <td colspan="2" style="font-size: 14pt;">
-                            @@
-                        </td>
-                        <td>
-                            <img src="~/logos/teams/tampa-bay-lightning.png" />
-                        </td>
-                        <td style="text-align: left;">
-                            Tampa Bay
-                        </td>
-                        <td>
-                            Not started
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="text-align: right;">
-                            Colorado
-                        </td>
-                        <td>
-                            <img src="~/logos/teams/colorado-avalanche.png" />
-                        </td>
-                        <td colspan="2" style="font-size: 14pt;">
-                            @@
-                        </td>
-                        <td>
-                            <img src="~/logos/teams/minnesota-wild.png" />
-                        </td>
-                        <td style="text-align: left;">
-                            Minnesota
-                        </td>
-                        <td>
-                            Not started
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="text-align: right;">
-                            Pittsburgh
-                        </td>
-                        <td>
-                            <img src="~/logos/teams/pittsburgh-penguins.png" />
-                        </td>
-                        <td colspan="2" style="font-size: 14pt;">
-                            @@
-                        </td>
-                        <td>
-                            <img src="~/logos/teams/new-york-rangers.png" />
-                        </td>
-                        <td style="text-align: left;">
-                            NY Rangers
-                        </td>
-                        <td>
-                            Not started
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="text-align: right;">
-                            Los Angeles
-                        </td>
-                        <td>
-                            <img src="~/logos/teams/los-angeles-kings.png" />
-                        </td>
-                        <td colspan="2" style="font-size: 14pt;">
-                            @@
-                        </td>
-                        <td>
-                            <img src="~/logos/teams/anaheim-ducks.png" />
-                        </td>
-                        <td style="text-align: left;">
-                            Anaheim
-                        </td>
-                        <td>
-                            Not started
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="text-align: right;">
-                            Buffalo
-                        </td>
-                        <td>
-                            <img src="~/logos/teams/buffalo-sabres.png" />
-                        </td>
-                        <td colspan="2" style="font-size: 14pt;">
-                            @@
-                        </td>
-                        <td>
-                            <img src="~/logos/teams/boston-bruins.png" />
-                        </td>
-                        <td style="text-align: left;">
-                            Boston
-                        </td>
-                        <td>
-                            Not started
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="text-align: right;">
-                            Winnipeg
-                        </td>
-                        <td>
-                            <img src="~/logos/teams/winnipeg-jets.png" />
-                        </td>
-                        <td colspan="2" style="font-size: 14pt;">
-                            @@
-                        </td>
-                        <td>
-                            <img src="~/logos/teams/vancouver-canucks.png" />
-                        </td>
-                        <td style="text-align: left;">
-                            Vancouver
-                        </td>
-                        <td>
-                            Not started
-                        </td>
-                    </tr>
+                    @if (todaysGames.Any())
+                    {
+                        foreach (var game in todaysGames)
+                        {
+                            <tr>
+                                <td style="text-align: right;">
+                                    @GetName(game.AwayTeam)
+                                </td>
+                                <td>
+                                    <img src="~/@game.AwayTeam.LogoPath" />
+                                </td>
+                                <td colspan="2" style="font-size: 14pt;">
+                                    @@
+                                </td>
+                                <td>
+                                    <img src="~/@game.HomeTeam.LogoPath" />
+                                </td>
+                                <td style="text-align: left;">
+                                    @GetName(game.HomeTeam)
+                                </td>
+                                <td>
+                                    @game.Status
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr class="no-games-today">
+                            <td colspan="7">
+                                <h5 class="text-danger">There are no games today.</h5>
+                            </td>
+                        </tr>
+                    }
                 </tbody>
             </table>
         </div>
@@ -154,23 +83,23 @@
             <h4>Standings</h4>
             <ul class="nav nav-pills nav-fill" id="conference-tabs" role="tablist">
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="east-tab" data-bs-toggle="tab" data-bs-target="#east" type="button" role="tab" aria-controls="east" aria-selected="true">EAST</button>
+                    <button class="nav-link active" id="east-tab" title="Eastern Conference" data-bs-toggle="tab" data-bs-target="#east" type="button" role="tab" aria-controls="east" aria-selected="true">Eastern Conference</button>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="west-tab" data-bs-toggle="tab" data-bs-target="#west" type="button" role="tab" aria-controls="west" aria-selected="false">WEST</button>
+                    <button class="nav-link" id="west-tab" title="Western Conference" data-bs-toggle="tab" data-bs-target="#west" type="button" role="tab" aria-controls="west" aria-selected="false">Western Conference</button>
                 </li>
             </ul>
             <div class="tab-content" id="conference-tab-content">
                 <div class="tab-pane fade show active" id="east" role="tabpanel" aria-labelledby="east-tab">
                     <ul class="nav nav-pills nav-fill" id="eastern-division-tabs" role="tablist">
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link active" id="atl-tab" data-bs-toggle="tab" data-bs-target="#atl" type="button" role="tab" aria-controls="atl" aria-selected="true">ATL</button>
+                            <button class="nav-link active" id="atl-tab" title="Atlantic Division" data-bs-toggle="tab" data-bs-target="#atl" type="button" role="tab" aria-controls="atl" aria-selected="true">Atlantic</button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="ne-tab" data-bs-toggle="tab" data-bs-target="#ne" type="button" role="tab" aria-controls="ne" aria-selected="false">NE</button>
+                            <button class="nav-link" id="ne-tab" title="Northeast Division" data-bs-toggle="tab" data-bs-target="#ne" type="button" role="tab" aria-controls="ne" aria-selected="false">Northeast</button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="se-tab" data-bs-toggle="tab" data-bs-target="#se" type="button" role="tab" aria-controls="se" aria-selected="false">SE</button>
+                            <button class="nav-link" id="se-tab" title="Southeast Division" data-bs-toggle="tab" data-bs-target="#se" type="button" role="tab" aria-controls="se" aria-selected="false">Southeast</button>
                         </li>
                     </ul>
                     <div class="tab-content" id="eastern-division-tab-content">
@@ -281,13 +210,13 @@
                 <div class="tab-pane fade" id="west" role="tabpanel" aria-labelledby="west-tab">
                     <ul class="nav nav-pills nav-fill" id="western-division-tabs" role="tablist">
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link active" id="cen-tab" data-bs-toggle="tab" data-bs-target="#cen" type="button" role="tab" aria-controls="cen" aria-selected="true">CEN</button>
+                            <button class="nav-link active" id="cen-tab" title="Central Division" data-bs-toggle="tab" data-bs-target="#cen" type="button" role="tab" aria-controls="cen" aria-selected="true">Central</button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="nw-tab" data-bs-toggle="tab" data-bs-target="#nw" type="button" role="tab" aria-controls="nw" aria-selected="false">NW</button>
+                            <button class="nav-link" id="nw-tab" title="Northwest Division" data-bs-toggle="tab" data-bs-target="#nw" type="button" role="tab" aria-controls="nw" aria-selected="false">Northwest</button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="pac-tab" data-bs-toggle="tab" data-bs-target="#pac" type="button" role="tab" aria-controls="pac" aria-selected="false">PAC</button>
+                            <button class="nav-link" id="pac-tab" title="Pacific Division" data-bs-toggle="tab" data-bs-target="#pac" type="button" role="tab" aria-controls="pac" aria-selected="false">Pacific</button>
                         </li>
                     </ul>
                     <div class="tab-content" id="western-division-tab-content">

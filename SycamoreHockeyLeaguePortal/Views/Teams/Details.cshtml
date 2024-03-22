@@ -111,7 +111,7 @@
 <div style="width: 750px; margin: auto;">
     <h3>@ViewBag.Season @ViewBag.GameType</h3>
     <form asp-action="Details" method="get" style="width: 750px; margin: auto;">
-        <div class="container">
+        <div class="container" id="team-schedule-options">
             <div class="row">
                 <div class="col">
                     Season:<br />
@@ -126,46 +126,77 @@
                     @Html.DropDownList("opponent", (IEnumerable<SelectListItem>)ViewBag.Opponents, "All Teams", new { onchange = "submit()" })
                 </div>
             </div>
+            <div class="row">
+                <div class="col-12">
+                    <ul class="nav nav-pills nav-justified" id="team-schedule-tabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="list-tab" data-bs-toggle="tab" data-bs-target="#list" type="button" role="tab" aria-controls="list" aria-selected="true">List</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="calendar-tab" data-bs-toggle="tab" data-bs-target="#calendar" type="button" role="tab" aria-controls="calendar" aria-selected="false">Calendar</button>
+                        </li>
+                    </ul>
+                    <div class="tab-content" id="team-schedule-tab-content">
+                        <div class="tab-pane fade show active" id="list" role="tabpanel" aria-labelledby="list-tab">
+                            <table class="table team-schedule">
+                                <thead>
+                                    <tr>
+                                        <th>
+                                            Date
+                                        </th>
+                                        <th colspan="2">
+                                            Opponent
+                                        </th>
+                                        <th colspan="2">
+                                            Result
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var game in schedule)
+                                    {
+                                        var isAwayGame = game.AwayTeamId == teamId ? "away-game" : "";
+
+                                        <tr class="@isAwayGame">
+                                            <td>
+                                                @GetDateString(game.Date)
+                                            </td>
+                                            <td class="opponent-name">
+                                                @GetOpponent(game)
+                                            </td>
+                                            <td class="opponent-logo">
+                                                <img class="schedule-team-logo" src="~/@GetOpponentLogoPath(game)" />
+                                            </td>
+                                            <td class="@GetResultColor(game) result">
+                                                @GetResult(game)
+                                            </td>
+                                            <td class="score">
+                                                @GetScoreString(game)
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="tab-pane fade" id="calendar" role="tabpanel" aria-labelledby="calendar-tab">
+                            <div class="container">
+                                <div class="row">
+                                    <div class="col">Sunday</div>
+                                    <div class="col">Monday</div>
+                                    <div class="col">Tuesday</div>
+                                    <div class="col">Wednesday</div>
+                                    <div class="col">Thursday</div>
+                                    <div class="col">Friday</div>
+                                    <div class="col">Saturday</div>
+                                </div>
+                                <div class="row">
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </form>
-
-    <table class="table team-schedule">
-        <thead>
-            <tr>
-                <th>
-                    Date
-                </th>
-                <th colspan="2">
-                    Opponent
-                </th>
-                <th colspan="2">
-                    Result
-                </th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var game in schedule)
-            {
-                var isAwayGame = game.AwayTeamId == teamId ? "away-game" : "";
-
-                <tr class="@isAwayGame">
-                    <td>
-                        @GetDateString(game.Date)
-                    </td>
-                    <td class="opponent-name">
-                        @GetOpponent(game)
-                    </td>
-                    <td class="opponent-logo">
-                        <img class="schedule-team-logo" src="~/@GetOpponentLogoPath(game)" />
-                    </td>
-                    <td class="@GetResultColor(game) result">
-                        @GetResult(game)
-                    </td>
-                    <td class="score">
-                        @GetScoreString(game)
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
 </div>

@@ -78,6 +78,12 @@
                            asp-route-team="@ViewBag.Team"
                            asp-route-weekOf="@ViewBag.Date.AddDays(7).ToShortDateString()">&rang;</a>
                     </li>
+                    <li class="page-item" id="today">
+                        <a class="page-link"
+                           asp-action="Index"
+                           asp-route-team="@ViewBag.Team"
+                           asp-route-weekOf="@DateTime.Now.ToShortDateString()">Today</a>
+                    </li>
                 </ul>
             </div>
             <div class="col">
@@ -157,7 +163,7 @@
                                     @game.Status
                                 </td>
                                 <td>
-                                    <a asp-action="GameControls" asp-route-id="@game.Id">Game Controls</a>
+                                    <a asp-action="GameControls" asp-route-id="@game.Id">Record Game</a>
                                     <a asp-action="GameCenter" asp-route-id="@game.Id">Game Center</a>
                                 </td>
                             </tr>

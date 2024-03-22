@@ -60,7 +60,7 @@
                                 </div>
                             </div>
                             <div class="row-cols-2 status">
-                                @currentGame.Status
+                                <a class="game-status-link" asp-controller="Schedule" asp-action="GameCenter" asp-route-id="@currentGame.Id">@currentGame.Status</a>
                             </div>
                         </div>
                     }

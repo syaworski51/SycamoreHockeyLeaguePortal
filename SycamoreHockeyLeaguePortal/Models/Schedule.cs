@@ -70,6 +70,9 @@ namespace SycamoreHockeyLeaguePortal.Models
                 
                 if (IsLive)
                 {
+                    if (Period == 0)
+                        return "Not started";
+
                     if (Period >= 4)
                     {
                         if (Period > 4)
@@ -108,9 +111,9 @@ namespace SycamoreHockeyLeaguePortal.Models
 
                         return "Final";
                     }
-                }
 
-                return "Not started";
+                    return "Not started";
+                }
             }
         }
 

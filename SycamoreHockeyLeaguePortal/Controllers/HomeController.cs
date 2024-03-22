@@ -20,6 +20,8 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         public async Task<IActionResult> Index()
         {
             var currentDate = DateTime.Now.Date;
+            ViewBag.CurrentDate = currentDate;
+
             var season = currentDate.Year;
             var firstDayOfSeason = _context.Schedule
                 .Include(s => s.Season)
@@ -46,6 +48,15 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 .OrderBy(g => g.Date.Date)
                 .ThenBy(g => g.GameIndex);
             ViewBag.UpcomingGames = await upcomingGames.AsNoTracking().ToListAsync();
+
+            var todaysGames = _context.Schedule
+                .Include(s => s.Season)
+                .Include(s => s.PlayoffRound)
+                .Include(s => s.AwayTeam)
+                .Include(s => s.HomeTeam)
+                .Where(s => s.Date.Date == currentDate)
+                .OrderBy(s => s.GameIndex);
+            ViewBag.TodaysGames = await todaysGames.AsNoTracking().ToListAsync();
 
             var standings = _context.Standings
                 .Include(s => s.Season)

@@ -52,10 +52,11 @@ namespace SycamoreHockeyLeaguePortal.Models
                     string team1Name = Team1.AlternateName == null ? Team1.City : Team1.AlternateName;
                     string team2Name = Team2.AlternateName == null ? Team2.City : Team2.AlternateName;
                     string leader = (Team1Wins > Team2Wins) ? team1Name : team2Name;
+                    string leadsOrWins = (Status == "In progress") ? "leads" : "wins";
                     int leadingScore = Math.Max(Team1Wins, Team2Wins);
                     int trailingScore = Math.Min(Team1Wins, Team2Wins);
 
-                    return $"{leader} leads series {leadingScore}-{trailingScore}";
+                    return $"{leader} {leadsOrWins} series {leadingScore}-{trailingScore}";
                 }
 
                 return $"Series is tied {Team1Wins}-{Team2Wins}";

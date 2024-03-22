@@ -112,7 +112,8 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                     leaders.Add(leader);
                 }
 
-                int maxFollowerCount = 8 - leaders.Count;
+                int playoffTeamsPerConference = (season > 2021) ? 8 : 4;
+                int maxFollowerCount = playoffTeamsPerConference - leaders.Count;
                 foreach (var team in conferenceStandings)
                 {
                     if (followers.Count >= maxFollowerCount)
@@ -387,15 +388,16 @@ namespace SycamoreHockeyLeaguePortal.Controllers
 
         private async Task<IQueryable<Standings>> GetStandings(int season, string? viewBy)
         {
-            IQueryable<Standings> standings;
-            
+            IQueryable<Standings> standings = _context.Standings
+                .Include(s => s.Season)
+                .Include(s => s.Conference)
+                .Include(s => s.Division)
+                .Include(s => s.Team)
+                .Where(s => s.Season.Year == season);
+
             if (season <= 2022)
-                standings = _context.Standings
-                    .Include(s => s.Season)
-                    .Include(s => s.Conference)
-                    .Include(s => s.Division)
-                    .Include(s => s.Team)
-                    .Where(s => s.Season.Year == season)
+            {
+                standings = standings
                     .OrderByDescending(s => s.Points)
                     .ThenBy(s => s.GamesPlayed)
                     .ThenByDescending(s => s.Wins)
@@ -404,13 +406,10 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                     .ThenByDescending(s => s.GoalsFor)
                     .ThenBy(s => s.Team.City)
                     .ThenBy(s => s.Team.Name);
+            }
             else if (season == 2023)
-                standings = _context.Standings
-                    .Include(s => s.Season)
-                    .Include(s => s.Conference)
-                    .Include(s => s.Division)
-                    .Include(s => s.Team)
-                    .Where(s => s.Season.Year == season)
+            {
+                standings = standings
                     .OrderByDescending(s => s.Points)
                     .ThenBy(s => s.GamesPlayed)
                     .ThenByDescending(s => s.RegulationWins)
@@ -430,14 +429,10 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                     .ThenByDescending(s => s.Streak)
                     .ThenBy(s => s.Team.City)
                     .ThenBy(s => s.Team.Name);
+            }
             else
             {
-                standings = _context.Standings
-                    .Include(s => s.Season)
-                    .Include(s => s.Conference)
-                    .Include(s => s.Division)
-                    .Include(s => s.Team)
-                    .Where(s => s.Season.Year == season)
+                standings = standings
                     .OrderByDescending(s => s.WinPct)
                     .ThenByDescending(s => s.Wins)
                     .ThenBy(s => s.Losses)
@@ -454,12 +449,12 @@ namespace SycamoreHockeyLeaguePortal.Controllers
 
             bool standingsUpdateAvailable = await GetStandingsUpdateStatus();
             if (standingsUpdateAvailable)
-                await ApplyH2HTiebreakers(standings.ToList());
+                standings = (IQueryable<Standings>)await ApplyH2HTiebreakers(standings.ToList());
 
             return standings;
         }
 
-        private async Task ApplyH2HTiebreakers(List<Standings> standings)
+        private async Task<List<Standings>> ApplyH2HTiebreakers(List<Standings> standings)
         {
             for (int index = 0; index < standings.Count - 1; index++)
             {
@@ -476,7 +471,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                         .Include(s => s.HomeTeam)
                         .Where(s => s.Season.Year == currentTeam.Season.Year &&
                                     s.Type == "Regular Season" &&
-                                    s.IsLive == false &&
+                                    !s.IsLive &&
                                     s.Period >= 3 &&
                                     ((s.AwayTeamId == currentTeam.TeamId &&
                                       s.HomeTeamId == nextTeam.TeamId) ||
@@ -488,76 +483,93 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                         int[] h2hWins = { 0, 0 };
                         int[] h2hGoalsFor = { 0, 0 };
                         int[] h2hGFInWins = { 0, 0 };
+                        int[] h2hWinPoints = { 0, 0 };
+                        const int CURRENT_TEAM = 0, NEXT_TEAM = 1;
+                        
                         foreach (var game in h2hGamesPlayed)
                         {
                             if (game.HomeTeamId == currentTeam.TeamId)
                             {
-                                h2hGoalsFor[0] += (int)game.HomeScore!;
-                                h2hGoalsFor[1] += (int)game.AwayScore!;
+                                h2hGoalsFor[CURRENT_TEAM] += (int)game.HomeScore!;
+                                h2hGoalsFor[NEXT_TEAM] += (int)game.AwayScore!;
 
                                 if (game.HomeScore > game.AwayScore)
                                 {
-                                    h2hWins[0]++;
-                                    h2hGFInWins[0] += (int)game.HomeScore!;
+                                    h2hWins[CURRENT_TEAM]++;
+                                    h2hGFInWins[CURRENT_TEAM] += (int)game.HomeScore!;
+                                    h2hWinPoints[CURRENT_TEAM] += 5 - game.Period;
                                 }
                                 else
                                 {
-                                    h2hWins[1]++;
-                                    h2hGFInWins[1] += (int)game.AwayScore!;
+                                    h2hWins[NEXT_TEAM]++;
+                                    h2hGFInWins[NEXT_TEAM] += (int)game.AwayScore!;
+                                    h2hWinPoints[NEXT_TEAM] += 5 - game.Period;
                                 }
                             }
                             else
                             {
-                                h2hGoalsFor[0] += (int)game.AwayScore!;
-                                h2hGoalsFor[1] += (int)game.HomeScore!;
+                                h2hGoalsFor[CURRENT_TEAM] += (int)game.AwayScore!;
+                                h2hGoalsFor[NEXT_TEAM] += (int)game.HomeScore!;
 
                                 if (game.AwayScore > game.HomeScore)
                                 {
-                                    h2hWins[0]++;
-                                    h2hGFInWins[0] += (int)game.AwayScore!;
+                                    h2hWins[CURRENT_TEAM]++;
+                                    h2hGFInWins[CURRENT_TEAM] += (int)game.AwayScore!;
+                                    h2hWinPoints[CURRENT_TEAM] += 5 - game.Period;
                                 }
                                 else
                                 {
-                                    h2hWins[1]++;
-                                    h2hGFInWins[1] += (int)game.HomeScore!;
+                                    h2hWins[NEXT_TEAM]++;
+                                    h2hGFInWins[NEXT_TEAM] += (int)game.HomeScore!;
+                                    h2hWinPoints[NEXT_TEAM] += 5 - game.Period;
                                 }
                             }
                         }
 
-                        if (h2hWins[0] == h2hWins[1])
+                        if (h2hWins[CURRENT_TEAM] == h2hWins[NEXT_TEAM])
                         {
-                            if (h2hGoalsFor[0] == h2hGoalsFor[1])
+                            if (h2hGoalsFor[CURRENT_TEAM] == h2hGoalsFor[NEXT_TEAM])
                             {
-                                if (h2hGFInWins[0] == h2hGFInWins[1])
-                                    await ApplyGroupRecordTiebreakers(standings[index], standings[index + 1]);
-                                if (h2hGFInWins[0] < h2hGFInWins[1])
-                                    (standings[index], standings[index + 1]) = (standings[index + 1], standings[index]);
+                                if (h2hGFInWins[CURRENT_TEAM] == h2hGFInWins[NEXT_TEAM])
+                                {
+                                    if (h2hWinPoints[CURRENT_TEAM] == h2hWinPoints[NEXT_TEAM])
+                                        standings = ApplyGroupRecordTiebreakers(standings, currentTeam, index, nextTeam, index + 1);
+                                    else if (h2hWinPoints[CURRENT_TEAM] < h2hWinPoints[NEXT_TEAM])
+                                        standings = SwapTeams(standings, currentTeam, index, nextTeam, index + 1);
+                                }   
+                                else if (h2hGFInWins[CURRENT_TEAM] < h2hGFInWins[NEXT_TEAM])
+                                    standings = SwapTeams(standings, currentTeam, index, nextTeam, index + 1);
                             }
-                            else if (h2hGoalsFor[0] < h2hGoalsFor[1])
-                                (standings[index], standings[index + 1]) = (standings[index + 1], standings[index]);
+                            else if (h2hGoalsFor[CURRENT_TEAM] < h2hGoalsFor[NEXT_TEAM])
+                                standings = SwapTeams(standings, currentTeam, index, nextTeam, index + 1);
                         }
-                        else if (h2hWins[0] < h2hWins[1])
-                            (standings[index], standings[index + 1]) = (standings[index + 1], standings[index]);
+                        else if (h2hWins[CURRENT_TEAM] < h2hWins[NEXT_TEAM])
+                            standings = SwapTeams(standings, currentTeam, index, nextTeam, index + 1);
                     }
                 }
             }
 
             await StandingsUpdated();
+            return standings;
         }
 
-        private async Task ApplyGroupRecordTiebreakers(Standings team1, Standings team2)
+        private List<Standings> ApplyGroupRecordTiebreakers(List<Standings> standings, 
+                                                            Standings team1, int index1, 
+                                                            Standings team2, int index2)
         {
             if (team1.DivisionId == team2.DivisionId)
-                BreakTieWithinDivision(team1, team2);
+                return BreakTieWithinDivision(standings, team1, index1, team2, index2);
             
             else if (team1.ConferenceId == team2.ConferenceId)
-                BreakTieWithinConference(team1, team2);
+                return BreakTieWithinConference(standings, team1, index1, team2, index2);
             
             else
-                BreakTieInOverallStandings(team1, team2);
+                return BreakTieInOverallStandings(standings, team1, index1, team2, index2);
         }
 
-        private void BreakTieWithinDivision(Standings team1, Standings team2)
+        private List<Standings> BreakTieWithinDivision(List<Standings> standings, 
+                                            Standings team1, int index1, 
+                                            Standings team2, int index2)
         {
             if (team1.WinsVsDivision == team2.WinsVsDivision &&
                 team1.LossesVsDivision == team2.LossesVsDivision)
@@ -566,16 +578,20 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                     team1.LossesVsConference == team2.LossesVsConference)
                 {
                     if (team1.InterConfWinPct < team2.InterConfWinPct)
-                        (team1, team2) = (team2, team1);
+                        standings = SwapTeams(standings, team1, index1, team2, index2);
                 }
                 else if (team1.WinPctVsConference < team2.WinPctVsConference)
-                    (team1, team2) = (team2, team1);
+                    standings = SwapTeams(standings, team1, index1, team2, index2);
             }
             else if (team1.WinPctVsDivision < team2.WinPctVsDivision)
-                (team1, team2) = (team2, team1);
+                standings = SwapTeams(standings, team1, index1, team2, index2);
+
+            return standings;
         }
 
-        private void BreakTieWithinConference(Standings team1, Standings team2)
+        private List<Standings> BreakTieWithinConference(List<Standings> standings, 
+                                              Standings team1, int index1, 
+                                              Standings team2, int index2)
         {
             if (team1.WinsVsConference == team2.WinsVsConference &&
                 team1.LossesVsConference == team2.LossesVsConference)
@@ -584,16 +600,20 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                     team1.LossesVsDivision == team2.LossesVsDivision)
                 {
                     if (team1.InterConfWinPct < team2.InterConfWinPct)
-                        (team1, team2) = (team2, team1);
+                        standings = SwapTeams(standings, team1, index1, team2, index2);
                 }
                 else if (team1.WinPctVsDivision < team2.WinPctVsDivision)
-                    (team1, team2) = (team2, team1);
+                    standings = SwapTeams(standings, team1, index1, team2, index2);
             }
             else if (team1.WinPctVsConference < team2.WinPctVsConference)
-                (team1, team2) = (team2, team1);
+                standings = SwapTeams(standings, team1, index1, team2, index2);
+
+            return standings;
         }
 
-        private void BreakTieInOverallStandings(Standings team1, Standings team2)
+        private List<Standings> BreakTieInOverallStandings(List<Standings> standings, 
+                                                Standings team1, int index1, 
+                                                Standings team2, int index2)
         {
             if (team1.InterConfWins == team2.InterConfWins &&
                 team1.InterConfLosses == team2.InterConfLosses)
@@ -601,14 +621,25 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 if (team1.WinsVsConference == team2.WinsVsConference &&
                     team2.LossesVsConference == team2.LossesVsConference)
                 {
-                    if (team1.WinPctVsDivision < team2.WinPctVsDivision) 
-                        (team1, team2) = (team2, team1);
+                    if (team1.WinPctVsDivision < team2.WinPctVsDivision)
+                        standings = SwapTeams(standings, team1, index1, team2, index2);
                 }
                 else if (team1.WinPctVsConference < team2.WinPctVsConference)
-                    (team1, team2) = (team2, team1);
+                    standings = SwapTeams(standings, team1, index1, team2, index2);
             }
             else if (team1.InterConfWinPct < team2.InterConfWinPct)
-                (team1, team2) = (team2, team1);
+                standings = SwapTeams(standings, team1, index1, team2, index2);
+
+            return standings;
+        }
+
+        private List<Standings> SwapTeams(List<Standings> standings,
+                                          Standings team1, int index1,
+                                          Standings team2, int index2)
+        {
+            standings[index1] = team2;
+            standings[index2] = team1;
+            return standings;
         }
 
         private async Task<bool> GetStandingsUpdateStatus()
