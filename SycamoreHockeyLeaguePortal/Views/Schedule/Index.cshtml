@@ -103,73 +103,8 @@
         {
             foreach (var gameDate in dates)
             {
-                var games = Model
-                .Where(g => g.Date.Date == gameDate.Date);
-
-                <h3 class="schedule-game-date">@GetDateString(gameDate)</h3>
-                <table class="table schedule">
-                    <thead>
-                        <tr>
-                            <th colspan="2" style="text-align: right;">
-                                Away Team
-                            </th>
-                            <th colspan="2">
-                                Scores
-                            </th>
-                            <th colspan="2" style="text-align: left;">
-                                Home Team
-                            </th>
-                            <th>
-                                Status
-                            </th>
-                            <th class="actions"></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var game in games)
-                        {
-                            var awayTeam = game.AwayTeam;
-                            var homeTeam = game.HomeTeam;
-
-                            <tr>
-                                <td class="schedule-team-name" style="text-align: right;">
-                                    @awayTeam.FullName
-                                </td>
-                                <td style="width: 30px;">
-                                    <img class="schedule-team-logo" src="~/@awayTeam.LogoPath" title="@awayTeam.FullName" alt="@awayTeam.Code" />
-                                </td>
-                                @if (game.Period > 0)
-                                {
-                                    <td class="schedule-score">
-                                        @game.AwayScore
-                                    </td>
-                                    <td class="schedule-score">
-                                        @game.HomeScore
-                                    </td>
-                                }
-                                else
-                                {
-                                    <td class="schedule-score" colspan="2">
-                                        @@
-                                    </td>
-                                }
-                                <td style="width: 30px;">
-                                    <img class="schedule-team-logo" src="~/@homeTeam.LogoPath" title="@homeTeam.FullName" alt="@homeTeam.Code" />
-                                </td>
-                                <td class="schedule-team-name" style="text-align: left;">
-                                    @homeTeam.FullName
-                                </td>
-                                <td>
-                                    @game.Status
-                                </td>
-                                <td>
-                                    <a asp-action="GameControls" asp-route-id="@game.Id">Record Game</a>
-                                    <a asp-action="GameCenter" asp-route-id="@game.Id">Game Center</a>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
+                ViewBag.Date = gameDate;
+                <partial name="Partials/GameDaySchedule.cshtml" />
             }
         }
         else

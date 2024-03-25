@@ -1,0 +1,39 @@
+﻿@model IQueryable<Standings>
+
+@{
+    IQueryable<Standings> standings = ViewBag.DivisionStandings;
+    string name = ViewBag.DivisionName;
+}
+
+<table class="table standings-widget-table">
+    <thead>
+        <tr>
+            <th colspan="2">@name</th>
+            <th>W-L</th>
+            <th>W%</th>
+            <th>GB</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var team in standings)
+        {
+            <tr>
+                <td>
+                    <img src="~/@team.Team.LogoPath" title="@team.Team.FullName" alt="@team.Team.Code" />
+                </td>
+                <td title="@team.Team.FullName">
+                    <a class="team-name" asp-controller="Teams" asp-action="Details" asp-route-id="@team.Team.Code" asp-route-season="@team.Season.Year" asp-route-gameType="regular-season">@team.Team.Code</a>
+                </td>
+                <td class="team-stats">
+                    @team.Record_2024Format
+                </td>
+                <th class="team-stats">
+                    @string.Format("{0:F1}", team.WinPct)
+                </th>
+                <td class="team-stats">
+                    @(team.DivisionGamesBehind > 0 ? team.DivisionGamesBehind : "--")
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

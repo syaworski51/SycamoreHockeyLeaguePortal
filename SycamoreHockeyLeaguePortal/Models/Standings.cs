@@ -74,15 +74,15 @@ namespace SycamoreHockeyLeaguePortal.Models
         [Display(Name = "P%")]
         public decimal PointsPct { get; set; }
 
-        [Column(TypeName = "decimal(2,1)")]
+        [Column(TypeName = "decimal(3,1)")]
         [Display(Name = "GB")]
         public decimal DivisionGamesBehind { get; set; }
 
-        [Column(TypeName = "decimal(2,1)")]
+        [Column(TypeName = "decimal(3,1)")]
         [Display(Name = "GB")]
         public decimal ConferenceGamesBehind { get; set; }
 
-        [Column(TypeName = "decimal(2,1)")]
+        [Column(TypeName = "decimal(3,1)")]
         [Display(Name = "GB")]
         public decimal LeagueGamesBehind { get; set; }
 

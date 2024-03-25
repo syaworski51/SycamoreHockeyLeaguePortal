@@ -5,7 +5,9 @@
     ViewData["Title"] = Model.FullName;
 
     var teamId = Model.Id;
+    int season = ViewBag.Season;
     var schedule = ViewBag.Schedule;
+    Standings teamStats = ViewBag.TeamStats;
 
     string GetDayOfWeek(DateTime date)
     {
@@ -72,7 +74,7 @@
     {
         string scoreString = "";
 
-        if (!game.IsLive && game.Period >= 3)
+        if (game.IsFinalized && game.Period >= 3)
         {
             scoreString = (game.HomeTeamId == teamId) ?
                 $"{game.HomeScore} - {game.AwayScore}" :
@@ -93,6 +95,65 @@
         }
 
         return scoreString;
+    }
+
+    string GetStreakString(int streak)
+    {
+        streak = Math.Abs(streak);
+
+        if (streak > 0)
+            return $"W {streak}";
+
+        if (streak < 0)
+            return $"L {streak}";
+
+        return "--";
+    }
+
+    string GetGoalDifferentialString(int goalDifferential)
+    {
+        if (goalDifferential > 0)
+            return $"+{goalDifferential}";
+
+        return goalDifferential.ToString();
+    }
+
+    string GetRecordFormat(int season, Standings teamStats, string type = "overall")
+    {
+        if (season < 2024)
+        {
+            switch (type)
+            {
+                case "division":
+                    return teamStats.RecordVsDivision_2021Format;
+
+                case "conference":
+                    return teamStats.RecordVsConference_2021Format;
+
+                case "inter-conference":
+                    return teamStats.InterConfRecord_2021Format;
+
+                default:
+                    return teamStats.Record_2021Format;
+            }
+        }
+        else
+        {
+            switch (type)
+            {
+                case "division":
+                    return teamStats.RecordVsDivision_2024Format;
+
+                case "conference":
+                    return teamStats.RecordVsConference_2024Format;
+
+                case "inter-conference":
+                    return teamStats.InterConfRecord_2024Format;
+
+                default:
+                    return teamStats.Record_2024Format;
+            }
+        }
     }
 }
 
@@ -130,14 +191,14 @@
                 <div class="col-12">
                     <ul class="nav nav-pills nav-justified" id="team-schedule-tabs" role="tablist">
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link active" id="list-tab" data-bs-toggle="tab" data-bs-target="#list" type="button" role="tab" aria-controls="list" aria-selected="true">List</button>
+                            <button class="nav-link active" id="schedule-tab" data-bs-toggle="tab" data-bs-target="#schedule" type="button" role="tab" aria-controls="schedule" aria-selected="true">Schedule</button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="calendar-tab" data-bs-toggle="tab" data-bs-target="#calendar" type="button" role="tab" aria-controls="calendar" aria-selected="false">Calendar</button>
+                            <button class="nav-link" id="team-stats-tab" data-bs-toggle="tab" data-bs-target="#team-stats" type="button" role="tab" aria-controls="team-stats" aria-selected="false">Team Stats</button>
                         </li>
                     </ul>
                     <div class="tab-content" id="team-schedule-tab-content">
-                        <div class="tab-pane fade show active" id="list" role="tabpanel" aria-labelledby="list-tab">
+                        <div class="tab-pane fade show active" id="schedule" role="tabpanel" aria-labelledby="schedule-tab">
                             <table class="table team-schedule">
                                 <thead>
                                     <tr>
@@ -178,19 +239,77 @@
                                 </tbody>
                             </table>
                         </div>
-                        <div class="tab-pane fade" id="calendar" role="tabpanel" aria-labelledby="calendar-tab">
-                            <div class="container">
+                        <div class="tab-pane fade" id="team-stats" role="tabpanel" aria-labelledby="team-stats-tab">
+                            <div class="container team-stats-grid">
                                 <div class="row">
-                                    <div class="col">Sunday</div>
-                                    <div class="col">Monday</div>
-                                    <div class="col">Tuesday</div>
-                                    <div class="col">Wednesday</div>
-                                    <div class="col">Thursday</div>
-                                    <div class="col">Friday</div>
-                                    <div class="col">Saturday</div>
+                                    <div class="col container team-stat">
+                                        <div class="row">
+                                            <div class="col">RECORD</div>
+                                            <div class="col stat">@GetRecordFormat(season, teamStats)</div>
+                                        </div>
+                                    </div>
+                                    <div class="col container team-stat">
+                                        @if (season < 2024)
+                                        {
+                                            <div class="row">
+                                                <div class="col">POINTS</div>
+                                                <div class="col stat">@teamStats.Points</div>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div class="row">
+                                                <div class="col">WIN %</div>
+                                                <div class="col stat">@teamStats.WinPct</div>
+                                            </div>
+                                        }
+                                    </div>
+                                    <div class="col container team-stat">
+                                        <div class="row">
+                                            <div class="col">STREAK</div>
+                                            <div class="col stat">@GetStreakString(teamStats.Streak)</div>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div class="row">
-
+                                    <div class="col container team-stat">
+                                        <div class="row">
+                                            <div class="col">GF</div>
+                                            <div class="col stat">@teamStats.GoalsFor</div>
+                                        </div>
+                                    </div>
+                                    <div class="col container team-stat">
+                                        <div class="row">
+                                            <div class="col">GA</div>
+                                            <div class="col stat">@teamStats.GoalsAgainst</div>
+                                        </div>
+                                    </div>
+                                    <div class="col container team-stat">
+                                        <div class="row">
+                                            <div class="col">GD</div>
+                                            <div class="col stat">@GetGoalDifferentialString(teamStats.GoalDifferential)</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col container team-stat">
+                                        <div class="row">
+                                            <div class="col">DIVISION RECORD</div>
+                                            <div class="col stat">@GetRecordFormat(season, teamStats, "division")</div>
+                                        </div>
+                                    </div>
+                                    <div class="col container team-stat">
+                                        <div class="row">
+                                            <div class="col">CONF RECORD</div>
+                                            <div class="col stat">@GetRecordFormat(season, teamStats, "conference")</div>
+                                        </div>
+                                    </div>
+                                    <div class="col container team-stat">
+                                        <div class="row">
+                                            <div class="col">EAST/WEST RECORD</div>
+                                            <div class="col stat">@GetRecordFormat(season, teamStats, "inter-conference")</div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>

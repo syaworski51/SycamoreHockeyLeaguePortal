@@ -8,7 +8,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Razor.Language;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure.Internal;
 using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
 using SycamoreHockeyLeaguePortal.Data;
 using SycamoreHockeyLeaguePortal.Models;
 
@@ -70,9 +72,9 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 .OrderBy(a => a.Team.City)
                 .OrderBy(a => a.Team.Name);
 
-            var standings = await GetStandings(season, viewBy);
+            var standings = await GetStandings(season);
 
-            return View(await standings.AsNoTracking().ToListAsync());
+            return View(standings);
         }
 
         public async Task<IActionResult> PlayoffMatchups(int season)
@@ -81,7 +83,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
 
             List<List<Standings>> playoffTeams = new List<List<Standings>>();
 
-            var standings = await GetStandings(season, "conference");
+            var standings = await GetStandings(season);
 
             var conferences = standings
                 .Select(s => s.Conference)
@@ -348,7 +350,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 .Include(s => s.Team)
                 .Where(s => s.Season.Year == season &&
                             s.Team.Code == team1Code)
-                .FirstOrDefault();
+                .FirstOrDefault()!;
             ViewData["Team1"] = team1;
 
             var team2 = _context.Standings
@@ -358,7 +360,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 .Include(s => s.Team)
                 .Where(s => s.Season.Year == season &&
                             s.Team.Code == team2Code)
-                .FirstOrDefault();
+                .FirstOrDefault()!;
             ViewData["Team2"] = team2;
 
             var teams = _context.Standings
@@ -386,7 +388,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             return View();
         }
 
-        private async Task<IQueryable<Standings>> GetStandings(int season, string? viewBy)
+        private async Task<List<Standings>> GetStandings(int season)
         {
             IQueryable<Standings> standings = _context.Standings
                 .Include(s => s.Season)
@@ -447,198 +449,166 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                     .ThenBy(s => s.Team.Name);
             }
 
-            bool standingsUpdateAvailable = await GetStandingsUpdateStatus();
-            if (standingsUpdateAvailable)
-                standings = (IQueryable<Standings>)await ApplyH2HTiebreakers(standings.ToList());
+            List<Standings> standingsList = standings.ToList();
 
-            return standings;
+            if (season >= 2024)
+                standingsList = await ApplyTiebreakers(standingsList);
+
+            return standingsList;
         }
 
-        private async Task<List<Standings>> ApplyH2HTiebreakers(List<Standings> standings)
+        private async Task<List<Standings>> ApplyTiebreakers(List<Standings> standings)
         {
-            for (int index = 0; index < standings.Count - 1; index++)
+            for (int index = 0; index < standings.Count() - 1; index++)
             {
-                var currentTeam = standings[index];
-                var nextTeam = standings[index + 1];
+                Standings currentTeam = standings[index];
+                Standings nextTeam = standings[index + 1];
 
-                if (currentTeam.Wins == nextTeam.Wins && 
+                if (currentTeam.Wins == nextTeam.Wins &&
                     currentTeam.Losses == nextTeam.Losses)
-                {
-                    var h2hGamesPlayed = _context.Schedule
-                        .Include(s => s.Season)
-                        .Include(s => s.PlayoffRound)
-                        .Include(s => s.AwayTeam)
-                        .Include(s => s.HomeTeam)
-                        .Where(s => s.Season.Year == currentTeam.Season.Year &&
-                                    s.Type == "Regular Season" &&
-                                    !s.IsLive &&
-                                    s.Period >= 3 &&
-                                    ((s.AwayTeamId == currentTeam.TeamId &&
-                                      s.HomeTeamId == nextTeam.TeamId) ||
-                                     (s.AwayTeamId == nextTeam.TeamId &&
-                                      s.HomeTeamId == currentTeam.TeamId)));
-
-                    if (h2hGamesPlayed.Any())
-                    {
-                        int[] h2hWins = { 0, 0 };
-                        int[] h2hGoalsFor = { 0, 0 };
-                        int[] h2hGFInWins = { 0, 0 };
-                        int[] h2hWinPoints = { 0, 0 };
-                        const int CURRENT_TEAM = 0, NEXT_TEAM = 1;
-                        
-                        foreach (var game in h2hGamesPlayed)
-                        {
-                            if (game.HomeTeamId == currentTeam.TeamId)
-                            {
-                                h2hGoalsFor[CURRENT_TEAM] += (int)game.HomeScore!;
-                                h2hGoalsFor[NEXT_TEAM] += (int)game.AwayScore!;
-
-                                if (game.HomeScore > game.AwayScore)
-                                {
-                                    h2hWins[CURRENT_TEAM]++;
-                                    h2hGFInWins[CURRENT_TEAM] += (int)game.HomeScore!;
-                                    h2hWinPoints[CURRENT_TEAM] += 5 - game.Period;
-                                }
-                                else
-                                {
-                                    h2hWins[NEXT_TEAM]++;
-                                    h2hGFInWins[NEXT_TEAM] += (int)game.AwayScore!;
-                                    h2hWinPoints[NEXT_TEAM] += 5 - game.Period;
-                                }
-                            }
-                            else
-                            {
-                                h2hGoalsFor[CURRENT_TEAM] += (int)game.AwayScore!;
-                                h2hGoalsFor[NEXT_TEAM] += (int)game.HomeScore!;
-
-                                if (game.AwayScore > game.HomeScore)
-                                {
-                                    h2hWins[CURRENT_TEAM]++;
-                                    h2hGFInWins[CURRENT_TEAM] += (int)game.AwayScore!;
-                                    h2hWinPoints[CURRENT_TEAM] += 5 - game.Period;
-                                }
-                                else
-                                {
-                                    h2hWins[NEXT_TEAM]++;
-                                    h2hGFInWins[NEXT_TEAM] += (int)game.HomeScore!;
-                                    h2hWinPoints[NEXT_TEAM] += 5 - game.Period;
-                                }
-                            }
-                        }
-
-                        if (h2hWins[CURRENT_TEAM] == h2hWins[NEXT_TEAM])
-                        {
-                            if (h2hGoalsFor[CURRENT_TEAM] == h2hGoalsFor[NEXT_TEAM])
-                            {
-                                if (h2hGFInWins[CURRENT_TEAM] == h2hGFInWins[NEXT_TEAM])
-                                {
-                                    if (h2hWinPoints[CURRENT_TEAM] == h2hWinPoints[NEXT_TEAM])
-                                        standings = ApplyGroupRecordTiebreakers(standings, currentTeam, index, nextTeam, index + 1);
-                                    else if (h2hWinPoints[CURRENT_TEAM] < h2hWinPoints[NEXT_TEAM])
-                                        standings = SwapTeams(standings, currentTeam, index, nextTeam, index + 1);
-                                }   
-                                else if (h2hGFInWins[CURRENT_TEAM] < h2hGFInWins[NEXT_TEAM])
-                                    standings = SwapTeams(standings, currentTeam, index, nextTeam, index + 1);
-                            }
-                            else if (h2hGoalsFor[CURRENT_TEAM] < h2hGoalsFor[NEXT_TEAM])
-                                standings = SwapTeams(standings, currentTeam, index, nextTeam, index + 1);
-                        }
-                        else if (h2hWins[CURRENT_TEAM] < h2hWins[NEXT_TEAM])
-                            standings = SwapTeams(standings, currentTeam, index, nextTeam, index + 1);
-                    }
-                }
+                    standings = ApplyH2HTiebreaker(standings, index, currentTeam, nextTeam);
             }
 
             await StandingsUpdated();
             return standings;
         }
 
-        private List<Standings> ApplyGroupRecordTiebreakers(List<Standings> standings, 
-                                                            Standings team1, int index1, 
-                                                            Standings team2, int index2)
+        private List<Standings> ApplyH2HTiebreaker(List<Standings> standings, int index,
+                                                   Standings team1, Standings team2)
         {
-            if (team1.DivisionId == team2.DivisionId)
-                return BreakTieWithinDivision(standings, team1, index1, team2, index2);
-            
-            else if (team1.ConferenceId == team2.ConferenceId)
-                return BreakTieWithinConference(standings, team1, index1, team2, index2);
-            
-            else
-                return BreakTieInOverallStandings(standings, team1, index1, team2, index2);
+            int season = standings.First()!.Season.Year;
+            int[] series = GetH2HSeries(season, team1, team2);
+            const int TEAM1 = 0, TEAM2 = 1;
+
+            if (series[TEAM1] == series[TEAM2])
+                return ApplyWinsByTypeTiebreaker(standings, index, team1, team2);
+            else if (series[TEAM1] < series[TEAM2])
+                return SwapTeams(standings, index, team1, team2);
+
+            return standings;
         }
 
-        private List<Standings> BreakTieWithinDivision(List<Standings> standings, 
-                                            Standings team1, int index1, 
-                                            Standings team2, int index2)
+        private List<Standings> ApplyWinsByTypeTiebreaker(List<Standings> standings, int index,
+                                                          Standings team1, Standings team2)
+        {
+            if (team1.RegulationWins == team2.RegulationWins)
+            {
+                if (team1.RegPlusOTWins == team2.RegPlusOTWins)
+                    return ApplyGroupRecordTiebreakers(standings, index, team1, team2);
+                else if (team1.RegPlusOTWins < team2.RegPlusOTWins)
+                    return SwapTeams(standings, index, team1, team2);
+            }
+            else if (team1.RegulationWins < team2.RegulationWins)
+                return SwapTeams(standings, index, team1, team2);
+
+            return standings;
+        }
+
+        private List<Standings> ApplyGroupRecordTiebreakers(List<Standings> standings, int index,
+                                                            Standings team1, Standings team2)
+        {
+            if (team1.Division == team2.Division)
+                return BreakTieWithinDivision(standings, index, team1, team2);
+
+            if (team1.Conference == team2.Conference && team1.Division != team2.Division)
+                return BreakTieWithinConference(standings, index, team1, team2);
+
+            return BreakTieInOverallStandings(standings, index, team1, team2);
+        }
+
+        private List<Standings> BreakTieWithinDivision(List<Standings> standings, int index,
+                                                       Standings team1, Standings team2)
+        {
+            return ApplyDivisionRecordTiebreaker(standings, index, team1, team2, "division");
+        }
+
+        private List<Standings> ApplyDivisionRecordTiebreaker(List<Standings> standings, int index,
+                                                              Standings team1, Standings team2,
+                                                              string tiebreakingArea)
         {
             if (team1.WinsVsDivision == team2.WinsVsDivision &&
                 team1.LossesVsDivision == team2.LossesVsDivision)
             {
-                if (team1.WinsVsConference == team2.WinsVsConference &&
-                    team1.LossesVsConference == team2.LossesVsConference)
+                switch (tiebreakingArea)
                 {
-                    if (team1.InterConfWinPct < team2.InterConfWinPct)
-                        standings = SwapTeams(standings, team1, index1, team2, index2);
+                    case "division":
+                        return ApplyConferenceRecordTiebreaker(standings, index, team1, team2, tiebreakingArea);
+                    
+                    case "conference":
+                        return ApplyInterConferenceRecordTiebreaker(standings, index, team1, team2, tiebreakingArea);
+
+                    default:
+                        return standings;
                 }
-                else if (team1.WinPctVsConference < team2.WinPctVsConference)
-                    standings = SwapTeams(standings, team1, index1, team2, index2);
             }
             else if (team1.WinPctVsDivision < team2.WinPctVsDivision)
-                standings = SwapTeams(standings, team1, index1, team2, index2);
+                return SwapTeams(standings, index, team1, team2);
 
             return standings;
         }
 
-        private List<Standings> BreakTieWithinConference(List<Standings> standings, 
-                                              Standings team1, int index1, 
-                                              Standings team2, int index2)
+        private List<Standings> BreakTieWithinConference(List<Standings> standings, int index,
+                                                         Standings team1, Standings team2)
+        {
+            return ApplyConferenceRecordTiebreaker(standings, index, team1, team2, "conference");
+        }
+
+        private List<Standings> ApplyConferenceRecordTiebreaker(List<Standings> standings, int index,
+                                                                Standings team1, Standings team2,
+                                                                string tiebreakingArea)
         {
             if (team1.WinsVsConference == team2.WinsVsConference &&
                 team1.LossesVsConference == team2.LossesVsConference)
             {
-                if (team1.WinsVsDivision == team2.WinsVsDivision &&
-                    team1.LossesVsDivision == team2.LossesVsDivision)
+                switch (tiebreakingArea)
                 {
-                    if (team1.InterConfWinPct < team2.InterConfWinPct)
-                        standings = SwapTeams(standings, team1, index1, team2, index2);
+                    case "division":
+                        return ApplyInterConferenceRecordTiebreaker(standings, index, team1, team2, tiebreakingArea);
+
+                    default:
+                        return ApplyDivisionRecordTiebreaker(standings, index, team1, team2, tiebreakingArea);
                 }
-                else if (team1.WinPctVsDivision < team2.WinPctVsDivision)
-                    standings = SwapTeams(standings, team1, index1, team2, index2);
             }
             else if (team1.WinPctVsConference < team2.WinPctVsConference)
-                standings = SwapTeams(standings, team1, index1, team2, index2);
+                return SwapTeams(standings, index, team1, team2);
 
             return standings;
         }
 
-        private List<Standings> BreakTieInOverallStandings(List<Standings> standings, 
-                                                Standings team1, int index1, 
-                                                Standings team2, int index2)
+        private List<Standings> BreakTieInOverallStandings(List<Standings> standings, int index,
+                                                           Standings team1, Standings team2)
+        {
+            return ApplyInterConferenceRecordTiebreaker(standings, index, team1, team2, "league");
+        }
+
+        private List<Standings> ApplyInterConferenceRecordTiebreaker(List<Standings> standings, int index,
+                                                                     Standings team1, Standings team2,
+                                                                     string tiebreakingArea)
         {
             if (team1.InterConfWins == team2.InterConfWins &&
                 team1.InterConfLosses == team2.InterConfLosses)
             {
-                if (team1.WinsVsConference == team2.WinsVsConference &&
-                    team2.LossesVsConference == team2.LossesVsConference)
+                switch (tiebreakingArea)
                 {
-                    if (team1.WinPctVsDivision < team2.WinPctVsDivision)
-                        standings = SwapTeams(standings, team1, index1, team2, index2);
+                    case "league":
+                        return ApplyConferenceRecordTiebreaker(standings, index, team1, team2, tiebreakingArea);
+
+                    default:
+                        return standings;
                 }
-                else if (team1.WinPctVsConference < team2.WinPctVsConference)
-                    standings = SwapTeams(standings, team1, index1, team2, index2);
             }
             else if (team1.InterConfWinPct < team2.InterConfWinPct)
-                standings = SwapTeams(standings, team1, index1, team2, index2);
+                return SwapTeams(standings, index, team1, team2);
 
             return standings;
         }
 
-        private List<Standings> SwapTeams(List<Standings> standings,
-                                          Standings team1, int index1,
-                                          Standings team2, int index2)
+        private List<Standings> SwapTeams(List<Standings> standings, int index,
+                                          Standings team1, Standings team2)
         {
-            standings[index1] = team2;
-            standings[index2] = team1;
+            standings[index] = team2;
+            standings[index + 1] = team1;
+            
             return standings;
         }
 
@@ -681,7 +651,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         private IQueryable<Schedule> GetH2HGamesPlayed(int season, Standings team1, Standings team2)
         {
             var h2hGames = GetH2HGames(season, team1, team2);
-            return h2hGames.Where(g => !g.IsLive && g.Period >= 3);
+            return h2hGames.Where(g => g.IsFinalized && g.Period >= 3);
         }
 
         private int[] GetH2HSeries(int season, Standings team1, Standings team2)

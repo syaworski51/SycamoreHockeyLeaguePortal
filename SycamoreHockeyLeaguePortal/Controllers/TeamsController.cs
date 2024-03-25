@@ -84,6 +84,16 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 .OrderBy(t => t.Index);
             ViewData["GameTypes"] = new SelectList(gameTypes, "ParameterValue", "Name");
 
+            var teamStats = _context.Standings
+                .Include(s => s.Season)
+                .Include(s => s.Conference)
+                .Include(s => s.Division)
+                .Include(s => s.Team)
+                .Where(s => s.Season.Year == season &&
+                            s.TeamId == team.Id)
+                .FirstOrDefault()!;
+            ViewBag.TeamStats = teamStats;
+
             switch (gameType)
             {
                 case "regular-season":

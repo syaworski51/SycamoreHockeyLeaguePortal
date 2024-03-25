@@ -4,6 +4,11 @@
 }
 
 @font-face {
+    font-family: "Cambria Math";
+    src: url('../fonts/CAMBRIA.TTC') format('truetype');
+}
+
+@font-face {
     font-family: "Druk Text";
     src: url('../fonts/DRUKTEXT-MEDIUM-TRIAL.OTF') format('opentype');
 }
@@ -11,6 +16,11 @@
 @font-face {
     font-family: "Druk Wide";
     src: url('../fonts/DRUKWIDE-MEDIUM-TRIAL.OTF') format('opentype');
+}
+
+math mi {
+    font-family: "Cambria Math";
+    font-weight: bold;
 }
 
 * {
@@ -42,10 +52,6 @@ a:hover {
     font-weight: bold;
     background-color: none;
 }
-
-/*a:hover:not(.navbar-brand, .btn, .standings .team-link, .game-status-link, .change-playoff-status), .nav-item a:hover {
-    background-color: #808080;
-}*/
 
 html {
   font-size: 14px;
@@ -511,6 +517,10 @@ img {
     margin-top: 20px;
 }
 
+#standings-area a, .schedule-team-name a {
+    color: black;
+}
+
 #standings-area h3 {
     margin-top: 30px;
 }
@@ -533,4 +543,44 @@ img {
 
 #standings-links {
     text-align: center;
+}
+
+#schedule-widget a, #standings-widget a {
+    font-family: "Druk Wide";
+    font-weight: 100;
+    color: black;
+}
+
+#schedule-widget .score {
+    font-size: 20pt;
+}
+
+#schedule-widget .table tbody tr {
+    line-height: 10px;
+}
+
+.standings-widget-table .team-name {
+    font-family: 'Druk Wide';
+    color: black;
+}
+
+.team-stats-grid .col {
+    font-size: 10pt;
+    display: table-cell;
+    vertical-align: middle;
+}
+
+.team-stats-grid .team-stat {
+    border-right: 1px solid black;
+    border-bottom: 1px solid black;
+    margin: 5px;
+}
+
+.team-stats-grid .stat {
+    font-family: "Druk Wide";
+    font-size: 18pt;
+}
+
+.team-stats-grid .goal-ratio {
+    font-family: "Druk Text";
 }

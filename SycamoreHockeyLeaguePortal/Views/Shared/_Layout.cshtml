@@ -1,8 +1,8 @@
 ﻿@inject SycamoreHockeyLeaguePortal.Data.ApplicationDbContext _context
 
 @{
-    var currentDate = DateTime.Now.Date;
-    var currentYear = currentDate.Year;
+    DateTime currentDate = new DateTime(2025, 6, 21);
+    int currentYear = currentDate.Year;
     ViewData["BackgroundImage"] = "calgary-vs-nyrangers.png";
 }
 

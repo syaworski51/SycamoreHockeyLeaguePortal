@@ -1,4 +1,4 @@
-﻿@model IEnumerable<SycamoreHockeyLeaguePortal.Models.Standings>
+﻿@model List<SycamoreHockeyLeaguePortal.Models.Standings>
 @inject SycamoreHockeyLeaguePortal.Data.ApplicationDbContext _context
 
 @{
@@ -263,18 +263,18 @@
 
             var divisions = _context.Standings
             .Where(s => s.Season.Year == season &&
-            s.Conference.Name == conference)
-            .Select(s => s.Division.Name)
-            .Distinct();
+                        s.Conference.Name == conference)
+                .Select(s => s.Division.Name)
+                .Distinct();
 
             foreach (var division in divisions)
             {
                 <h5>@division</h5>
 
                 var teams = Model
-                .Where(s => s.Season.Year == season &&
-                s.Conference.Name == conference &&
-                s.Division.Name == division);
+                    .Where(s => s.Season.Year == season &&
+                    s.Conference.Name == conference &&
+                    s.Division.Name == division);
 
                 <table class="table standings">
                     <thead>
@@ -285,55 +285,55 @@
                                     #
                                 </th>
                                 <th colspan="2">
-                                    @Html.DisplayNameFor(model => model.Team)
+                                    @Html.DisplayNameFor(model => model.FirstOrDefault()!.Team)
                                 </th>
                                 <th class="fixed-column">
-                                    @Html.DisplayNameFor(model => model.GamesPlayed)
+                                    @Html.DisplayNameFor(model => model.FirstOrDefault()!.GamesPlayed)
                                 </th>
                                 <th class="fixed-column">
-                                    @Html.DisplayNameFor(model => model.Wins)
+                                    @Html.DisplayNameFor(model => model.FirstOrDefault()!.Wins)
                                 </th>
                                 <th class="fixed-column">
-                                    @Html.DisplayNameFor(model => model.Losses)
+                                    @Html.DisplayNameFor(model => model.FirstOrDefault()!.Losses)
                                 </th>
                                 <th class="fixed-column">
-                                    @Html.DisplayNameFor(model => model.OTLosses)
+                                    @Html.DisplayNameFor(model => model.FirstOrDefault()!.OTLosses)
                                 </th>
                                 <th class="fixed-column">
-                                    @Html.DisplayNameFor(model => model.Points)
+                                    @Html.DisplayNameFor(model => model.FirstOrDefault()!.Points)
                                 </th>
                                 <th>
-                                    @Html.DisplayNameFor(model => model.PointsPct)
+                                    @Html.DisplayNameFor(model => model.FirstOrDefault()!.PointsPct)
                                 </th>
                                 <th class="fixed-column">
-                                    @Html.DisplayNameFor(model => model.GoalsFor)
+                                    @Html.DisplayNameFor(model => model.FirstOrDefault()!.GoalsFor)
                                 </th>
                                 <th class="fixed-column">
-                                    @Html.DisplayNameFor(model => model.GoalsAgainst)
+                                    @Html.DisplayNameFor(model => model.FirstOrDefault()!.GoalsAgainst)
                                 </th>
                                 <th class="fixed-column">
-                                    @Html.DisplayNameFor(model => model.GoalDifferential)
+                                    @Html.DisplayNameFor(model => model.FirstOrDefault()!.GoalDifferential)
                                 </th>
                                 <th>
-                                    @Html.DisplayNameFor(model => model.Streak)
+                                    @Html.DisplayNameFor(model => model.FirstOrDefault()!.Streak)
                                 </th>
                                 <th class="fixed-column">
-                                    @Html.DisplayNameFor(model => model.RegulationWins)
+                                    @Html.DisplayNameFor(model => model.FirstOrDefault()!.RegulationWins)
                                 </th>
                                 <th class="fixed-column">
-                                    @Html.DisplayNameFor(model => model.RegPlusOTWins)
+                                    @Html.DisplayNameFor(model => model.FirstOrDefault()!.RegPlusOTWins)
                                 </th>
                                 <th class="record-column">
-                                    @Html.DisplayNameFor(model => model.RecordVsDivision_2021Format)
+                                    @Html.DisplayNameFor(model => model.FirstOrDefault()!.RecordVsDivision_2021Format)
                                 </th>
                                 @if (ViewBag.Season > 2021)
                                 {
                                     <th class="record-column">
-                                        @Html.DisplayNameFor(model => model.RecordVsConference_2021Format)
+                                        @Html.DisplayNameFor(model => model.FirstOrDefault()!.RecordVsConference_2021Format)
                                     </th>
                                 }
                                 <th class="record-column">
-                                    @Html.DisplayNameFor(model => model.InterConfRecord_2021Format)
+                                    @Html.DisplayNameFor(model => model.FirstOrDefault()!.InterConfRecord_2021Format)
                                 </th>
                             }
                             else
@@ -342,49 +342,49 @@
                                     #
                                 </th>
                                 <th colspan="2">
-                                    @Html.DisplayNameFor(model => model.Team)
+                                    @Html.DisplayNameFor(model => model.FirstOrDefault()!.Team)
                                 </th>
                                 <th class="fixed-column">
-                                    @Html.DisplayNameFor(model => model.GamesPlayed)
+                                    @Html.DisplayNameFor(model => model.FirstOrDefault()!.GamesPlayed)
                                 </th>
                                 <th class="fixed-column">
-                                    @Html.DisplayNameFor(model => model.Wins)
+                                    @Html.DisplayNameFor(model => model.FirstOrDefault()!.Wins)
                                 </th>
                                 <th class="fixed-column">
-                                    @Html.DisplayNameFor(model => model.Losses)
+                                    @Html.DisplayNameFor(model => model.FirstOrDefault()!.Losses)
                                 </th>
                                 <th>
-                                    @Html.DisplayNameFor(model => model.WinPct)
+                                    @Html.DisplayNameFor(model => model.FirstOrDefault()!.WinPct)
                                 </th>
                                 <th class="fixed-column">
-                                    @Html.DisplayNameFor(model => model.DivisionGamesBehind)
+                                    @Html.DisplayNameFor(model => model.FirstOrDefault()!.DivisionGamesBehind)
                                 </th>
                                 <th class="fixed-column">
-                                    @Html.DisplayNameFor(model => model.GoalsFor)
+                                    @Html.DisplayNameFor(model => model.FirstOrDefault()!.GoalsFor)
                                 </th>
                                 <th class="fixed-column">
-                                    @Html.DisplayNameFor(model => model.GoalsAgainst)
+                                    @Html.DisplayNameFor(model => model.FirstOrDefault()!.GoalsAgainst)
                                 </th>
                                 <th class="fixed-column">
-                                    @Html.DisplayNameFor(model => model.GoalDifferential)
+                                    @Html.DisplayNameFor(model => model.FirstOrDefault()!.GoalDifferential)
                                 </th>
                                 <th>
-                                    @Html.DisplayNameFor(model => model.Streak)
+                                    @Html.DisplayNameFor(model => model.FirstOrDefault()!.Streak)
                                 </th>
                                 <th class="fixed-column">
-                                    @Html.DisplayNameFor(model => model.RegulationWins)
+                                    @Html.DisplayNameFor(model => model.FirstOrDefault()!.RegulationWins)
                                 </th>
                                 <th class="fixed-column">
-                                    @Html.DisplayNameFor(model => model.RegPlusOTWins)
+                                    @Html.DisplayNameFor(model => model.FirstOrDefault()!.RegPlusOTWins)
                                 </th>
                                 <th class="record-column">
-                                    @Html.DisplayNameFor(model => model.RecordVsDivision_2024Format)
+                                    @Html.DisplayNameFor(model => model.FirstOrDefault()!.RecordVsDivision_2024Format)
                                 </th>
                                 <th class="record-column">
-                                    @Html.DisplayNameFor(model => model.RecordVsConference_2024Format)
+                                    @Html.DisplayNameFor(model => model.FirstOrDefault()!.RecordVsConference_2024Format)
                                 </th>
                                 <th class="record-column">
-                                    @Html.DisplayNameFor(model => model.InterConfRecord_2024Format)
+                                    @Html.DisplayNameFor(model => model.FirstOrDefault()!.InterConfRecord_2024Format)
                                 </th>
                             }
                         </tr>
@@ -555,55 +555,55 @@
                                 #
                             </th>
                             <th colspan="2">
-                                @Html.DisplayNameFor(model => model.Team)
+                                @Html.DisplayNameFor(model => model.FirstOrDefault()!.Team)
                             </th>
                             <th class="fixed-column">
-                                @Html.DisplayNameFor(model => model.GamesPlayed)
+                                @Html.DisplayNameFor(model => model.FirstOrDefault()!.GamesPlayed)
                             </th>
                             <th class="fixed-column">
-                                @Html.DisplayNameFor(model => model.Wins)
+                                @Html.DisplayNameFor(model => model.FirstOrDefault()!.Wins)
                             </th>
                             <th class="fixed-column">
-                                @Html.DisplayNameFor(model => model.Losses)
+                                @Html.DisplayNameFor(model => model.FirstOrDefault()!.Losses)
                             </th>
                             <th class="fixed-column">
-                                @Html.DisplayNameFor(model => model.OTLosses)
+                                @Html.DisplayNameFor(model => model.FirstOrDefault()!.OTLosses)
                             </th>
                             <th class="fixed-column">
-                                @Html.DisplayNameFor(model => model.Points)
+                                @Html.DisplayNameFor(model => model.FirstOrDefault()!.Points)
                             </th>
                             <th>
-                                @Html.DisplayNameFor(model => model.PointsPct)
+                                @Html.DisplayNameFor(model => model.FirstOrDefault()!.PointsPct)
                             </th>
                             <th class="fixed-column">
-                                @Html.DisplayNameFor(model => model.GoalsFor)
+                                @Html.DisplayNameFor(model => model.FirstOrDefault()!.GoalsFor)
                             </th>
                             <th class="fixed-column">
-                                @Html.DisplayNameFor(model => model.GoalsAgainst)
+                                @Html.DisplayNameFor(model => model.FirstOrDefault()!.GoalsAgainst)
                             </th>
                             <th class="fixed-column">
-                                @Html.DisplayNameFor(model => model.GoalDifferential)
+                                @Html.DisplayNameFor(model => model.FirstOrDefault()!.GoalDifferential)
                             </th>
                             <th>
-                                @Html.DisplayNameFor(model => model.Streak)
+                                @Html.DisplayNameFor(model => model.FirstOrDefault()!.Streak)
                             </th>
                             <th class="fixed-column">
-                                @Html.DisplayNameFor(model => model.RegulationWins)
+                                @Html.DisplayNameFor(model => model.FirstOrDefault()!.RegulationWins)
                             </th>
                             <th class="fixed-column">
-                                @Html.DisplayNameFor(model => model.RegPlusOTWins)
+                                @Html.DisplayNameFor(model => model.FirstOrDefault()!.RegPlusOTWins)
                             </th>
                             <th class="record-column">
-                                @Html.DisplayNameFor(model => model.RecordVsDivision_2021Format)
+                                @Html.DisplayNameFor(model => model.FirstOrDefault()!.RecordVsDivision_2021Format)
                             </th>
                             @if (ViewBag.Season > 2021)
                             {
                                 <th class="record-column">
-                                    @Html.DisplayNameFor(model => model.RecordVsConference_2021Format)
+                                    @Html.DisplayNameFor(model => model.FirstOrDefault()!.RecordVsConference_2021Format)
                                 </th>
                             }
                             <th class="record-column">
-                                @Html.DisplayNameFor(model => model.InterConfRecord_2021Format)
+                                @Html.DisplayNameFor(model => model.FirstOrDefault()!.InterConfRecord_2021Format)
                             </th>
                         }
                         else
@@ -612,49 +612,49 @@
                                 #
                             </th>
                             <th colspan="2">
-                                @Html.DisplayNameFor(model => model.Team)
+                                @Html.DisplayNameFor(model => model.FirstOrDefault()!.Team)
                             </th>
                             <th class="fixed-column">
-                                @Html.DisplayNameFor(model => model.GamesPlayed)
+                                @Html.DisplayNameFor(model => model.FirstOrDefault()!.GamesPlayed)
                             </th>
                             <th class="fixed-column">
-                                @Html.DisplayNameFor(model => model.Wins)
+                                @Html.DisplayNameFor(model => model.FirstOrDefault()!.Wins)
                             </th>
                             <th class="fixed-column">
-                                @Html.DisplayNameFor(model => model.Losses)
+                                @Html.DisplayNameFor(model => model.FirstOrDefault()!.Losses)
                             </th>
                             <th>
-                                @Html.DisplayNameFor(model => model.WinPct)
+                                @Html.DisplayNameFor(model => model.FirstOrDefault()!.WinPct)
                             </th>
                             <th class="fixed-column">
-                                @Html.DisplayNameFor(model => model.DivisionGamesBehind)
+                                @Html.DisplayNameFor(model => model.FirstOrDefault()!.DivisionGamesBehind)
                             </th>
                             <th class="fixed-column">
-                                @Html.DisplayNameFor(model => model.GoalsFor)
+                                @Html.DisplayNameFor(model => model.FirstOrDefault()!.GoalsFor)
                             </th>
                             <th class="fixed-column">
-                                @Html.DisplayNameFor(model => model.GoalsAgainst)
+                                @Html.DisplayNameFor(model => model.FirstOrDefault()!.GoalsAgainst)
                             </th>
                             <th class="fixed-column">
-                                @Html.DisplayNameFor(model => model.GoalDifferential)
+                                @Html.DisplayNameFor(model => model.FirstOrDefault()!.GoalDifferential)
                             </th>
                             <th>
-                                @Html.DisplayNameFor(model => model.Streak)
+                                @Html.DisplayNameFor(model => model.FirstOrDefault()!.Streak)
                             </th>
                             <th class="fixed-column">
-                                @Html.DisplayNameFor(model => model.RegulationWins)
+                                @Html.DisplayNameFor(model => model.FirstOrDefault()!.RegulationWins)
                             </th>
                             <th class="fixed-column">
-                                @Html.DisplayNameFor(model => model.RegPlusOTWins)
+                                @Html.DisplayNameFor(model => model.FirstOrDefault()!.RegPlusOTWins)
                             </th>
                             <th class="record-column">
-                                @Html.DisplayNameFor(model => model.RecordVsConference_2024Format)
+                                @Html.DisplayNameFor(model => model.FirstOrDefault()!.RecordVsConference_2024Format)
                             </th>
                             <th class="record-column">
-                                @Html.DisplayNameFor(model => model.RecordVsDivision_2024Format)
+                                @Html.DisplayNameFor(model => model.FirstOrDefault()!.RecordVsDivision_2024Format)
                             </th>
                             <th class="record-column">
-                                @Html.DisplayNameFor(model => model.InterConfRecord_2024Format)
+                                @Html.DisplayNameFor(model => model.FirstOrDefault()!.InterConfRecord_2024Format)
                             </th>
                         }
                     </tr>
@@ -812,52 +812,52 @@
                             #
                         </th>
                         <th colspan="2">
-                            @Html.DisplayNameFor(model => model.Team)
+                            @Html.DisplayNameFor(model => model.FirstOrDefault()!.Team)
                         </th>
                         <th class="fixed-column">
-                            @Html.DisplayNameFor(model => model.GamesPlayed)
+                            @Html.DisplayNameFor(model => model.FirstOrDefault()!.GamesPlayed)
                         </th>
                         <th class="fixed-column">
-                            @Html.DisplayNameFor(model => model.Wins)
+                            @Html.DisplayNameFor(model => model.FirstOrDefault()!.Wins)
                         </th>
                         <th class="fixed-column">
-                            @Html.DisplayNameFor(model => model.Losses)
+                            @Html.DisplayNameFor(model => model.FirstOrDefault()!.Losses)
                         </th>
                         <th class="fixed-column">
-                            @Html.DisplayNameFor(model => model.OTLosses)
+                            @Html.DisplayNameFor(model => model.FirstOrDefault()!.OTLosses)
                         </th>
                         <th class="fixed-column">
-                            @Html.DisplayNameFor(model => model.Points)
+                            @Html.DisplayNameFor(model => model.FirstOrDefault()!.Points)
                         </th>
                         <th>
-                            @Html.DisplayNameFor(model => model.PointsPct)
+                            @Html.DisplayNameFor(model => model.FirstOrDefault()!.PointsPct)
                         </th>
                         <th class="fixed-column">
-                            @Html.DisplayNameFor(model => model.GoalsFor)
+                            @Html.DisplayNameFor(model => model.FirstOrDefault()!.GoalsFor)
                         </th>
                         <th class="fixed-column">
-                            @Html.DisplayNameFor(model => model.GoalsAgainst)
+                            @Html.DisplayNameFor(model => model.FirstOrDefault()!.GoalsAgainst)
                         </th>
                         <th class="fixed-column">
-                            @Html.DisplayNameFor(model => model.GoalDifferential)
+                            @Html.DisplayNameFor(model => model.FirstOrDefault()!.GoalDifferential)
                         </th>
                         <th>
-                            @Html.DisplayNameFor(model => model.Streak)
+                            @Html.DisplayNameFor(model => model.FirstOrDefault()!.Streak)
                         </th>
                         <th class="fixed-column">
-                            @Html.DisplayNameFor(model => model.RegulationWins)
+                            @Html.DisplayNameFor(model => model.FirstOrDefault()!.RegulationWins)
                         </th>
                         <th class="fixed-column">
-                            @Html.DisplayNameFor(model => model.RegPlusOTWins)
+                            @Html.DisplayNameFor(model => model.FirstOrDefault()!.RegPlusOTWins)
                         </th>
                         <th class="record-column">
-                            @Html.DisplayNameFor(model => model.RecordVsDivision_2021Format)
+                            @Html.DisplayNameFor(model => model.FirstOrDefault()!.RecordVsDivision_2021Format)
                         </th>
                         <th class="record-column">
-                            @Html.DisplayNameFor(model => model.RecordVsConference_2021Format)
+                            @Html.DisplayNameFor(model => model.FirstOrDefault()!.RecordVsConference_2021Format)
                         </th>
                         <th class="record-column">
-                            @Html.DisplayNameFor(model => model.InterConfRecord_2021Format)
+                            @Html.DisplayNameFor(model => model.FirstOrDefault()!.InterConfRecord_2021Format)
                         </th>
                     }
                     else
@@ -866,49 +866,49 @@
                             #
                         </th>
                         <th colspan="2">
-                            @Html.DisplayNameFor(model => model.Team)
+                            @Html.DisplayNameFor(model => model.FirstOrDefault()!.Team)
                         </th>
                         <th class="fixed-column">
-                            @Html.DisplayNameFor(model => model.GamesPlayed)
+                            @Html.DisplayNameFor(model => model.FirstOrDefault()!.GamesPlayed)
                         </th>
                         <th class="fixed-column">
-                            @Html.DisplayNameFor(model => model.Wins)
+                            @Html.DisplayNameFor(model => model.FirstOrDefault()!.Wins)
                         </th>
                         <th class="fixed-column">
-                            @Html.DisplayNameFor(model => model.Losses)
+                            @Html.DisplayNameFor(model => model.FirstOrDefault()!.Losses)
                         </th>
                         <th>
-                            @Html.DisplayNameFor(model => model.WinPct)
+                            @Html.DisplayNameFor(model => model.FirstOrDefault()!.WinPct)
                         </th>
                         <th class="fixed-column">
-                            @Html.DisplayNameFor(model => model.DivisionGamesBehind)
+                            @Html.DisplayNameFor(model => model.FirstOrDefault()!.DivisionGamesBehind)
                         </th>
                         <th class="fixed-column">
-                            @Html.DisplayNameFor(model => model.GoalsFor)
+                            @Html.DisplayNameFor(model => model.FirstOrDefault()!.GoalsFor)
                         </th>
                         <th class="fixed-column">
-                            @Html.DisplayNameFor(model => model.GoalsAgainst)
+                            @Html.DisplayNameFor(model => model.FirstOrDefault()!.GoalsAgainst)
                         </th>
                         <th class="fixed-column">
-                            @Html.DisplayNameFor(model => model.GoalDifferential)
+                            @Html.DisplayNameFor(model => model.FirstOrDefault()!.GoalDifferential)
                         </th>
                         <th>
-                            @Html.DisplayNameFor(model => model.Streak)
+                            @Html.DisplayNameFor(model => model.FirstOrDefault()!.Streak)
                         </th>
                         <th class="fixed-column">
-                            @Html.DisplayNameFor(model => model.RegulationWins)
+                            @Html.DisplayNameFor(model => model.FirstOrDefault()!.RegulationWins)
                         </th>
                         <th class="fixed-column">
-                            @Html.DisplayNameFor(model => model.RegPlusOTWins)
+                            @Html.DisplayNameFor(model => model.FirstOrDefault()!.RegPlusOTWins)
                         </th>
                         <th class="record-column">
-                            @Html.DisplayNameFor(model => model.InterConfRecord_2024Format)
+                            @Html.DisplayNameFor(model => model.FirstOrDefault()!.InterConfRecord_2024Format)
                         </th>
                         <th class="record-column">
-                            @Html.DisplayNameFor(model => model.RecordVsConference_2024Format)
+                            @Html.DisplayNameFor(model => model.FirstOrDefault()!.RecordVsConference_2024Format)
                         </th>
                         <th class="record-column">
-                            @Html.DisplayNameFor(model => model.RecordVsDivision_2024Format)
+                            @Html.DisplayNameFor(model => model.FirstOrDefault()!.RecordVsDivision_2024Format)
                         </th>
                     }
                 </tr>

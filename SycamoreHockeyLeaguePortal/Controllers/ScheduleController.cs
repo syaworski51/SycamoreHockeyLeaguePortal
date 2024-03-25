@@ -248,10 +248,8 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             _context.Update(game);
             await _context.SaveChangesAsync();
 
-            if (game.Type == "Regular Season" && game.IsFinalized)
-            {
+            if (game.Type == "Regular Season" && game.IsFinalized && game.Period >= 3)
                 await UpdateStandings(game.Season.Year, game.AwayTeamId, game.HomeTeamId);
-            }
 
             if (game.Type == "Playoffs" && game.IsFinalized)
             {
@@ -261,8 +259,8 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                     .Include(s => s.Team1)
                     .Include(s => s.Team2)
                     .Where(s => s.Season.Year == game.Season.Year &&
-                                (s.Team1Id == game.AwayTeamId && s.Team1Id == game.HomeTeamId) ||
-                                (s.Team2Id == game.HomeTeamId && s.Team2Id == game.AwayTeamId))
+                                (s.Team1Id == game.HomeTeamId && s.Team2Id == game.AwayTeamId) ||
+                                (s.Team1Id == game.AwayTeamId && s.Team2Id == game.HomeTeamId))
                     .FirstOrDefault();
 
                 var seriesSchedule = _context.Schedule
@@ -311,7 +309,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             if (game.Type == "Playoffs")
                 return RedirectToAction(nameof(Playoffs), new { season = game.Season.Year, round = game.PlayoffRound.Index });
 
-            return RedirectToAction(nameof(Index), new { season = game.Season.Year, date = game.Date.ToShortDateString() });
+            return RedirectToAction(nameof(Index), new { season = game.Season.Year, weekOf = game.Date.ToShortDateString() });
         }
 
         // GET: Schedule/Delete/5
