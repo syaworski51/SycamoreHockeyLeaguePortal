@@ -163,5 +163,21 @@ namespace SycamoreHockeyLeaguePortal.Models
 
         [Column(TypeName = "decimal(4,1)")]
         public decimal InterConfWinPct { get; set; }
+
+        [Display(Name = "GP_L5")]
+        public int GamesPlayedInLast5Games { get; set; }
+
+        [Display(Name = "W_L5")]
+        public int WinsInLast5Games { get; set; }
+
+        [Display(Name = "L_L5")]
+        public int LossesInLast5Games { get; set; }
+
+        [Display(Name = "W%_L5")]
+        [Column(TypeName = "decimal(4,1)")]
+        public decimal WinPctInLast5Games { get; set; }
+
+        [Display(Name = "Last 5")]
+        public string RecordInLast5Games => $"{WinsInLast5Games}-{LossesInLast5Games}";
     }
 }

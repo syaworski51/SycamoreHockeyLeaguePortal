@@ -1,0 +1,134 @@
+﻿@model Team
+
+@{
+    Guid teamId = Model.Id;
+    IEnumerable<Schedule> schedule = ViewBag.Schedule;
+
+    string GetDayOfWeek(DateTime date)
+    {
+        return date.ToString("dddd");
+    }
+
+    string GetMonth(DateTime date)
+    {
+        return date.ToString("MMMM");
+    }
+
+    string GetDateString(DateTime date)
+    {
+        return $"{GetDayOfWeek(date)}, {GetMonth(date)} {date.Day}";
+    }
+
+    string GetOpponent(Schedule game)
+    {
+        if (game.AwayTeamId == teamId)
+            return $"@ {game.HomeTeam.FullName}";
+
+        return game.AwayTeam.FullName;
+    }
+
+    string GetOpponentLogoPath(Schedule game)
+    {
+        if (game.AwayTeamId == teamId)
+            return game.HomeTeam.LogoPath!;
+
+        return game.AwayTeam.LogoPath!;
+    }
+
+    string GetResult(Schedule game)
+    {
+        if (!game.IsLive && game.Period >= 3)
+        {
+            if (game.HomeTeamId == teamId)
+                return (game.HomeScore > game.AwayScore) ? "W" : "L";
+            else
+                return (game.AwayScore > game.HomeScore) ? "W" : "L";
+        }
+
+        return "";
+    }
+
+    string GetResultColor(Schedule game)
+    {
+        var result = GetResult(game);
+
+        switch (result)
+        {
+            case "W":
+                return "win";
+
+            case "L":
+                return "loss";
+
+            default:
+                return "text-black";
+        }
+    }
+
+    string GetScoreString(Schedule game)
+    {
+        string scoreString = "";
+
+        if (game.IsFinalized && game.Period >= 3)
+        {
+            scoreString = (game.HomeTeamId == teamId) ?
+                $"{game.HomeScore} - {game.AwayScore}" :
+                $"{game.AwayScore} - {game.HomeScore}";
+
+            if (game.Period > 3)
+            {
+                if (game.Period == 4)
+                    scoreString += " (OT)";
+                else
+                {
+                    if (game.Type == "Regular Season")
+                        scoreString += " (SO)";
+                    else
+                        scoreString += $" ({game.Period - 3}OT)";
+                }
+            }
+        }
+
+        return scoreString;
+    }
+}
+
+<table class="table team-schedule">
+    <thead>
+        <tr>
+            <th>
+                Date
+            </th>
+            <th colspan="2">
+                Opponent
+            </th>
+            <th colspan="2">
+                Result
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var game in schedule)
+        {
+            var isAwayGame = game.AwayTeamId == teamId ? "away-game" : "";
+
+            <tr class="@isAwayGame">
+                <td>
+                    @GetDateString(game.Date)
+                </td>
+                <td class="opponent-name">
+                    @GetOpponent(game)
+                </td>
+                <td class="opponent-logo">
+                    <img class="schedule-team-logo" src="~/@GetOpponentLogoPath(game)" />
+                </td>
+                <td class="@GetResultColor(game) result">
+                    @GetResult(game)
+                </td>
+                <td class="score">
+                    @GetScoreString(game)
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

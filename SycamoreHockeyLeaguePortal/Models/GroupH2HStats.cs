@@ -1,13 +1,15 @@
 ﻿namespace SycamoreHockeyLeaguePortal.Models
 {
-    public class MultiWayH2HStats
+    public class GroupH2HStats
     {
         public int GamesPlayed => Wins + Losses;
         public int Wins { get; set; }
         public int Losses { get; set; }
-        public decimal WinPct => 100 * ((decimal)Wins / GamesPlayed);
+        public decimal WinPct => (GamesPlayed > 0) ? 
+            100 * ((decimal)Wins / GamesPlayed) :
+            0;
 
-        public MultiWayH2HStats()
+        public GroupH2HStats()
         {
             Wins = 0;
             Losses = 0;

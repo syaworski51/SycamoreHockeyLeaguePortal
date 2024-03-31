@@ -1,0 +1,139 @@
+﻿@model Team
+
+@{
+    Guid teamId = Model.Id;
+    int season = ViewBag.Season;
+    Standings teamStats = ViewBag.TeamStats;
+
+    string GetStreakString(int streak)
+    {
+        streak = Math.Abs(streak);
+
+        if (streak > 0)
+            return $"W {streak}";
+
+        if (streak < 0)
+            return $"L {streak}";
+
+        return "--";
+    }
+
+    string GetGoalDifferentialString(int goalDifferential)
+    {
+        if (goalDifferential > 0)
+            return $"+{goalDifferential}";
+
+        return goalDifferential.ToString();
+    }
+
+    string GetRecordFormat(int season, Standings teamStats, string type = "overall")
+    {
+        if (season < 2024)
+        {
+            switch (type)
+            {
+                case "division":
+                    return teamStats.RecordVsDivision_2021Format;
+
+                case "conference":
+                    return teamStats.RecordVsConference_2021Format;
+
+                case "inter-conference":
+                    return teamStats.InterConfRecord_2021Format;
+
+                default:
+                    return teamStats.Record_2021Format;
+            }
+        }
+        else
+        {
+            switch (type)
+            {
+                case "division":
+                    return teamStats.RecordVsDivision_2024Format;
+
+                case "conference":
+                    return teamStats.RecordVsConference_2024Format;
+
+                case "inter-conference":
+                    return teamStats.InterConfRecord_2024Format;
+
+                default:
+                    return teamStats.Record_2024Format;
+            }
+        }
+    }
+}
+
+<div class="container team-stats-grid">
+    <div class="row">
+        <div class="col container team-stat">
+            <div class="row">
+                <div class="col">RECORD</div>
+                <div class="col stat">@GetRecordFormat(season, teamStats)</div>
+            </div>
+        </div>
+        <div class="col container team-stat">
+            @if (season < 2024)
+            {
+                <div class="row">
+                    <div class="col">POINTS</div>
+                    <div class="col stat">@teamStats.Points</div>
+                </div>
+            }
+            else
+            {
+                <div class="row">
+                    <div class="col">WIN %</div>
+                    <div class="col stat">@teamStats.WinPct</div>
+                </div>
+            }
+        </div>
+        <div class="col container team-stat">
+            <div class="row">
+                <div class="col">STREAK</div>
+                <div class="col stat">@GetStreakString(teamStats.Streak)</div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col container team-stat">
+            <div class="row">
+                <div class="col">GF</div>
+                <div class="col stat">@teamStats.GoalsFor</div>
+            </div>
+        </div>
+        <div class="col container team-stat">
+            <div class="row">
+                <div class="col">GA</div>
+                <div class="col stat">@teamStats.GoalsAgainst</div>
+            </div>
+        </div>
+        <div class="col container team-stat">
+            <div class="row">
+                <div class="col">GD</div>
+                <div class="col stat">@GetGoalDifferentialString(teamStats.GoalDifferential)</div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col container team-stat">
+            <div class="row">
+                <div class="col">DIVISION RECORD</div>
+                <div class="col stat">@GetRecordFormat(season, teamStats, "division")</div>
+            </div>
+        </div>
+        <div class="col container team-stat">
+            <div class="row">
+                <div class="col">CONF RECORD</div>
+                <div class="col stat">@GetRecordFormat(season, teamStats, "conference")</div>
+            </div>
+        </div>
+        <div class="col container team-stat">
+            <div class="row">
+                <div class="col">EAST/WEST RECORD</div>
+                <div class="col stat">@GetRecordFormat(season, teamStats, "inter-conference")</div>
+            </div>
+        </div>
+    </div>
+</div>

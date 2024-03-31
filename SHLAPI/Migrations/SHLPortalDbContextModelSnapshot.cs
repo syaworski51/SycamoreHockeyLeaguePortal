@@ -4,230 +4,27 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using SycamoreHockeyLeaguePortal.Data;
+using SHLAPI.Data;
 
 #nullable disable
 
-namespace SycamoreHockeyLeaguePortal.Data.Migrations
+namespace SHLAPI.Migrations
 {
-    [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [DbContext(typeof(SHLPortalDbContext))]
+    partial class SHLPortalDbContextModelSnapshot : ModelSnapshot
     {
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "7.0.15")
+                .HasAnnotation("ProductVersion", "7.0.17")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("ConcurrencyStamp")
-                        .IsConcurrencyToken()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Name")
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
-
-                    b.Property<string>("NormalizedName")
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("NormalizedName")
-                        .IsUnique()
-                        .HasDatabaseName("RoleNameIndex")
-                        .HasFilter("[NormalizedName] IS NOT NULL");
-
-                    b.ToTable("AspNetRoles", (string)null);
-                });
-
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("ClaimType")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ClaimValue")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("RoleId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("RoleId");
-
-                    b.ToTable("AspNetRoleClaims", (string)null);
-                });
-
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUser", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<int>("AccessFailedCount")
-                        .HasColumnType("int");
-
-                    b.Property<string>("ConcurrencyStamp")
-                        .IsConcurrencyToken()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Email")
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
-
-                    b.Property<bool>("EmailConfirmed")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("LockoutEnabled")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTimeOffset?>("LockoutEnd")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<string>("NormalizedEmail")
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
-
-                    b.Property<string>("NormalizedUserName")
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
-
-                    b.Property<string>("PasswordHash")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("PhoneNumber")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("PhoneNumberConfirmed")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("SecurityStamp")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("TwoFactorEnabled")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("UserName")
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("NormalizedEmail")
-                        .HasDatabaseName("EmailIndex");
-
-                    b.HasIndex("NormalizedUserName")
-                        .IsUnique()
-                        .HasDatabaseName("UserNameIndex")
-                        .HasFilter("[NormalizedUserName] IS NOT NULL");
-
-                    b.ToTable("AspNetUsers", (string)null);
-                });
-
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("ClaimType")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ClaimValue")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("AspNetUserClaims", (string)null);
-                });
-
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
-                {
-                    b.Property<string>("LoginProvider")
-                        .HasMaxLength(128)
-                        .HasColumnType("nvarchar(128)");
-
-                    b.Property<string>("ProviderKey")
-                        .HasMaxLength(128)
-                        .HasColumnType("nvarchar(128)");
-
-                    b.Property<string>("ProviderDisplayName")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("LoginProvider", "ProviderKey");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("AspNetUserLogins", (string)null);
-                });
-
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
-                {
-                    b.Property<string>("UserId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("RoleId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("UserId", "RoleId");
-
-                    b.HasIndex("RoleId");
-
-                    b.ToTable("AspNetUserRoles", (string)null);
-                });
-
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
-                {
-                    b.Property<string>("UserId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("LoginProvider")
-                        .HasMaxLength(128)
-                        .HasColumnType("nvarchar(128)");
-
-                    b.Property<string>("Name")
-                        .HasMaxLength(128)
-                        .HasColumnType("nvarchar(128)");
-
-                    b.Property<string>("Value")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("UserId", "LoginProvider", "Name");
-
-                    b.ToTable("AspNetUserTokens", (string)null);
-                });
-
-            modelBuilder.Entity("SycamoreHockeyLeaguePortal.Models.Alignment", b =>
+            modelBuilder.Entity("SHLAPI.Models.Alignment", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid?>("ConferenceId")
@@ -244,21 +41,20 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ConferenceId");
+                    b.HasIndex(new[] { "ConferenceId" }, "IX_Alignments_ConferenceId");
 
-                    b.HasIndex("DivisionId");
+                    b.HasIndex(new[] { "DivisionId" }, "IX_Alignments_DivisionId");
 
-                    b.HasIndex("SeasonId");
+                    b.HasIndex(new[] { "SeasonId" }, "IX_Alignments_SeasonId");
 
-                    b.HasIndex("TeamId");
+                    b.HasIndex(new[] { "TeamId" }, "IX_Alignments_TeamId");
 
                     b.ToTable("Alignments");
                 });
 
-            modelBuilder.Entity("SycamoreHockeyLeaguePortal.Models.Champion", b =>
+            modelBuilder.Entity("SHLAPI.Models.Champion", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("SeasonId")
@@ -269,17 +65,16 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("SeasonId");
+                    b.HasIndex(new[] { "SeasonId" }, "IX_Champions_SeasonId");
 
-                    b.HasIndex("TeamId");
+                    b.HasIndex(new[] { "TeamId" }, "IX_Champions_TeamId");
 
                     b.ToTable("Champions");
                 });
 
-            modelBuilder.Entity("SycamoreHockeyLeaguePortal.Models.ChampionsRound", b =>
+            modelBuilder.Entity("SHLAPI.Models.ChampionsRound", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("BestOf")
@@ -299,17 +94,16 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ChampionId");
+                    b.HasIndex(new[] { "ChampionId" }, "IX_ChampionsRounds_ChampionId");
 
-                    b.HasIndex("OpponentId");
+                    b.HasIndex(new[] { "OpponentId" }, "IX_ChampionsRounds_OpponentId");
 
                     b.ToTable("ChampionsRounds");
                 });
 
-            modelBuilder.Entity("SycamoreHockeyLeaguePortal.Models.Conference", b =>
+            modelBuilder.Entity("SHLAPI.Models.Conference", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Code")
@@ -325,10 +119,9 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
                     b.ToTable("Conferences");
                 });
 
-            modelBuilder.Entity("SycamoreHockeyLeaguePortal.Models.Division", b =>
+            modelBuilder.Entity("SHLAPI.Models.Division", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Code")
@@ -344,10 +137,9 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
                     b.ToTable("Divisions");
                 });
 
-            modelBuilder.Entity("SycamoreHockeyLeaguePortal.Models.GameType", b =>
+            modelBuilder.Entity("SHLAPI.Models.GameType", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("Index")
@@ -359,17 +151,18 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
 
                     b.Property<string>("ParameterValue")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("nvarchar(max)")
+                        .HasDefaultValueSql("(N'')");
 
                     b.HasKey("Id");
 
                     b.ToTable("GameTypes");
                 });
 
-            modelBuilder.Entity("SycamoreHockeyLeaguePortal.Models.PlayoffRound", b =>
+            modelBuilder.Entity("SHLAPI.Models.PlayoffRound", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("Index")
@@ -384,15 +177,14 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("SeasonId");
+                    b.HasIndex(new[] { "SeasonId" }, "IX_PlayoffRounds_SeasonId");
 
                     b.ToTable("PlayoffRounds");
                 });
 
-            modelBuilder.Entity("SycamoreHockeyLeaguePortal.Models.PlayoffSeries", b =>
+            modelBuilder.Entity("SHLAPI.Models.PlayoffSeries", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("RoundId")
@@ -418,21 +210,20 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("RoundId");
+                    b.HasIndex(new[] { "RoundId" }, "IX_PlayoffSeries_RoundId");
 
-                    b.HasIndex("SeasonId");
+                    b.HasIndex(new[] { "SeasonId" }, "IX_PlayoffSeries_SeasonId");
 
-                    b.HasIndex("Team1Id");
+                    b.HasIndex(new[] { "Team1Id" }, "IX_PlayoffSeries_Team1Id");
 
-                    b.HasIndex("Team2Id");
+                    b.HasIndex(new[] { "Team2Id" }, "IX_PlayoffSeries_Team2Id");
 
                     b.ToTable("PlayoffSeries");
                 });
 
-            modelBuilder.Entity("SycamoreHockeyLeaguePortal.Models.PlayoffStatus", b =>
+            modelBuilder.Entity("SHLAPI.Models.PlayoffStatus", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("ActiveFrom")
@@ -457,10 +248,9 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
                     b.ToTable("PlayoffStatuses");
                 });
 
-            modelBuilder.Entity("SycamoreHockeyLeaguePortal.Models.ProgramFlag", b =>
+            modelBuilder.Entity("SHLAPI.Models.ProgramFlag", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Description")
@@ -475,10 +265,9 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
                     b.ToTable("ProgramFlags");
                 });
 
-            modelBuilder.Entity("SycamoreHockeyLeaguePortal.Models.Schedule", b =>
+            modelBuilder.Entity("SHLAPI.Models.Schedule", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<int?>("AwayScore")
@@ -499,8 +288,11 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
                     b.Property<Guid>("HomeTeamId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<bool>("IsFinalized")
-                        .HasColumnType("bit");
+                    b.Property<bool?>("IsFinalized")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValueSql("(CONVERT([bit],(0)))");
 
                     b.Property<bool>("IsLive")
                         .HasColumnType("bit");
@@ -523,21 +315,20 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AwayTeamId");
+                    b.HasIndex(new[] { "AwayTeamId" }, "IX_Schedule_AwayTeamId");
 
-                    b.HasIndex("HomeTeamId");
+                    b.HasIndex(new[] { "HomeTeamId" }, "IX_Schedule_HomeTeamId");
 
-                    b.HasIndex("PlayoffRoundId");
+                    b.HasIndex(new[] { "PlayoffRoundId" }, "IX_Schedule_PlayoffRoundId");
 
-                    b.HasIndex("SeasonId");
+                    b.HasIndex(new[] { "SeasonId" }, "IX_Schedule_SeasonId");
 
-                    b.ToTable("Schedule");
+                    b.ToTable("Schedule", (string)null);
                 });
 
-            modelBuilder.Entity("SycamoreHockeyLeaguePortal.Models.Season", b =>
+            modelBuilder.Entity("SHLAPI.Models.Season", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("GamesPerTeam")
@@ -551,20 +342,19 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
                     b.ToTable("Seasons");
                 });
 
-            modelBuilder.Entity("SycamoreHockeyLeaguePortal.Models.Standings", b =>
+            modelBuilder.Entity("SHLAPI.Models.Standings", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<decimal>("ConferenceGamesBehind")
-                        .HasColumnType("decimal(3,1)");
+                        .HasColumnType("decimal(3, 1)");
 
                     b.Property<Guid?>("ConferenceId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<decimal>("DivisionGamesBehind")
-                        .HasColumnType("decimal(3,1)");
+                        .HasColumnType("decimal(3, 1)");
 
                     b.Property<Guid?>("DivisionId")
                         .HasColumnType("uniqueidentifier");
@@ -596,17 +386,18 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
                     b.Property<int>("InterConfLosses")
                         .HasColumnType("int");
 
-                    b.Property<int>("InterConfOTLosses")
-                        .HasColumnType("int");
+                    b.Property<int>("InterConfOtlosses")
+                        .HasColumnType("int")
+                        .HasColumnName("InterConfOTLosses");
 
                     b.Property<decimal>("InterConfWinPct")
-                        .HasColumnType("decimal(4,1)");
+                        .HasColumnType("decimal(4, 1)");
 
                     b.Property<int>("InterConfWins")
                         .HasColumnType("int");
 
                     b.Property<decimal>("LeagueGamesBehind")
-                        .HasColumnType("decimal(3,1)");
+                        .HasColumnType("decimal(3, 1)");
 
                     b.Property<int>("Losses")
                         .HasColumnType("int");
@@ -623,14 +414,17 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
                     b.Property<int>("MaximumPossiblePoints")
                         .HasColumnType("int");
 
-                    b.Property<int>("OTLosses")
-                        .HasColumnType("int");
+                    b.Property<int>("Otlosses")
+                        .HasColumnType("int")
+                        .HasColumnName("OTLosses");
 
-                    b.Property<int>("OTLossesVsConference")
-                        .HasColumnType("int");
+                    b.Property<int>("OtlossesVsConference")
+                        .HasColumnType("int")
+                        .HasColumnName("OTLossesVsConference");
 
-                    b.Property<int>("OTLossesVsDivision")
-                        .HasColumnType("int");
+                    b.Property<int>("OtlossesVsDivision")
+                        .HasColumnType("int")
+                        .HasColumnName("OTLossesVsDivision");
 
                     b.Property<string>("PlayoffStatus")
                         .HasColumnType("nvarchar(max)");
@@ -639,10 +433,11 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
                         .HasColumnType("int");
 
                     b.Property<decimal>("PointsPct")
-                        .HasColumnType("decimal(4,1)");
+                        .HasColumnType("decimal(4, 1)");
 
-                    b.Property<int>("RegPlusOTWins")
-                        .HasColumnType("int");
+                    b.Property<int>("RegPlusOtwins")
+                        .HasColumnType("int")
+                        .HasColumnName("RegPlusOTWins");
 
                     b.Property<int>("RegulationWins")
                         .HasColumnType("int");
@@ -666,16 +461,16 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<decimal>("WinPct")
-                        .HasColumnType("decimal(4,1)");
+                        .HasColumnType("decimal(4, 1)");
 
                     b.Property<decimal>("WinPctInLast5Games")
-                        .HasColumnType("decimal(4,1)");
+                        .HasColumnType("decimal(4, 1)");
 
                     b.Property<decimal>("WinPctVsConference")
-                        .HasColumnType("decimal(4,1)");
+                        .HasColumnType("decimal(4, 1)");
 
                     b.Property<decimal>("WinPctVsDivision")
-                        .HasColumnType("decimal(4,1)");
+                        .HasColumnType("decimal(4, 1)");
 
                     b.Property<int>("Wins")
                         .HasColumnType("int");
@@ -691,21 +486,20 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ConferenceId");
+                    b.HasIndex(new[] { "ConferenceId" }, "IX_Standings_ConferenceId");
 
-                    b.HasIndex("DivisionId");
+                    b.HasIndex(new[] { "DivisionId" }, "IX_Standings_DivisionId");
 
-                    b.HasIndex("SeasonId");
+                    b.HasIndex(new[] { "SeasonId" }, "IX_Standings_SeasonId");
 
-                    b.HasIndex("TeamId");
+                    b.HasIndex(new[] { "TeamId" }, "IX_Standings_TeamId");
 
                     b.ToTable("Standings");
                 });
 
-            modelBuilder.Entity("SycamoreHockeyLeaguePortal.Models.StandingsSortOption", b =>
+            modelBuilder.Entity("SHLAPI.Models.StandingsSortOption", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("FirstYear")
@@ -730,10 +524,9 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
                     b.ToTable("StandingsSortOptions");
                 });
 
-            modelBuilder.Entity("SycamoreHockeyLeaguePortal.Models.Team", b =>
+            modelBuilder.Entity("SHLAPI.Models.Team", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("AlternateName")
@@ -756,7 +549,9 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
 
                     b.Property<string>("PrimaryColor")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("nvarchar(max)")
+                        .HasDefaultValueSql("(N'')");
 
                     b.Property<string>("SecondaryColor")
                         .HasColumnType("nvarchar(max)");
@@ -769,75 +564,24 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
                     b.ToTable("Teams");
                 });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
+            modelBuilder.Entity("SHLAPI.Models.Alignment", b =>
                 {
-                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
-                        .WithMany()
-                        .HasForeignKey("RoleId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
-                {
-                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", null)
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
-                {
-                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", null)
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
-                {
-                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
-                        .WithMany()
-                        .HasForeignKey("RoleId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", null)
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
-                {
-                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", null)
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("SycamoreHockeyLeaguePortal.Models.Alignment", b =>
-                {
-                    b.HasOne("SycamoreHockeyLeaguePortal.Models.Conference", "Conference")
-                        .WithMany()
+                    b.HasOne("SHLAPI.Models.Conference", "Conference")
+                        .WithMany("Alignments")
                         .HasForeignKey("ConferenceId");
 
-                    b.HasOne("SycamoreHockeyLeaguePortal.Models.Division", "Division")
-                        .WithMany()
+                    b.HasOne("SHLAPI.Models.Division", "Division")
+                        .WithMany("Alignments")
                         .HasForeignKey("DivisionId");
 
-                    b.HasOne("SycamoreHockeyLeaguePortal.Models.Season", "Season")
-                        .WithMany()
+                    b.HasOne("SHLAPI.Models.Season", "Season")
+                        .WithMany("Alignments")
                         .HasForeignKey("SeasonId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("SycamoreHockeyLeaguePortal.Models.Team", "Team")
-                        .WithMany()
+                    b.HasOne("SHLAPI.Models.Team", "Team")
+                        .WithMany("Alignments")
                         .HasForeignKey("TeamId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -851,16 +595,16 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
                     b.Navigation("Team");
                 });
 
-            modelBuilder.Entity("SycamoreHockeyLeaguePortal.Models.Champion", b =>
+            modelBuilder.Entity("SHLAPI.Models.Champion", b =>
                 {
-                    b.HasOne("SycamoreHockeyLeaguePortal.Models.Season", "Season")
-                        .WithMany()
+                    b.HasOne("SHLAPI.Models.Season", "Season")
+                        .WithMany("Champions")
                         .HasForeignKey("SeasonId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("SycamoreHockeyLeaguePortal.Models.Team", "Team")
-                        .WithMany()
+                    b.HasOne("SHLAPI.Models.Team", "Team")
+                        .WithMany("Champions")
                         .HasForeignKey("TeamId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -870,18 +614,16 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
                     b.Navigation("Team");
                 });
 
-            modelBuilder.Entity("SycamoreHockeyLeaguePortal.Models.ChampionsRound", b =>
+            modelBuilder.Entity("SHLAPI.Models.ChampionsRound", b =>
                 {
-                    b.HasOne("SycamoreHockeyLeaguePortal.Models.Champion", "Champion")
-                        .WithMany()
+                    b.HasOne("SHLAPI.Models.Champion", "Champion")
+                        .WithMany("ChampionsRounds")
                         .HasForeignKey("ChampionId")
-                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("SycamoreHockeyLeaguePortal.Models.Team", "Opponent")
-                        .WithMany()
+                    b.HasOne("SHLAPI.Models.Team", "Opponent")
+                        .WithMany("ChampionsRounds")
                         .HasForeignKey("OpponentId")
-                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Champion");
@@ -889,10 +631,10 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
                     b.Navigation("Opponent");
                 });
 
-            modelBuilder.Entity("SycamoreHockeyLeaguePortal.Models.PlayoffRound", b =>
+            modelBuilder.Entity("SHLAPI.Models.PlayoffRound", b =>
                 {
-                    b.HasOne("SycamoreHockeyLeaguePortal.Models.Season", "Season")
-                        .WithMany()
+                    b.HasOne("SHLAPI.Models.Season", "Season")
+                        .WithMany("PlayoffRounds")
                         .HasForeignKey("SeasonId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -900,30 +642,26 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
                     b.Navigation("Season");
                 });
 
-            modelBuilder.Entity("SycamoreHockeyLeaguePortal.Models.PlayoffSeries", b =>
+            modelBuilder.Entity("SHLAPI.Models.PlayoffSeries", b =>
                 {
-                    b.HasOne("SycamoreHockeyLeaguePortal.Models.PlayoffRound", "Round")
-                        .WithMany()
+                    b.HasOne("SHLAPI.Models.PlayoffRound", "Round")
+                        .WithMany("PlayoffSeries")
                         .HasForeignKey("RoundId")
-                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("SycamoreHockeyLeaguePortal.Models.Season", "Season")
-                        .WithMany()
+                    b.HasOne("SHLAPI.Models.Season", "Season")
+                        .WithMany("PlayoffSeries")
                         .HasForeignKey("SeasonId")
-                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("SycamoreHockeyLeaguePortal.Models.Team", "Team1")
-                        .WithMany()
+                    b.HasOne("SHLAPI.Models.Team", "Team1")
+                        .WithMany("PlayoffSeriesTeam1s")
                         .HasForeignKey("Team1Id")
-                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("SycamoreHockeyLeaguePortal.Models.Team", "Team2")
-                        .WithMany()
+                    b.HasOne("SHLAPI.Models.Team", "Team2")
+                        .WithMany("PlayoffSeriesTeam2s")
                         .HasForeignKey("Team2Id")
-                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Round");
@@ -935,28 +673,25 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
                     b.Navigation("Team2");
                 });
 
-            modelBuilder.Entity("SycamoreHockeyLeaguePortal.Models.Schedule", b =>
+            modelBuilder.Entity("SHLAPI.Models.Schedule", b =>
                 {
-                    b.HasOne("SycamoreHockeyLeaguePortal.Models.Team", "AwayTeam")
-                        .WithMany()
+                    b.HasOne("SHLAPI.Models.Team", "AwayTeam")
+                        .WithMany("ScheduleAwayTeams")
                         .HasForeignKey("AwayTeamId")
-                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("SycamoreHockeyLeaguePortal.Models.Team", "HomeTeam")
-                        .WithMany()
+                    b.HasOne("SHLAPI.Models.Team", "HomeTeam")
+                        .WithMany("ScheduleHomeTeams")
                         .HasForeignKey("HomeTeamId")
-                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("SycamoreHockeyLeaguePortal.Models.PlayoffRound", "PlayoffRound")
-                        .WithMany()
+                    b.HasOne("SHLAPI.Models.PlayoffRound", "PlayoffRound")
+                        .WithMany("Schedules")
                         .HasForeignKey("PlayoffRoundId");
 
-                    b.HasOne("SycamoreHockeyLeaguePortal.Models.Season", "Season")
-                        .WithMany()
+                    b.HasOne("SHLAPI.Models.Season", "Season")
+                        .WithMany("Schedules")
                         .HasForeignKey("SeasonId")
-                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("AwayTeam");
@@ -968,24 +703,24 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
                     b.Navigation("Season");
                 });
 
-            modelBuilder.Entity("SycamoreHockeyLeaguePortal.Models.Standings", b =>
+            modelBuilder.Entity("SHLAPI.Models.Standings", b =>
                 {
-                    b.HasOne("SycamoreHockeyLeaguePortal.Models.Conference", "Conference")
-                        .WithMany()
+                    b.HasOne("SHLAPI.Models.Conference", "Conference")
+                        .WithMany("Standings")
                         .HasForeignKey("ConferenceId");
 
-                    b.HasOne("SycamoreHockeyLeaguePortal.Models.Division", "Division")
-                        .WithMany()
+                    b.HasOne("SHLAPI.Models.Division", "Division")
+                        .WithMany("Standings")
                         .HasForeignKey("DivisionId");
 
-                    b.HasOne("SycamoreHockeyLeaguePortal.Models.Season", "Season")
-                        .WithMany()
+                    b.HasOne("SHLAPI.Models.Season", "Season")
+                        .WithMany("Standings")
                         .HasForeignKey("SeasonId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("SycamoreHockeyLeaguePortal.Models.Team", "Team")
-                        .WithMany()
+                    b.HasOne("SHLAPI.Models.Team", "Team")
+                        .WithMany("Standings")
                         .HasForeignKey("TeamId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -997,6 +732,66 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
                     b.Navigation("Season");
 
                     b.Navigation("Team");
+                });
+
+            modelBuilder.Entity("SHLAPI.Models.Champion", b =>
+                {
+                    b.Navigation("ChampionsRounds");
+                });
+
+            modelBuilder.Entity("SHLAPI.Models.Conference", b =>
+                {
+                    b.Navigation("Alignments");
+
+                    b.Navigation("Standings");
+                });
+
+            modelBuilder.Entity("SHLAPI.Models.Division", b =>
+                {
+                    b.Navigation("Alignments");
+
+                    b.Navigation("Standings");
+                });
+
+            modelBuilder.Entity("SHLAPI.Models.PlayoffRound", b =>
+                {
+                    b.Navigation("PlayoffSeries");
+
+                    b.Navigation("Schedules");
+                });
+
+            modelBuilder.Entity("SHLAPI.Models.Season", b =>
+                {
+                    b.Navigation("Alignments");
+
+                    b.Navigation("Champions");
+
+                    b.Navigation("PlayoffRounds");
+
+                    b.Navigation("PlayoffSeries");
+
+                    b.Navigation("Schedules");
+
+                    b.Navigation("Standings");
+                });
+
+            modelBuilder.Entity("SHLAPI.Models.Team", b =>
+                {
+                    b.Navigation("Alignments");
+
+                    b.Navigation("Champions");
+
+                    b.Navigation("ChampionsRounds");
+
+                    b.Navigation("PlayoffSeriesTeam1s");
+
+                    b.Navigation("PlayoffSeriesTeam2s");
+
+                    b.Navigation("ScheduleAwayTeams");
+
+                    b.Navigation("ScheduleHomeTeams");
+
+                    b.Navigation("Standings");
                 });
 #pragma warning restore 612, 618
         }

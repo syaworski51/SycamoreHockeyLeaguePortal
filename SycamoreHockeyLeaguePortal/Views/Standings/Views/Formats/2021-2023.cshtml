@@ -1,0 +1,362 @@
+﻿@model List<Standings>
+@inject SycamoreHockeyLeaguePortal.Data.ApplicationDbContext _context
+
+@{
+    IEnumerable<Standings> teams = ViewBag.Teams;
+    int season = ViewBag.Season;
+    string viewBy = ViewBag.ViewBy;
+
+    string GetName(Team team)
+    {
+        var teamsInSameCity = _context.Team
+            .Where(t => t.City == team.City);
+
+        if (teamsInSameCity.Count() > 1)
+            return team.AlternateName!;
+
+        return team.City;
+    }
+
+    string GetStreak(Standings teamStats)
+    {
+        if (teamStats.Streak != 0)
+        {
+            string type = (teamStats.Streak > 0) ? "W" : "L";
+            int duration = Math.Abs(teamStats.Streak);
+            return $"{type} {duration}";
+        }
+
+        return "--";
+    }
+
+    string GetColor(int value)
+    {
+        if (value > 0)
+            return "text-success";
+
+        if (value < 0)
+            return "text-danger";
+
+        return "text-dark";
+    }
+
+    string IsRowPlayoffCutoff(int rank)
+    {
+        int cutoff = viewBy == "conference" ? 8 : 4;
+
+        if ((season <= 2022 && viewBy == "division") ||
+            (season >= 2023 && viewBy == "conference"))
+            return (rank == cutoff) ?
+                "playoff-cutoff" :
+                "standings-record";
+
+        return "standings-record";
+    }
+
+    string GetGoalDifferentialString(int gd)
+    {
+        if (gd > 0)
+            return $"+{gd}";
+
+        return gd.ToString();
+    }
+
+    List<List<Standings>> GetStandingsByDivision(string conference)
+    {
+        List<List<Standings>> standings = new List<List<Standings>>();
+
+        var divisions = _context.Alignment
+            .Where(s => s.Season.Year == season &&
+                        s.Conference.Code == conference)
+            .Select(d => d.Division)
+            .Distinct();
+
+        foreach (var division in divisions)
+        {
+            standings.Add(new List<Standings>());
+
+            var teams = Model
+                .Where(s => s.DivisionId == division.Id);
+
+            foreach (var team in teams)
+                standings.Last().Add(team);
+        }
+
+        return standings;
+    }
+
+    List<Standings> GetTeamsAtPosition(string conference, int highestPosition, int? lowestPosition = null)
+    {
+        List<Standings> teams = new List<Standings>();
+
+        var divisions = _context.Alignment
+            .Where(s => s.Season.Year == season &&
+                        s.Conference.Code == conference)
+            .Select(s => s.Division)
+            .Distinct();
+
+        if (lowestPosition != null)
+        {
+            for (int position = highestPosition; position <= lowestPosition; position++)
+            {
+                foreach (var division in divisions)
+                {
+                    var divisionStandings = Model
+                        .Where(s => s.DivisionId == division.Id)
+                        .ToList();
+
+                    teams.Add(divisionStandings[position - 1]);
+                }
+            }
+        }
+        else
+        {
+            foreach (var division in divisions)
+            {
+                var divisionStandings = Model
+                    .Where(s => s.DivisionId == division.Id)
+                    .ToList();
+
+                teams.Add(divisionStandings[highestPosition - 1]);
+            }
+        }
+
+
+
+        return teams;
+    }
+
+    List<Standings> GetLeaders(string conference)
+    {
+        return GetTeamsAtPosition(conference, 1);
+    }
+
+    List<Standings> Get2ndPlaceTeams(string conference)
+    {
+        return GetTeamsAtPosition(conference, 2);
+    }
+
+    List<Standings> GetWildCards(string conference)
+    {
+        return GetTeamsAtPosition(conference, 3, 4);
+    }
+
+    string GetBadgeClass(int season, string playoffStatus)
+    {
+        string clinchedPresidentsTrophy = "bg-warning text-dark";
+        string clinchedConference = "bg-success";
+        string clinchedDivision = "bg-success";
+        string clinchedHomeIceAdvantage = "bg-primary";
+        string clinched2021PlayoffSpot = "bg-primary";
+        string clinchedPlayoffSpot = "bg-secondary";
+        string eliminated = "bg-danger";
+
+        if (season == 2021)
+        {
+            switch (playoffStatus)
+            {
+                case "z":
+                    return clinchedPresidentsTrophy;
+
+                case "y":
+                    return clinchedDivision;
+
+                case "e":
+                    return eliminated;
+
+                default:
+                    return clinched2021PlayoffSpot;
+            }
+        }
+        else
+        {
+            switch (playoffStatus)
+            {
+                case "P":
+                    return clinchedPresidentsTrophy;
+
+                case "Z":
+                    return clinchedConference;
+
+                case "Y":
+                    return clinchedDivision;
+
+                case "X":
+                    return clinchedHomeIceAdvantage;
+
+                case "e":
+                    return eliminated;
+
+                default:
+                    return clinchedPlayoffSpot;
+            }
+        }
+    }
+
+    string GetPlayoffStatusDescription(string symbol)
+    {
+        var description = _context.PlayoffStatus
+            .Where(ps => ps.Symbol == symbol &&
+                         season >= ps.ActiveFrom &&
+                         (season <= ps.ActiveTo || ps.ActiveTo == null))
+            .Select(ps => ps.Description)
+            .FirstOrDefault()!;
+
+        return description;
+    }
+
+    string GetNextGame(Standings team)
+    {
+        var nextGame = _context.Schedule
+            .Where(s => s.Season.Year == season &&
+                        (s.AwayTeamId == team.TeamId ||
+                         s.HomeTeamId == team.TeamId) &&
+                        !s.IsLive && s.Period == 0)
+            .First();
+
+        string month = nextGame.Date.Month.ToString();
+        string day = string.Format("{0:D2}", nextGame.Date.Day);
+        bool isHomeOrAway = nextGame.HomeTeamId == team.TeamId;
+        string homeOrAway = isHomeOrAway ? "vs" : "@";
+        Team opponent = isHomeOrAway ? nextGame.AwayTeam : nextGame.HomeTeam;
+
+        return $"{month}/{day} {homeOrAway} {opponent.Code}";
+    }
+}
+
+<table class="table standings">
+    <thead>
+        <tr>
+            <th>
+                #
+            </th>
+            <th colspan="2">
+                @Html.DisplayNameFor(model => model.FirstOrDefault()!.Team)
+            </th>
+            <th class="fixed-column">
+                @Html.DisplayNameFor(model => model.FirstOrDefault()!.GamesPlayed)
+            </th>
+            <th class="fixed-column">
+                @Html.DisplayNameFor(model => model.FirstOrDefault()!.Wins)
+            </th>
+            <th class="fixed-column">
+                @Html.DisplayNameFor(model => model.FirstOrDefault()!.Losses)
+            </th>
+            <th class="fixed-column">
+                @Html.DisplayNameFor(model => model.FirstOrDefault()!.OTLosses)
+            </th>
+            <th class="fixed-column">
+                @Html.DisplayNameFor(model => model.FirstOrDefault()!.Points)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.FirstOrDefault()!.PointsPct)
+            </th>
+            <th class="fixed-column">
+                @Html.DisplayNameFor(model => model.FirstOrDefault()!.GoalsFor)
+            </th>
+            <th class="fixed-column">
+                @Html.DisplayNameFor(model => model.FirstOrDefault()!.GoalsAgainst)
+            </th>
+            <th class="fixed-column">
+                @Html.DisplayNameFor(model => model.FirstOrDefault()!.GoalDifferential)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.FirstOrDefault()!.Streak)
+            </th>
+            <th class="fixed-column">
+                @Html.DisplayNameFor(model => model.FirstOrDefault()!.RegulationWins)
+            </th>
+            <th class="fixed-column">
+                @Html.DisplayNameFor(model => model.FirstOrDefault()!.RegPlusOTWins)
+            </th>
+            <th class="record-column">
+                @Html.DisplayNameFor(model => model.FirstOrDefault()!.RecordVsDivision_2021Format)
+            </th>
+            @if (season > 2021)
+            {
+                <th class="record-column">
+                    @Html.DisplayNameFor(model => model.FirstOrDefault()!.RecordVsConference_2021Format)
+                </th>
+            }
+            <th class="record-column">
+                @Html.DisplayNameFor(model => model.FirstOrDefault()!.InterConfRecord_2021Format)
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+        @{
+            int rank = 1;
+
+            foreach (var team in teams)
+            {
+                <tr class="@IsRowPlayoffCutoff(rank)">
+                    <th>
+                        <a class="change-playoff-status" asp-action="PlayoffStatus" asp-route-id="@team.Id" asp-route-currentStatus="@team.PlayoffStatus" asp-route-viewBy="@ViewBag.ViewBy">@rank</a>
+                    </th>
+                    <td class="team-logo">
+                        <img src="~/@team.Team.LogoPath" width="25" height="25" />
+                    </td>
+                    <td class="team-name">
+                        <a class="team-link" asp-controller="Teams" asp-action="Details" asp-route-id="@team.Team.Code" asp-route-season="@season" asp-route-gameType="regular-season">@team.Team.FullName</a>
+                        @if (team.PlayoffStatus != "")
+                        {
+                            <span class="badge @GetBadgeClass(season, team.PlayoffStatus!)" title="@GetPlayoffStatusDescription(team.PlayoffStatus!)">@team.PlayoffStatus</span>
+                        }
+                    </td>
+                    <td class="text-secondary">
+                        @Html.DisplayFor(modelteam => team.GamesPlayed)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelteam => team.Wins)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelteam => team.Losses)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelteam => team.OTLosses)
+                    </td>
+                    <th>
+                        @Html.DisplayFor(modelteam => team.Points)
+                    </th>
+                    <td>
+                        @string.Format("{0:F1}", team.PointsPct)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelteam => team.GoalsFor)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelteam => team.GoalsAgainst)
+                    </td>
+                    <td class="@GetColor(team.GoalDifferential)">
+                        @GetGoalDifferentialString(team.GoalDifferential)
+                    </td>
+                    <td class="@GetColor(team.Streak)">
+                        @GetStreak(team)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelteam => team.RegulationWins)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelteam => team.RegPlusOTWins)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelteam => team.RecordVsDivision_2021Format)
+                    </td>
+                    @if (ViewBag.Season > 2021)
+                    {
+                        <td>
+                            @Html.DisplayFor(modelteam => team.RecordVsConference_2021Format)
+                        </td>
+                    }
+                    <td>
+                        @Html.DisplayFor(modelteam => team.InterConfRecord_2021Format)
+                    </td>
+                </tr>
+
+                rank++;
+            }
+
+            _context.SaveChanges();
+        }
+    </tbody>
+</table>

@@ -1,4 +1,5 @@
 ﻿@model List<Standings>
+@inject SycamoreHockeyLeaguePortal.Data.ApplicationDbContext _context
 
 @{
     int season = ViewBag.Season;
@@ -6,137 +7,37 @@
     var conferences = Model
         .Where(s => s.Season.Year == season)
         .Select(s => s.Conference)
-        .Distinct();
+        .Distinct()
+        .OrderBy(c => c!.Name);
 }
 
 @foreach (var conference in conferences)
 {
-    <h3>@conference.Name</h3>
+    <h3>@conference!.Name</h3>
 
     var divisions = Model
-            .Where(s => s.Season.Year == season &&
-                        s.Conference == conference)
-            .Select(s => s.Division)
-            .Distinct();
+        .Where(s => s.Season.Year == season &&
+                    s.Conference == conference)
+        .Select(s => s.Division)
+        .Distinct()
+        .OrderBy(d => d.Name);
 
     foreach (var division in divisions)
     {
-        <table class="table">
-            <thead>
-                <tr>
-                    @if (season < 2024)
-                    {
-                        <th>
-                            #
-                        </th>
-                        <th colspan="2">
-                            @Html.DisplayNameFor(model => model.FirstOrDefault()!.Team)
-                        </th>
-                        <th class="fixed-column">
-                            @Html.DisplayNameFor(model => model.FirstOrDefault()!.GamesPlayed)
-                        </th>
-                        <th class="fixed-column">
-                            @Html.DisplayNameFor(model => model.FirstOrDefault()!.Wins)
-                        </th>
-                        <th class="fixed-column">
-                            @Html.DisplayNameFor(model => model.FirstOrDefault()!.Losses)
-                        </th>
-                        <th class="fixed-column">
-                            @Html.DisplayNameFor(model => model.FirstOrDefault()!.OTLosses)
-                        </th>
-                        <th class="fixed-column">
-                            @Html.DisplayNameFor(model => model.FirstOrDefault()!.Points)
-                        </th>
-                        <th>
-                            @Html.DisplayNameFor(model => model.FirstOrDefault()!.PointsPct)
-                        </th>
-                        <th class="fixed-column">
-                            @Html.DisplayNameFor(model => model.FirstOrDefault()!.GoalsFor)
-                        </th>
-                        <th class="fixed-column">
-                            @Html.DisplayNameFor(model => model.FirstOrDefault()!.GoalsAgainst)
-                        </th>
-                        <th class="fixed-column">
-                            @Html.DisplayNameFor(model => model.FirstOrDefault()!.GoalDifferential)
-                        </th>
-                        <th>
-                            @Html.DisplayNameFor(model => model.FirstOrDefault()!.Streak)
-                        </th>
-                        <th class="fixed-column">
-                            @Html.DisplayNameFor(model => model.FirstOrDefault()!.RegulationWins)
-                        </th>
-                        <th class="fixed-column">
-                            @Html.DisplayNameFor(model => model.FirstOrDefault()!.RegPlusOTWins)
-                        </th>
-                        <th class="record-column">
-                            @Html.DisplayNameFor(model => model.FirstOrDefault()!.RecordVsDivision_2021Format)
-                        </th>
-                        @if (ViewBag.Season > 2021)
-                        {
-                            <th class="record-column">
-                                @Html.DisplayNameFor(model => model.FirstOrDefault()!.RecordVsConference_2021Format)
-                            </th>
-                        }
-                        <th class="record-column">
-                            @Html.DisplayNameFor(model => model.FirstOrDefault()!.InterConfRecord_2021Format)
-                        </th>
-                    }
-                    else
-                    {
-                        <th>
-                            #
-                        </th>
-                        <th colspan="2">
-                            @Html.DisplayNameFor(model => model.FirstOrDefault()!.Team)
-                        </th>
-                        <th class="fixed-column">
-                            @Html.DisplayNameFor(model => model.FirstOrDefault()!.GamesPlayed)
-                        </th>
-                        <th class="fixed-column">
-                            @Html.DisplayNameFor(model => model.FirstOrDefault()!.Wins)
-                        </th>
-                        <th class="fixed-column">
-                            @Html.DisplayNameFor(model => model.FirstOrDefault()!.Losses)
-                        </th>
-                        <th>
-                            @Html.DisplayNameFor(model => model.FirstOrDefault()!.WinPct)
-                        </th>
-                        <th class="fixed-column">
-                            @Html.DisplayNameFor(model => model.FirstOrDefault()!.DivisionGamesBehind)
-                        </th>
-                        <th class="fixed-column">
-                            @Html.DisplayNameFor(model => model.FirstOrDefault()!.GoalsFor)
-                        </th>
-                        <th class="fixed-column">
-                            @Html.DisplayNameFor(model => model.FirstOrDefault()!.GoalsAgainst)
-                        </th>
-                        <th class="fixed-column">
-                            @Html.DisplayNameFor(model => model.FirstOrDefault()!.GoalDifferential)
-                        </th>
-                        <th>
-                            @Html.DisplayNameFor(model => model.FirstOrDefault()!.Streak)
-                        </th>
-                        <th class="fixed-column">
-                            @Html.DisplayNameFor(model => model.FirstOrDefault()!.RegulationWins)
-                        </th>
-                        <th class="fixed-column">
-                            @Html.DisplayNameFor(model => model.FirstOrDefault()!.RegPlusOTWins)
-                        </th>
-                        <th class="record-column">
-                            @Html.DisplayNameFor(model => model.FirstOrDefault()!.RecordVsDivision_2024Format)
-                        </th>
-                        <th class="record-column">
-                            @Html.DisplayNameFor(model => model.FirstOrDefault()!.RecordVsConference_2024Format)
-                        </th>
-                        <th class="record-column">
-                            @Html.DisplayNameFor(model => model.FirstOrDefault()!.InterConfRecord_2024Format)
-                        </th>
-                    }
-                </tr>
-            </thead>
-            <tbody>
+        <h5>@division!.Name</h5>
 
-            </tbody>
-        </table>
+        var teams = Model.Where(s => s.Season.Year == season &&
+                                     s.Conference == conference &&
+                                     s.Division == division);
+        ViewBag.Teams = teams;
+
+        if (season < 2024)
+        {
+            <partial name="Formats/2021-2023.cshtml" />
+        }
+        else
+        {
+            <partial name="Formats/2024-Present.cshtml" />
+        }
     }
 }

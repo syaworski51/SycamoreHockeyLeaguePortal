@@ -584,3 +584,11 @@ img {
 .team-stats-grid .goal-ratio {
     font-family: "Druk Text";
 }
+
+.standings-record {
+    border-bottom: 1px solid #b3b3b3;
+}
+
+.playoff-cutoff {
+    border-bottom: 1px solid black;
+}

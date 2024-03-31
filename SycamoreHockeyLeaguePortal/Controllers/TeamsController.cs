@@ -13,10 +13,16 @@ namespace SycamoreHockeyLeaguePortal.Controllers
     public class TeamsController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private IQueryable<Schedule> schedule;
 
         public TeamsController(ApplicationDbContext context)
         {
             _context = context;
+            schedule = _context.Schedule
+                .Include(s => s.Season)
+                .Include(s => s.PlayoffRound)
+                .Include(s => s.AwayTeam)
+                .Include(s => s.HomeTeam);
         }
 
         // GET: Teams
@@ -32,13 +38,13 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 try
                 {
                     var mostRecentSeason = _context.Standings
-                    .Include(s => s.Season)
-                    .Include(s => s.Conference)
-                    .Include(s => s.Division)
-                    .Include(s => s.Team)
-                    .Where(s => s.TeamId == team.Id)
-                    .Select(s => s.Season.Year)
-                    .Max();
+                        .Include(s => s.Season)
+                        .Include(s => s.Conference)
+                        .Include(s => s.Division)
+                        .Include(s => s.Team)
+                        .Where(s => s.TeamId == team.Id)
+                        .Select(s => s.Season.Year)
+                        .Max();
 
                     mostRecentSeasons.Add(mostRecentSeason);
                 }
@@ -118,11 +124,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 .ThenBy(t => t.Name);
             ViewBag.Opponents = new SelectList(opponents, "Code", "FullName");
 
-            IQueryable<Schedule> schedule = _context.Schedule
-                .Include(s => s.Season)
-                .Include(s => s.PlayoffRound)
-                .Include(s => s.AwayTeam)
-                .Include(s => s.HomeTeam)
+            schedule = schedule
                 .Where(s => s.Season.Year == season &&
                             s.Type == gameType &&
                             (s.AwayTeam.Code == id ||
