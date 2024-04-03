@@ -43,8 +43,7 @@ namespace SHLAPI.APIControllers
 
         // GET: api/Schedule/5
         [HttpGet("{season}/{type}/{date}/{awayCode}/{homeCode}")]
-        public async Task<ActionResult<Schedule>> GetGame(int season, string type, DateTime date, 
-                                                          string awayCode, string homeCode)
+        public async Task<ActionResult<Schedule>> GetGame(int season, DateTime date, string awayCode, string homeCode)
         {
             if (_context.Schedule == null)
             {
@@ -57,7 +56,6 @@ namespace SHLAPI.APIControllers
                 .Include(s => s.AwayTeam)
                 .Include(s => s.HomeTeam)
                 .Where(s => s.Season.Year == season &&
-                            s.Type == type &&
                             s.Date == date &&
                             s.AwayTeam.Code == awayCode &&
                             s.HomeTeam.Code == homeCode)
@@ -102,23 +100,71 @@ namespace SHLAPI.APIControllers
             return NoContent();
         }
 
+        [HttpPut("{season}/{date}/{awayCode}/{homeCode}")]
+        public async Task<IActionResult> AwayGoal(int season, DateTime date, string awayCode, string homeCode)
+        {
+            var game = await RetrieveGame(season, date, awayCode, homeCode);
+
+            if (game == null)
+                return NotFound();
+
+            await ChangeScore(game, game.AwayTeam);
+            return NoContent();
+        }
+
+        [HttpPut("{season}/{date}/{awayCode}/{homeCode}")]
+        public async Task<IActionResult> RemoveAwayGoal(int season, DateTime date, string awayCode, string homeCode)
+        {
+            var game = await RetrieveGame(season, date, awayCode, homeCode);
+
+            if (game == null)
+                return NotFound();
+
+            await ChangeScore(game, game.AwayTeam, -1);
+            return NoContent();
+        }
+
+        [HttpPut("{season}/{date}/{awayCode}/{homeCode}")]
+        public async Task<IActionResult> HomeGoal(int season, DateTime date, string awayCode, string homeCode)
+        {
+            var game = await RetrieveGame(season, date, awayCode, homeCode);
+
+            if (game == null)
+                return NotFound();
+
+            await ChangeScore(game, game.HomeTeam);
+            return NoContent();
+        }
+
+        [HttpPut("{season}/{date}/{awayCode}/{homeCode}")]
+        public async Task<IActionResult> RemoveHomeGoal(int season, DateTime date, string awayCode, string homeCode)
+        {
+            var game = await RetrieveGame(season, date, awayCode, homeCode);
+
+            if (game == null)
+                return NotFound();
+
+            await ChangeScore(game, game.HomeTeam, -1);
+            return NoContent();
+        }
+
         // POST: api/Schedule
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Schedule>> PostSchedule(Schedule schedule)
+        public async Task<ActionResult<Schedule>> PostGame(Schedule game)
         {
           if (_context.Schedule == null)
           {
               return Problem("Entity set 'SHLPortalDbContext.Schedules'  is null.");
           }
-            _context.Schedule.Add(schedule);
+            _context.Schedule.Add(game);
             try
             {
                 await _context.SaveChangesAsync();
             }
             catch (DbUpdateException)
             {
-                if (ScheduleExists(schedule.Id))
+                if (ScheduleExists(game.Id))
                 {
                     return Conflict();
                 }
@@ -128,7 +174,7 @@ namespace SHLAPI.APIControllers
                 }
             }
 
-            return CreatedAtAction("GetSchedule", new { id = schedule.Id }, schedule);
+            return CreatedAtAction("GetSchedule", new { id = game.Id }, game);
         }
 
         // DELETE: api/Schedule/5
@@ -154,6 +200,31 @@ namespace SHLAPI.APIControllers
         private bool ScheduleExists(Guid id)
         {
             return (_context.Schedule?.Any(e => e.Id == id)).GetValueOrDefault();
+        }
+
+        private async Task<Schedule> RetrieveGame(int season, DateTime date, string awayCode, string homeCode)
+        {
+            return await _context.Schedule
+                .Include(s => s.Season)
+                .Include(s => s.PlayoffRound)
+                .Include(s => s.AwayTeam)
+                .Include(s => s.HomeTeam)
+                .Where(s => s.Season.Year == season &&
+                            s.Date == date &&
+                            s.AwayTeam.Code == awayCode &&
+                            s.HomeTeam.Code == homeCode)
+                .FirstOrDefaultAsync();
+        }
+
+        private async Task ChangeScore(Schedule game, Team team, int changeInScore = 1)
+        {
+            if (game.HomeTeam == team)
+                game.HomeScore += changeInScore;
+            else
+                game.AwayScore += changeInScore;
+
+            _context.Update(game);
+            await _context.SaveChangesAsync();
         }
     }
 }

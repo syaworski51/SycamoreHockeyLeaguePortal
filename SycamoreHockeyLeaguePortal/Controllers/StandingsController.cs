@@ -75,7 +75,47 @@ namespace SycamoreHockeyLeaguePortal.Controllers
 
             var standings = await GetStandings(season);
 
+            var leaders = GetLeaders(standings);
+            ViewBag.Leaders = leaders;
+
+            var nonLeaders = GetNonLeaders(standings, leaders);
+            ViewBag.NonLeaders = nonLeaders;
+
             return View(standings);
+        }
+
+        public List<Standings> GetLeaders(List<Standings> standings)
+        {
+            var divisions = standings
+                .Select(s => s.Division)
+                .Distinct();
+
+            List<Standings> leaders = new List<Standings>();
+
+            foreach (var division in divisions)
+            {
+                var leader = standings
+                    .Where(s => s.Division == division)
+                    .First();
+
+                leaders.Add(leader);
+            }
+
+            return leaders;
+        }
+
+        public List<Standings> GetNonLeaders(List<Standings> standings, List<Standings>? leaders = null)
+        {
+            leaders ??= GetLeaders(standings);
+            List<Standings> nonLeaders = new List<Standings>();
+
+            foreach (var team in standings)
+            {
+                if (!leaders.Contains(team))
+                    nonLeaders.Add(team);
+            }
+
+            return nonLeaders;
         }
 
         public async Task<IActionResult> PlayoffMatchups(int season)
@@ -612,14 +652,14 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 tiedTeams = ReorderTiedTeamsForDivisionLeaderTiebreaker(leaders, nonLeaders);
                 standings = ReorderTeams(standings, startingIndex, tiedTeams);
 
-                // If there are at least 2 division leaders, apply the appropriate tiebreaker between them
+                // If there are at least 2 division leaders, bring them to the head-to-head gateway
                 if (leaders.Count >= 2)
-                    standings = ApplyH2HTiebreaker(standings, startingIndex, leaders);
+                    standings = GoToH2HGateway(standings, startingIndex, leaders);
             }
 
-            // If there are at least 2 non-leaders, apply the appropriate tiebreaker between them
+            // If there are at least 2 non-leaders, bring them to the head-to-head gateway
             if (nonLeaders.Count >= 2)
-                standings = ApplyH2HTiebreaker(standings, startingIndex + leaders.Count, nonLeaders);
+                standings = GoToH2HGateway(standings, startingIndex + leaders.Count, nonLeaders);
 
 
             // Return the newly updated standings
@@ -699,7 +739,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         /// <param name="startingIndex">The index in the standings where the tie starts.</param>
         /// <param name="tiedTeams">The teams in the tie being broken.</param>
         /// <returns>The updated league standings with the appropriate tiebreaker applied.</returns>
-        private List<Standings> ApplyH2HTiebreaker(List<Standings> standings, int startingIndex, List<Standings> tiedTeams)
+        private List<Standings> GoToH2HGateway(List<Standings> standings, int startingIndex, List<Standings> tiedTeams)
         {
             // If there are only two tied teams, unpack the list and apply the H2H Series tiebreaker.
             if (tiedTeams.Count == 2)
@@ -966,12 +1006,14 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                     {
                         // If all the teams that entered this tiebreaker remain tied, proceed to the ROW tiebreaker
                         if (teamsTiedAfterRW.Count == tiedTeams.Count)
-                            return ApplyRegPlusOTWinsTiebreaker(standings, startingIndex + index, tiedTeams);
+                            return ApplyRegPlusOTWinsTiebreaker(standings, startingIndex, tiedTeams);
+
+                        startingIndex += index - (teamsTiedAfterRW.Count - 2);
 
                         // If only 2 teams remain tied, restart the tiebreaking process at the H2H Series step for 2-way ties
                         // with those teams
                         if (teamsTiedAfterRW.Count == 2)
-                            return ApplyH2HSeriesTiebreaker(standings, startingIndex + index,
+                            return ApplyH2HSeriesTiebreaker(standings, startingIndex,
                                                             teamsTiedAfterRW[0], teamsTiedAfterRW[1]);
 
                         // If 3 or more teams remain tied...
@@ -983,11 +1025,11 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                             
                             // If the tiebreaker DOES apply, apply it to those teams
                             if (h2hTiebreakerApplies)
-                                return ApplyGroupH2HStandingsTiebreaker(standings, startingIndex + index, teamsTiedAfterRW);
+                                return ApplyGroupH2HStandingsTiebreaker(standings, startingIndex, teamsTiedAfterRW);
                             
                             // If NOT, proceed to the ROW tiebreaker with only those teams
                             else
-                                return ApplyRegPlusOTWinsTiebreaker(standings, startingIndex + index, teamsTiedAfterRW);
+                                return ApplyRegPlusOTWinsTiebreaker(standings, startingIndex, teamsTiedAfterRW);
                         }
                     }
                 }
@@ -997,9 +1039,11 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                     // If there are any teams in the list of tied teams...
                     if (teamsTiedAfterRW.Any())
                     {
+                        int startingIndexForThisTie = startingIndex + (index - (teamsTiedAfterRW.Count - 1));
+                        
                         // If there are only 2 teams in the list, apply the H2H Series tiebreaker to those teams
                         if (teamsTiedAfterRW.Count == 2)
-                            standings = ApplyH2HSeriesTiebreaker(standings, startingIndex + index,
+                            standings = ApplyH2HSeriesTiebreaker(standings, startingIndexForThisTie,
                                                                  teamsTiedAfterRW[0], teamsTiedAfterRW[1]);
 
                         // If there are 3 or more teams in the list...
@@ -1010,11 +1054,12 @@ namespace SycamoreHockeyLeaguePortal.Controllers
 
                             // If the tiebreaker DOES apply, apply it to those teams
                             if (h2hTiebreakerApplies)
-                                standings = ApplyGroupH2HStandingsTiebreaker(standings, startingIndex + index,
+                                standings = ApplyGroupH2HStandingsTiebreaker(standings, startingIndexForThisTie,
                                                                              teamsTiedAfterRW);
                             // If NOT, proceed to the ROW tiebreaker with only those teams
                             else
-                                standings = ApplyRegPlusOTWinsTiebreaker(standings, startingIndex + index, teamsTiedAfterRW);
+                                standings = ApplyRegPlusOTWinsTiebreaker(standings, startingIndexForThisTie, 
+                                                                         teamsTiedAfterRW);
                         }
 
                         // Clear the list of tied teams
@@ -1051,8 +1096,10 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                         if (teamsTiedAfterROW.Count == tiedTeams.Count)
                             return ApplyDivisionRecordTiebreaker(standings, startingIndex, tiedTeams);
 
-                        else if (teamsTiedAfterROW.Count == 2)
-                            return ApplyH2HSeriesTiebreaker(standings, startingIndex + index,
+                        startingIndex += index - (teamsTiedAfterROW.Count - 2);
+
+                        if (teamsTiedAfterROW.Count == 2)
+                            return ApplyH2HSeriesTiebreaker(standings, startingIndex,
                                                             teamsTiedAfterROW[0], teamsTiedAfterROW[1]);
 
                         else if (teamsTiedAfterROW.Count >= 3)
@@ -1060,10 +1107,9 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                             bool h2hTiebreakerApplies = CheckH2HGamesPlayed(standings, teamsTiedAfterROW);
 
                             if (h2hTiebreakerApplies)
-                                return ApplyGroupH2HStandingsTiebreaker(standings, startingIndex + index,
-                                                                        teamsTiedAfterROW);
+                                return ApplyGroupH2HStandingsTiebreaker(standings, startingIndex, teamsTiedAfterROW);
                             
-                            return ApplyDivisionRecordTiebreaker(standings, startingIndex + index, teamsTiedAfterROW);
+                            return ApplyDivisionRecordTiebreaker(standings, startingIndex, teamsTiedAfterROW);
                         }
                             
                     }
@@ -1072,19 +1118,21 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 {
                     if (teamsTiedAfterROW.Any())
                     {
+                        int startingIndexForThisTie = startingIndex + (index - (teamsTiedAfterROW.Count - 1));
+
                         if (teamsTiedAfterROW.Count == 2)
-                            standings = ApplyH2HSeriesTiebreaker(standings, startingIndex + index,
-                                                           teamsTiedAfterROW[0], teamsTiedAfterROW[1]);
+                            standings = ApplyH2HSeriesTiebreaker(standings, startingIndexForThisTie,
+                                                                 teamsTiedAfterROW[0], teamsTiedAfterROW[1]);
 
                         if (teamsTiedAfterROW.Count >= 3)
                         {
                             bool h2hTiebreakerApplies = CheckH2HGamesPlayed(standings, teamsTiedAfterROW);
 
                             if (h2hTiebreakerApplies)
-                                standings = ApplyGroupH2HStandingsTiebreaker(standings, startingIndex + index,
+                                standings = ApplyGroupH2HStandingsTiebreaker(standings, startingIndexForThisTie,
                                                                              teamsTiedAfterROW);
                             else
-                                standings = ApplyDivisionRecordTiebreaker(standings, startingIndex + index, 
+                                standings = ApplyDivisionRecordTiebreaker(standings, startingIndexForThisTie, 
                                                                           teamsTiedAfterROW);
                         }
 
@@ -1145,12 +1193,12 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         {
             var divisionRecordTiebreaker = tiedTeams
                 .OrderByDescending(t => t.WinPctVsDivision)
-                .ThenByDescending(t => t.WinPctVsDivision)
+                .ThenByDescending(t => t.WinsVsDivision)
                 .ThenBy(t => t.LossesVsDivision);
             standings = ReorderTeams(standings, startingIndex, divisionRecordTiebreaker);
 
             List<Standings> teamsTiedAfterDivisionRecords = new List<Standings>();
-            for (int index = 0; index < divisionRecordTiebreaker.Count(); index++)
+            for (int index = 0; index < divisionRecordTiebreaker.Count() - 1; index++)
             {
                 Standings currentTeam = divisionRecordTiebreaker.ElementAt(index);
                 Standings nextTeam = divisionRecordTiebreaker.ElementAt(index + 1);
@@ -1168,14 +1216,51 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                         if (teamsTiedAfterDivisionRecords.Count == tiedTeams.Count)
                             return ApplyConferenceRecordTiebreaker(standings, startingIndex, tiedTeams);
 
+                        startingIndex += index - (teamsTiedAfterDivisionRecords.Count - 2);
+
                         if (teamsTiedAfterDivisionRecords.Count == 2)
-                            return ApplyH2HSeriesTiebreaker(standings, startingIndex + index,
+                            return ApplyH2HSeriesTiebreaker(standings, startingIndex,
                                                             teamsTiedAfterDivisionRecords[0], 
                                                             teamsTiedAfterDivisionRecords[1]);
 
                         if (teamsTiedAfterDivisionRecords.Count >= 3)
-                            return ApplyGroupH2HStandingsTiebreaker(standings, startingIndex + index, 
-                                                                    teamsTiedAfterDivisionRecords);
+                        {
+                            bool h2hTiebreakerApplies = CheckH2HGamesPlayed(standings, teamsTiedAfterDivisionRecords);
+
+                            if (h2hTiebreakerApplies)
+                                return ApplyGroupH2HStandingsTiebreaker(standings, startingIndex,
+                                                                        teamsTiedAfterDivisionRecords);
+                            else
+                                return ApplyConferenceRecordTiebreaker(standings, startingIndex, 
+                                                                       teamsTiedAfterDivisionRecords);
+                        }
+                            
+                    }
+                }
+                else
+                {
+                    if (teamsTiedAfterDivisionRecords.Any())
+                    {
+                        int startingIndexForThisTie = startingIndex + (index - (teamsTiedAfterDivisionRecords.Count - 1));
+
+                        if (teamsTiedAfterDivisionRecords.Count == 2)
+                            standings = ApplyH2HSeriesTiebreaker(standings, startingIndexForThisTie,
+                                                                 teamsTiedAfterDivisionRecords[0],
+                                                                 teamsTiedAfterDivisionRecords[1]);
+
+                        if (teamsTiedAfterDivisionRecords.Count >= 3)
+                        {
+                            bool h2hTiebreakerApplies = CheckH2HGamesPlayed(standings, teamsTiedAfterDivisionRecords);
+
+                            if (h2hTiebreakerApplies)
+                                standings = ApplyGroupH2HStandingsTiebreaker(standings, startingIndexForThisTie,
+                                                                             teamsTiedAfterDivisionRecords);
+                            else
+                                standings = ApplyConferenceRecordTiebreaker(standings, startingIndexForThisTie,
+                                                                            teamsTiedAfterDivisionRecords);
+                        }
+
+                        teamsTiedAfterDivisionRecords.Clear();
                     }
                 }
             }
@@ -1229,7 +1314,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 if (currentTeam.WinsVsConference == nextTeam.WinsVsConference &&
                     currentTeam.LossesVsConference == nextTeam.LossesVsConference)
                 {
-                    if (!teamsTiedAfterConferenceRecords.Any())
+                    if (teamsTiedAfterConferenceRecords.IsNullOrEmpty())
                         teamsTiedAfterConferenceRecords.Add(currentTeam);
 
                     teamsTiedAfterConferenceRecords.Add(nextTeam);
@@ -1239,8 +1324,10 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                         if (teamsTiedAfterConferenceRecords.Count == tiedTeams.Count)
                             return ApplyInterConferenceRecordTiebreaker(standings, startingIndex, tiedTeams);
 
+                        startingIndex += index - (teamsTiedAfterConferenceRecords.Count - 2);
+
                         if (teamsTiedAfterConferenceRecords.Count == 2)
-                            return ApplyH2HSeriesTiebreaker(standings, startingIndex + index,
+                            return ApplyH2HSeriesTiebreaker(standings, startingIndex,
                                                             teamsTiedAfterConferenceRecords[0],
                                                             teamsTiedAfterConferenceRecords[1]);
 
@@ -1249,10 +1336,10 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                             bool h2hTiebreakerApplies = CheckH2HGamesPlayed(standings, teamsTiedAfterConferenceRecords);
 
                             if (h2hTiebreakerApplies)
-                                return ApplyGroupH2HStandingsTiebreaker(standings, startingIndex + index,
+                                return ApplyGroupH2HStandingsTiebreaker(standings, startingIndex,
                                                                         teamsTiedAfterConferenceRecords);
                             else
-                                return ApplyInterConferenceRecordTiebreaker(standings, startingIndex + index,
+                                return ApplyInterConferenceRecordTiebreaker(standings, startingIndex,
                                                                             teamsTiedAfterConferenceRecords);
                         }
                     }
@@ -1261,10 +1348,10 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 {
                     if (teamsTiedAfterConferenceRecords.Any())
                     {
-                        int newStartingIndex = startingIndex + (index - (teamsTiedAfterConferenceRecords.Count - 1));
+                        int startingIndexForThisTie = startingIndex + (index - (teamsTiedAfterConferenceRecords.Count - 1));
                         
                         if (teamsTiedAfterConferenceRecords.Count == 2)
-                            standings = ApplyH2HSeriesTiebreaker(standings, newStartingIndex,
+                            standings = ApplyH2HSeriesTiebreaker(standings, startingIndexForThisTie,
                                                                  teamsTiedAfterConferenceRecords[0],
                                                                  teamsTiedAfterConferenceRecords[1]);
 
@@ -1273,8 +1360,11 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                             bool h2hTiebreakerApplies = CheckH2HGamesPlayed(standings, teamsTiedAfterConferenceRecords);
 
                             if (h2hTiebreakerApplies)
-                                standings = ApplyGroupH2HStandingsTiebreaker(standings, newStartingIndex,
+                                standings = ApplyGroupH2HStandingsTiebreaker(standings, startingIndexForThisTie,
                                                                              teamsTiedAfterConferenceRecords);
+                            else
+                                standings = ApplyInterConferenceRecordTiebreaker(standings, startingIndexForThisTie,
+                                                                                 teamsTiedAfterConferenceRecords);
                         }
 
                         teamsTiedAfterConferenceRecords.Clear();
@@ -1316,7 +1406,73 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         private List<Standings> ApplyInterConferenceRecordTiebreaker(List<Standings> standings, int startingIndex,
                                                                      List<Standings> tiedTeams)
         {
+            var interConferenceRecordTiebreaker = tiedTeams
+                .OrderByDescending(t => t.InterConfWinPct)
+                .ThenByDescending(t => t.InterConfWins)
+                .ThenBy(t => t.InterConfLosses);
+            standings = ReorderTeams(standings, startingIndex, interConferenceRecordTiebreaker);
 
+            List<Standings> teamsTiedAfterInterConferenceRecords = new List<Standings>();
+            for (int index = 0; index < interConferenceRecordTiebreaker.Count() - 1; index++)
+            {
+                Standings currentTeam = interConferenceRecordTiebreaker.ElementAt(index);
+                Standings nextTeam = interConferenceRecordTiebreaker.ElementAt(index + 1);
+
+                if (currentTeam.InterConfWins == nextTeam.InterConfWins &&
+                    currentTeam.InterConfLosses == nextTeam.InterConfLosses)
+                {
+                    if (teamsTiedAfterInterConferenceRecords.IsNullOrEmpty())
+                        teamsTiedAfterInterConferenceRecords.Add(currentTeam);
+
+                    teamsTiedAfterInterConferenceRecords.Add(nextTeam);
+
+                    if (index == tiedTeams.Count - 2)
+                    {
+                        if (teamsTiedAfterInterConferenceRecords.Count == tiedTeams.Count)
+                            return standings;
+
+                        startingIndex += index - (teamsTiedAfterInterConferenceRecords.Count - 2);
+
+                        if (teamsTiedAfterInterConferenceRecords.Count == 2)
+                            return ApplyH2HSeriesTiebreaker(standings, startingIndex,
+                                                            teamsTiedAfterInterConferenceRecords[0],
+                                                            teamsTiedAfterInterConferenceRecords[1]);
+
+                        if (teamsTiedAfterInterConferenceRecords.Count >= 3)
+                        {
+                            bool h2hTiebreakerApplies = CheckH2HGamesPlayed(standings, teamsTiedAfterInterConferenceRecords);
+
+                            if (h2hTiebreakerApplies)
+                                return ApplyGroupH2HStandingsTiebreaker(standings, startingIndex,
+                                                                        teamsTiedAfterInterConferenceRecords);
+                        }
+                    }
+                }
+                else
+                {
+                    if (teamsTiedAfterInterConferenceRecords.Any())
+                    {
+                        int startingIndexForThisTie = startingIndex + 
+                                                      (index - (teamsTiedAfterInterConferenceRecords.Count - 1));
+
+                        if (teamsTiedAfterInterConferenceRecords.Count == 2)
+                            standings = ApplyH2HSeriesTiebreaker(standings, startingIndexForThisTie,
+                                                                 teamsTiedAfterInterConferenceRecords[0],
+                                                                 teamsTiedAfterInterConferenceRecords[1]);
+
+                        if (teamsTiedAfterInterConferenceRecords.Count >= 3)
+                        {
+                            bool h2hTiebreakerApplies = CheckH2HGamesPlayed(standings, teamsTiedAfterInterConferenceRecords);
+
+                            if (h2hTiebreakerApplies)
+                                standings = ApplyGroupH2HStandingsTiebreaker(standings, startingIndexForThisTie,
+                                                                             teamsTiedAfterInterConferenceRecords);
+                        }
+
+                        teamsTiedAfterInterConferenceRecords.Clear();
+                    }
+                }
+            }
 
             return standings;
         }

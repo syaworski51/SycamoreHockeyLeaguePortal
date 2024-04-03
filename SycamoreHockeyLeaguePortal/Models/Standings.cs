@@ -86,6 +86,10 @@ namespace SycamoreHockeyLeaguePortal.Models
         [Display(Name = "GB")]
         public decimal LeagueGamesBehind { get; set; }
 
+        [Column(TypeName = "decimal(3,1)")]
+        [Display(Name = "GB")]
+        public decimal PlayoffsGamesBehind { get; set; }
+
         [Display(Name = "GF")]
         public int GoalsFor { get; set; }
 
@@ -155,10 +159,10 @@ namespace SycamoreHockeyLeaguePortal.Models
         
         public int InterConfOTLosses { get; set; }
 
-        [Display(Name = "East/West")]
+        [Display(Name = "EC/WC")]
         public string InterConfRecord_2021Format => $"{InterConfWins}-{InterConfLosses}-{InterConfOTLosses}";
 
-        [Display(Name = "East/West")]
+        [Display(Name = "EC/WC")]
         public string InterConfRecord_2024Format => $"{InterConfWins}-{InterConfLosses}";
 
         [Column(TypeName = "decimal(4,1)")]

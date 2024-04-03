@@ -1,0 +1,50 @@
+﻿@model List<Standings>
+
+@{
+    int season = ViewBag.Season;
+
+    var conferences = Model
+        .Where(s => s.Season.Year == season)
+        .Select(s => s.Conference)
+        .Distinct()
+        .OrderBy(c => c!.Name);
+
+    List<Standings> leaders = ViewBag.Leaders;
+    List<Standings> nonLeaders = ViewBag.NonLeaders;
+}
+
+@foreach (var conference in conferences)
+{
+    <h3>@conference.Name</h3>
+
+    var conferenceLeaders = leaders
+        .Where(l => l.Conference == conference);
+
+    <h5>Leaders</h5>
+    ViewBag.Teams = conferenceLeaders;
+    ViewBag.Rank = 1;
+    @if (season < 2024)
+    {
+        <partial name="Formats/2021-2023.cshtml" />
+    }
+    else
+    {
+        <partial name="Formats/2024-Present.cshtml" />
+    }
+
+
+    var conferenceNonLeaders = nonLeaders
+            .Where(nl => nl.Conference == conference);
+
+    <h5>Non-Leaders</h5>
+    ViewBag.Teams = conferenceNonLeaders;
+    ViewBag.Rank = conferenceLeaders.Count() + 1;
+    @if (season < 2024)
+    {
+        <partial name="Formats/2021-2023.cshtml" />
+    }
+    else
+    {
+        <partial name="Formats/2024-Present.cshtml" />
+    }
+}

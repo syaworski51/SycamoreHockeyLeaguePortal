@@ -38,4 +38,31 @@
             <div class="status">@Html.DisplayFor(model => model.Status)</div>
         </div>
     </div>
+    @if (!Model.IsFinalized)
+    {
+        <div class="row" style="margin-top: 30px;">
+            <div class="col">
+                @if (Model.Period == 0)
+                {
+                    <a class="btn btn-primary" asp-action="GameControls" asp-route-id="@Model.Id">Start Game</a>
+                }
+                else
+                {
+                    <a class="btn btn-primary" asp-action="GameControls" asp-route-id="@Model.Id">Resume Game</a>
+                }
+            </div>
+        </div>
+    }
+    <div class="row" style="margin-top: 50px;">
+        <div class="col">
+            @if (Model.Type == "Regular Season")
+            {
+                <a asp-action="Index" asp-route-weekOf="@Model.Date.ToShortDateString()">Back to Schedule</a>
+            }
+            else
+            {
+                <a asp-action="Index" asp-route-season="@Model.Date.Year" asp-route-round="@Model.PlayoffRound!.Index">Back to Playoffs</a>
+            }
+        </div>
+    </div>
 </div>

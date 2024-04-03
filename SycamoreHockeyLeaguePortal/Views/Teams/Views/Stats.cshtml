@@ -7,13 +7,14 @@
 
     string GetStreakString(int streak)
     {
-        streak = Math.Abs(streak);
-
         if (streak > 0)
             return $"W {streak}";
 
         if (streak < 0)
+        {
+            streak = Math.Abs(streak);
             return $"L {streak}";
+        }
 
         return "--";
     }

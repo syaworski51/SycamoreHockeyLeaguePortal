@@ -38,7 +38,7 @@
                         <th colspan="2">Away Team</th>
                         <th colspan="2">Scores</th>
                         <th colspan="2">Home Team</th>
-                        <th>Status</th>
+                        <th style="width: 170px;">Status</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -75,7 +75,7 @@
                                     @GetName(game.HomeTeam)
                                 </td>
                                 <td>
-                                    @game.Status
+                                    <a asp-controller="Schedule" asp-action="GameCenter" asp-route-id="@game.Id">@game.Status</a>
                                 </td>
                             </tr>
                         }
@@ -120,21 +120,21 @@
                                 ViewBag.DivisionStandings = atlanticStandings;
                                 ViewBag.DivisionName = "Atlantic";
                             }
-                            <partial name="Partials/StandingsQuickView.cshtml" />
+                            <partial name="Widgets/Standings.cshtml" />
                         </div>
                         <div class="tab-pane fade" id="ne" role="tabpanel" aria-labelledby="ne-tab">
                             @{
                                 ViewBag.DivisionStandings = northeastStandings;
                                 ViewBag.DivisionName = "Northeast";
                             }
-                            <partial name="Partials/StandingsQuickView.cshtml" />
+                            <partial name="Widgets/Standings.cshtml" />
                         </div>
                         <div class="tab-pane fade" id="se" role="tabpanel" aria-labelledby="se-tab">
                             @{
                                 ViewBag.DivisionStandings = southeastStandings;
                                 ViewBag.DivisionName = "Southeast";
                             }
-                            <partial name="Partials/StandingsQuickView.cshtml" />
+                            <partial name="Widgets/Standings.cshtml" />
                         </div>
                     </div>
                 </div>
@@ -156,21 +156,21 @@
                                 ViewBag.DivisionStandings = centralStandings;
                                 ViewBag.DivisionName = "Central";
                             }
-                            <partial name="Partials/StandingsQuickView.cshtml" />
+                            <partial name="Widgets/Standings.cshtml" />
                         </div>
                         <div class="tab-pane fade" id="nw" role="tabpanel" aria-labelledby="nw-tab">
                             @{
                                 ViewBag.DivisionStandings = northwestStandings;
                                 ViewBag.DivisionName = "Northwest";
                             }
-                            <partial name="Partials/StandingsQuickView.cshtml" />
+                            <partial name="Widgets/Standings.cshtml" />
                         </div>
                         <div class="tab-pane fade" id="pac" role="tabpanel" aria-labelledby="pac-tab">
                             @{
                                 ViewBag.DivisionStandings = pacificStandings;
                                 ViewBag.DivisionName = "Pacific";
                             }
-                            <partial name="Partials/StandingsQuickView.cshtml" />
+                            <partial name="Widgets/Standings.cshtml" />
                         </div>
                     </div>
                 </div>

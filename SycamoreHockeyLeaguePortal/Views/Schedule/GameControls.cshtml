@@ -42,7 +42,7 @@
 
 <div class="row">
     <form asp-action="GameControls">
-        <div class="col-md-4 container">
+        <div class="col-md-4 container game-controls">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <input type="hidden" asp-for="Id" />
             <input type="hidden" asp-for="SeasonId" />
@@ -50,39 +50,37 @@
             <input type="hidden" asp-for="Date" />
             <input type="hidden" asp-for="Type" />
             <input type="hidden" asp-for="AwayTeamId" />
+            <input type="hidden" asp-for="AwayScore" />
             <input type="hidden" asp-for="HomeTeamId" />
+            <input type="hidden" asp-for="HomeScore" />
+            <input type="hidden" asp-for="Period" />
             <input type="hidden" asp-for="GameIndex" />
+            <input type="hidden" asp-for="IsLive" />
+            <input type="hidden" asp-for="IsFinalized" />
             <div class="row">
                 <div class="col form-group">
-                    <label asp-for="AwayScore" class="control-label"></label>
-                    <input asp-for="AwayScore" class="form-control" onchange="UpdateAwayScore($(this).val)" />
-                    <span asp-validation-for="AwayScore" class="text-danger"></span>
+                    <label asp-for="AwayScore" class="control-label"></label><br />
+                    <a class="btn btn-primary" asp-action="AwayGoal" asp-route-id="@Model.Id">+1</a>
+                    <br />
+                    <a class="btn btn-secondary" asp-action="RemoveAwayGoal" asp-route-id="@Model.Id">-1</a>
                 </div>
                 <div class="col form-group">
-                    <label asp-for="Period" class="control-label"></label>
-                    <input asp-for="Period" class="form-control" onchange="UpdatePeriod($(this).val)" />
-                    <span asp-validation-for="Period" class="text-danger"></span>
+                    <label asp-for="Period" class="control-label"></label><br />
+                    <a class="btn btn-primary" asp-action="NextPeriod" asp-route-id="@Model.Id">+1</a>
+                    <br />
+                    <a class="btn btn-secondary" asp-action="PreviousPeriod" asp-route-id="@Model.Id">-1</a>
                 </div>
                 <div class="col form-group">
-                    <label asp-for="HomeScore" class="control-label"></label>
-                    <input asp-for="HomeScore" class="form-control" onchange="UpdateHomeScore($(this).val)" />
-                    <span asp-validation-for="HomeScore" class="text-danger"></span>
+                    <label asp-for="HomeScore" class="control-label"></label><br />
+                    <a class="btn btn-primary" asp-action="HomeGoal" asp-route-id="@Model.Id">+1</a>
+                    <br />
+                    <a class="btn btn-secondary" asp-action="RemoveHomeGoal" asp-route-id="@Model.Id">-1</a>
                 </div>
             </div>
             <div class="row">
-                <div class="col form-group form-check">
-                    <label class="form-check-label">
-                        <input class="form-check-input" asp-for="IsLive" /> @Html.DisplayNameFor(model => model.IsLive)
-                    </label>
-                </div>
-                <div class="col form-group form-check">
-                    <label class="form-check-label">
-                        <input class="form-check-input" asp-for="IsFinalized" /> @Html.DisplayNameFor(model => model.IsFinalized)
-                    </label>
-                </div>
                 <div class="col form-group">
-                    <input type="submit" value="Update" class="btn btn-secondary" asp-route-finalized="false" />
-                    <input type="submit" value="Finalize" class="btn btn-primary" asp-route-finalized="true" />
+                    <input type="submit" value="Save" class="btn btn-secondary exit-button" asp-route-finalized="false" />
+                    <input type="submit" value="Finalize" class="btn btn-primary exit-button" />
                 </div>
             </div>
         </div>

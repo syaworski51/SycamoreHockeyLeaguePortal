@@ -78,7 +78,17 @@
                     @game.Status
                 </td>
                 <td>
-                    <a asp-action="GameControls" asp-route-id="@game.Id">Record Game</a>
+                    @if (!game.IsFinalized)
+                    {
+                        if (game.IsLive)
+                        {
+                            <a asp-action="GameControls" asp-route-id="@game.Id">Resume Game</a>
+                        }
+                        else
+                        {
+                            <a asp-action="GameControls" asp-route-id="@game.Id">Start Game</a>
+                        }
+                    }
                     <a asp-action="GameCenter" asp-route-id="@game.Id">Game Center</a>
                 </td>
             </tr>

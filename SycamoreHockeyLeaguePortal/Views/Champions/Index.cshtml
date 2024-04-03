@@ -2,6 +2,12 @@
 
 @{
     ViewData["Title"] = "Champions";
+
+    string GetOpponentFontSize(int roundIndex)
+    {
+        double fontSize = 12 - (roundIndex * 0.5);
+        return $"{fontSize}pt";
+    }
 }
 
 <h1>@ViewBag.Title</h1>
@@ -36,7 +42,7 @@
                             }
                             else
                             {
-                                <span>
+                                <span style="font-size: @GetOpponentFontSize(roundIndex);">
                                     4-@(ViewBag.Rounds[teamIndex][roundIndex].SeriesLength - 4) vs <img class="champion-round-logo" src="~/@ViewBag.Rounds[teamIndex][roundIndex].Opponent.LogoPath" title="@ViewBag.Rounds[teamIndex][roundIndex].Opponent.FullName" /> @ViewBag.Rounds[teamIndex][roundIndex].Opponent.Code
                                 </span>
                             }

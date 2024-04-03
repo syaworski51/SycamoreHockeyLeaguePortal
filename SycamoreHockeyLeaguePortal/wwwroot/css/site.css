@@ -281,7 +281,7 @@ img {
 
 .standings .team-name {
     text-align: left;
-    width: 220px;
+    width: 210px;
 }
 
 .champion {
@@ -469,7 +469,7 @@ img {
 }
 
 .record-column {
-    width: 95px;
+    width: 82px;
 }
 
 .game .team-name {
@@ -545,7 +545,7 @@ img {
     text-align: center;
 }
 
-#schedule-widget a, #standings-widget a {
+/*#schedule-widget a, */#standings-widget a {
     font-family: "Druk Wide";
     font-weight: 100;
     color: black;
@@ -591,4 +591,18 @@ img {
 
 .playoff-cutoff {
     border-bottom: 1px solid black;
+}
+
+.game-controls .col {
+    text-align: center;
+}
+
+.game-controls .btn {
+    margin: 5px;
+    width: 60%;
+}
+
+.game-controls .exit-button {
+    width: 40%;
+    margin-top: 10px;
 }

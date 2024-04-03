@@ -96,65 +96,6 @@
 
         return scoreString;
     }
-
-    string GetStreakString(int streak)
-    {
-        streak = Math.Abs(streak);
-
-        if (streak > 0)
-            return $"W {streak}";
-
-        if (streak < 0)
-            return $"L {streak}";
-
-        return "--";
-    }
-
-    string GetGoalDifferentialString(int goalDifferential)
-    {
-        if (goalDifferential > 0)
-            return $"+{goalDifferential}";
-
-        return goalDifferential.ToString();
-    }
-
-    string GetRecordFormat(int season, Standings teamStats, string type = "overall")
-    {
-        if (season < 2024)
-        {
-            switch (type)
-            {
-                case "division":
-                    return teamStats.RecordVsDivision_2021Format;
-
-                case "conference":
-                    return teamStats.RecordVsConference_2021Format;
-
-                case "inter-conference":
-                    return teamStats.InterConfRecord_2021Format;
-
-                default:
-                    return teamStats.Record_2021Format;
-            }
-        }
-        else
-        {
-            switch (type)
-            {
-                case "division":
-                    return teamStats.RecordVsDivision_2024Format;
-
-                case "conference":
-                    return teamStats.RecordVsConference_2024Format;
-
-                case "inter-conference":
-                    return teamStats.InterConfRecord_2024Format;
-
-                default:
-                    return teamStats.Record_2024Format;
-            }
-        }
-    }
 }
 
 <div class="container">

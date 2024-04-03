@@ -19,7 +19,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
 
         public async Task<IActionResult> Index()
         {
-            var currentDate = new DateTime(2025, 6, 21);
+            var currentDate = new DateTime(2024, 4, 11);
             ViewBag.CurrentDate = currentDate;
 
             var season = currentDate.Year;

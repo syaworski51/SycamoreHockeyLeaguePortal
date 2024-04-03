@@ -227,65 +227,65 @@
 <table class="table standings">
     <thead>
         <tr>
-            <th>
+            <th title="Ranking">
                 #
             </th>
-            <th colspan="2">
+            <th colspan="2" title="Team">
                 @Html.DisplayNameFor(model => model.FirstOrDefault()!.Team)
             </th>
-            <th class="fixed-column">
+            <th class="fixed-column" title="Games Played">
                 @Html.DisplayNameFor(model => model.FirstOrDefault()!.GamesPlayed)
             </th>
-            <th class="fixed-column">
+            <th class="fixed-column" title="Wins">
                 @Html.DisplayNameFor(model => model.FirstOrDefault()!.Wins)
             </th>
-            <th class="fixed-column">
+            <th class="fixed-column" title="Losses">
                 @Html.DisplayNameFor(model => model.FirstOrDefault()!.Losses)
             </th>
-            <th class="fixed-column">
+            <th class="fixed-column" title="Overtime Losses">
                 @Html.DisplayNameFor(model => model.FirstOrDefault()!.OTLosses)
             </th>
-            <th class="fixed-column">
+            <th class="fixed-column" title="Points">
                 @Html.DisplayNameFor(model => model.FirstOrDefault()!.Points)
             </th>
-            <th>
+            <th title="Points Percentage">
                 @Html.DisplayNameFor(model => model.FirstOrDefault()!.PointsPct)
             </th>
-            <th class="fixed-column">
+            <th class="fixed-column" title="Goals For">
                 @Html.DisplayNameFor(model => model.FirstOrDefault()!.GoalsFor)
             </th>
-            <th class="fixed-column">
+            <th class="fixed-column" title="Goals Against">
                 @Html.DisplayNameFor(model => model.FirstOrDefault()!.GoalsAgainst)
             </th>
-            <th class="fixed-column">
+            <th class="fixed-column" title="Goal Differential">
                 @Html.DisplayNameFor(model => model.FirstOrDefault()!.GoalDifferential)
             </th>
-            <th>
+            <th title="Streak">
                 @Html.DisplayNameFor(model => model.FirstOrDefault()!.Streak)
             </th>
-            <th class="fixed-column">
+            <th class="fixed-column" title="Regulation Wins">
                 @Html.DisplayNameFor(model => model.FirstOrDefault()!.RegulationWins)
             </th>
-            <th class="fixed-column">
+            <th class="fixed-column" title="Regulation + Overtime Wins">
                 @Html.DisplayNameFor(model => model.FirstOrDefault()!.RegPlusOTWins)
             </th>
-            <th class="record-column">
+            <th class="record-column" title="Record vs. division opponents">
                 @Html.DisplayNameFor(model => model.FirstOrDefault()!.RecordVsDivision_2021Format)
             </th>
             @if (season > 2021)
             {
-                <th class="record-column">
+                <th class="record-column" title="Record vs. conference opponents outside of division">
                     @Html.DisplayNameFor(model => model.FirstOrDefault()!.RecordVsConference_2021Format)
                 </th>
             }
-            <th class="record-column">
+            <th class="record-column" title="Record vs. other conference">
                 @Html.DisplayNameFor(model => model.FirstOrDefault()!.InterConfRecord_2021Format)
             </th>
         </tr>
     </thead>
     <tbody>
         @{
-            int rank = 1;
+            int rank = ViewBag.Rank ?? 1;
 
             foreach (var team in teams)
             {

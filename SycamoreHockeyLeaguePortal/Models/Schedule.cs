@@ -37,7 +37,7 @@ namespace SycamoreHockeyLeaguePortal.Models
         public Team AwayTeam { get; set; }
 
         [Display(Name = "Away Score")]
-        public int? AwayScore { get; set; }
+        public int AwayScore { get; set; }
 
         [ForeignKey(nameof(HomeTeam))]
         public Guid HomeTeamId { get; set; }
@@ -46,7 +46,7 @@ namespace SycamoreHockeyLeaguePortal.Models
         public Team HomeTeam { get; set; }
 
         [Display(Name = "Home Score")]
-        public int? HomeScore { get; set; }
+        public int HomeScore { get; set; }
 
         [Display(Name = "Period")]
         public int Period { get; set; }
