@@ -15,11 +15,11 @@ public partial class Schedule
 
     public Guid AwayTeamId { get; set; }
 
-    public int? AwayScore { get; set; }
+    public int AwayScore { get; set; }
 
     public Guid HomeTeamId { get; set; }
 
-    public int? HomeScore { get; set; }
+    public int HomeScore { get; set; }
 
     public int Period { get; set; }
 

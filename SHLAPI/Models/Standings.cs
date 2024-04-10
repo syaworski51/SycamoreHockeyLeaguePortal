@@ -95,6 +95,8 @@ public partial class Standings
 
     public int WinsInLast5Games { get; set; }
 
+    public decimal PlayoffsGamesBehind { get; set; }
+
     public virtual Conference? Conference { get; set; }
 
     public virtual Division? Division { get; set; }

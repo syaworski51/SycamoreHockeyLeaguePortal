@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using SycamoreHockeyLeaguePortal.Data;
 using SycamoreHockeyLeaguePortal.Models;
@@ -601,7 +602,9 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                             s.Type == REGULAR_SEASON &&
                             (s.AwayTeam == team || s.HomeTeam == team) &&
                             s.IsFinalized &&
-                            s.Period >= 3);
+                            s.Period >= 3)
+                .OrderBy(s => s.Date)
+                .ThenBy(s => s.GameIndex);
         }
 
         private IQueryable<Schedule> GetGamesWon(int season, Team team)
@@ -795,16 +798,36 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 if (game.HomeTeam == team)
                 {
                     if (game.HomeScore > game.AwayScore)
-                        streak = streak > 0 ? streak++ : 1;
+                    {
+                        if (streak >= 0)
+                            streak++;
+                        else
+                            streak = 1;
+                    }
                     else
-                        streak = streak < 0 ? streak-- : -1;
+                    {
+                        if (streak <= 0)
+                            streak--;
+                        else
+                            streak = -1;
+                    }
                 }
                 else
                 {
                     if (game.AwayScore > game.HomeScore)
-                        streak = streak > 0 ? streak++ : 1;
+                    {
+                        if (streak >= 0)
+                            streak++;
+                        else
+                            streak = 1;
+                    }
                     else
-                        streak = streak < 0 ? streak-- : -1;
+                    {
+                        if (streak <= 0)
+                            streak--;
+                        else
+                            streak = -1;
+                    }
                 }
             }
 

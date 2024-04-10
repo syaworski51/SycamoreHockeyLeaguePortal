@@ -2,6 +2,7 @@
 
 @{
     ViewData["Title"] = "Home Page";
+    int season = ViewBag.Season;
     DateTime currentDate = ViewBag.CurrentDate;
     List<Schedule> todaysGames = ViewBag.TodaysGames;
 
@@ -48,7 +49,7 @@
                         {
                             <tr>
                                 <td style="text-align: right;">
-                                    @GetName(game.AwayTeam)
+                                    <a asp-controller="Teams" asp-action="Details" asp-route-id="@game.AwayTeamId" asp-route-season="@season">@GetName(game.AwayTeam)</a>
                                 </td>
                                 <td>
                                     <img src="~/@game.AwayTeam.LogoPath" />
@@ -72,7 +73,7 @@
                                     <img src="~/@game.HomeTeam.LogoPath" />
                                 </td>
                                 <td style="text-align: left;">
-                                    @GetName(game.HomeTeam)
+                                    <a asp-controller="Teams" asp-action="Details" asp-route-id="@game.HomeTeamId" asp-route-season="@season">@GetName(game.HomeTeam)</a>
                                 </td>
                                 <td>
                                     <a asp-controller="Schedule" asp-action="GameCenter" asp-route-id="@game.Id">@game.Status</a>

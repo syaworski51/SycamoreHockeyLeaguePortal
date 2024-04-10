@@ -47,7 +47,7 @@ public partial class SHLPortalDbContext : DbContext
     public virtual DbSet<Team> Teams { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        => optionsBuilder.UseSqlServer("name=DefaultConnection");
+        => optionsBuilder.UseSqlServer("name=SHL_DB");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -222,6 +222,7 @@ public partial class SHLPortalDbContext : DbContext
             entity.Property(e => e.Otlosses).HasColumnName("OTLosses");
             entity.Property(e => e.OtlossesVsConference).HasColumnName("OTLossesVsConference");
             entity.Property(e => e.OtlossesVsDivision).HasColumnName("OTLossesVsDivision");
+            entity.Property(e => e.PlayoffsGamesBehind).HasColumnType("decimal(3, 1)");
             entity.Property(e => e.PointsPct).HasColumnType("decimal(4, 1)");
             entity.Property(e => e.RegPlusOtwins).HasColumnName("RegPlusOTWins");
             entity.Property(e => e.WinPct).HasColumnType("decimal(4, 1)");

@@ -45,7 +45,7 @@
         int cutoff = viewBy == "conference" ? 8 : 4;
 
         if ((season <= 2022 && viewBy == "division") ||
-            (season >= 2023 && viewBy == "conference"))
+            (season >= 2023 && viewBy == "playoffs"))
             return (rank == cutoff) ?
                 "playoff-cutoff" :
                 "standings-record";

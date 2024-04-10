@@ -545,10 +545,13 @@ img {
     text-align: center;
 }
 
-/*#schedule-widget a, */#standings-widget a {
+#schedule-widget a, #standings-widget a {
+    color: black;
+}
+
+#standings-widget a {
     font-family: "Druk Wide";
     font-weight: 100;
-    color: black;
 }
 
 #schedule-widget .score {
