@@ -1,10 +1,19 @@
 ﻿@model List<List<Standings[]>>
+@inject SycamoreHockeyLeaguePortal.Data.ApplicationDbContext _context
 
 @{
     ViewData["Title"] = "Playoff Matchups";
 
     var conferences = ViewBag.Conferences;
     int conferenceIndex = 0;
+
+    string IsExtraSpaceNeeded(int groupIndex, int numberOfGroups)
+    {
+        if (groupIndex == numberOfGroups - 1)
+            return "0";
+
+        return "75px";
+    }
 }
 
 <h1>If the playoffs started today...</h1>
@@ -14,34 +23,68 @@
     {
         <div class="row d-flex justify-content-center">
             <h3 class="conference">@conferences[conferenceIndex].Name</h3>
-            @for (int matchupIndex = 0; matchupIndex < conference.Count; matchupIndex++)
+            @for (int groupIndex = 0; groupIndex < conference.Count - 2; groupIndex++)
             {
-                int higherSeed = matchupIndex + 1;
-                int lowerSeed = (conference.Count * 2) - matchupIndex;
+                int matchup1Index = groupIndex;
+                var matchup1 = conference[matchup1Index];
 
+                int matchup2Index = conference.Count - (matchup1Index + 1);
+                var matchup2 = conference[matchup2Index];
+
+                int higherSeed = matchup1Index + 1;
+                int lowerSeed = (conference.Count * 2) - matchup1Index;
                 <div class="col-2 card container playoff-matchup">
                     <div class="row">
                         <div class="col">
                             <div class="seed-number">@higherSeed</div>
-                            <img class="team-logo" src="~/@conference[matchupIndex][0].Team.LogoPath" title="@conference[matchupIndex][0].Team.FullName" />
+                            <img class="team-logo" src="~/@matchup1[0].Team.LogoPath" title="@matchup1[0].Team.FullName - @matchup1[0].Division!.Code" />
                         </div>
                         <div class="col">
                             <div class="seed-number">@lowerSeed</div>
-                            <img class="team-logo" src="~/@conference[matchupIndex][1].Team.LogoPath" title="@conference[matchupIndex][1].Team.FullName" />
+                            <img class="team-logo" src="~/@matchup1[1].Team.LogoPath" title="@matchup1[1].Team.FullName - @matchup1[1].Division!.Code" />
                         </div>
                     </div>
                     <div class="row teams">
                         <div class="col">
-                            <h6>@conference[matchupIndex][0].Team.City</h6>
-                            <h3>@conference[matchupIndex][0].Team.Name</h3>
-                            <span class="vs">vs</span>
-                            <h6>@conference[matchupIndex][1].Team.City</h6>
-                            <h3>@conference[matchupIndex][1].Team.Name</h3>
+                            <h6>@matchup1[0].Team.City</h6>
+                            <h3>@matchup1[0].Team.Name</h3>
+                            <span class="vs">- VS -</span>
+                            <h6>@matchup1[1].Team.City</h6>
+                            <h3>@matchup1[1].Team.Name</h3>
                         </div>
                     </div>
                     <div class="row">
                         <div class="col">
-                            <a asp-action="HeadToHeadComparison" asp-route-season="@conference[matchupIndex][0].Season.Year" asp-route-team1Code="@conference[matchupIndex][0].Team.Code" asp-route-team2Code="@conference[matchupIndex][1].Team.Code">Head-to-Head</a>
+                            <a asp-action="HeadToHeadComparison" asp-route-season="@matchup1[0].Season.Year" asp-route-team1Code="@matchup1[0].Team.Code" asp-route-team2Code="@matchup1[1].Team.Code">Head-to-Head</a>
+                        </div>
+                    </div>
+                </div>
+
+                higherSeed = matchup2Index + 1;
+                lowerSeed = (conference.Count * 2) - matchup2Index;
+                <div class="col-2 card container playoff-matchup" style="margin-right: @IsExtraSpaceNeeded(groupIndex, conference.Count / 2)">
+                    <div class="row">
+                        <div class="col">
+                            <div class="seed-number">@higherSeed</div>
+                            <img class="team-logo" src="~/@matchup2[0].Team.LogoPath" title="@matchup2[0].Team.FullName - @matchup2[0].Division!.Code" />
+                        </div>
+                        <div class="col">
+                            <div class="seed-number">@lowerSeed</div>
+                            <img class="team-logo" src="~/@matchup2[1].Team.LogoPath" title="@matchup2[1].Team.FullName - @matchup2[1].Division!.Code" />
+                        </div>
+                    </div>
+                    <div class="row teams">
+                        <div class="col">
+                            <h6>@matchup2[0].Team.City</h6>
+                            <h3>@matchup2[0].Team.Name</h3>
+                            <span class="vs">- VS -</span>
+                            <h6>@matchup2[1].Team.City</h6>
+                            <h3>@matchup2[1].Team.Name</h3>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <a asp-action="HeadToHeadComparison" asp-route-season="@matchup2[0].Season.Year" asp-route-team1Code="@matchup2[0].Team.Code" asp-route-team2Code="@matchup2[1].Team.Code">Head-to-Head</a>
                         </div>
                     </div>
                 </div>

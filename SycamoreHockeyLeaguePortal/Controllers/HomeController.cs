@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SycamoreHockeyLeaguePortal.Data;
+using SycamoreHockeyLeaguePortal.Data.Migrations;
 using SycamoreHockeyLeaguePortal.Models;
 using System.Diagnostics;
 
@@ -81,25 +82,26 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 .ThenBy(s => s.InterConfLosses)
                 .ThenByDescending(s => s.GoalDifferential)
                 .ThenByDescending(s => s.GoalsFor)
+                .ThenByDescending(s => s.WinPctInLast10Games)
+                .ThenByDescending(s => s.WinsInLast10Games)
+                .ThenBy(s => s.LossesInLast10Games)
                 .ThenByDescending(s => s.Streak)
-                .ThenByDescending(s => s.StreakGoalDifferential)
-                .ThenByDescending(s => s.StreakGoalsFor)
                 .ThenBy(s => s.Team.City)
                 .ThenBy(s => s.Team.Name);
 
             ViewBag.AtlanticStandings = standings
-                .Where(s => s.Division!.Code == "ATL");
+                .Where(s => s.Division!.Code == "AT");
             ViewBag.NortheastStandings = standings
                 .Where(s => s.Division!.Code == "NE");
             ViewBag.SoutheastStandings = standings
                 .Where(s => s.Division!.Code == "SE");
 
             ViewBag.CentralStandings = standings
-                .Where(s => s.Division!.Code == "CEN");
+                .Where(s => s.Division!.Code == "CE");
             ViewBag.NorthwestStandings = standings
                 .Where(s => s.Division!.Code == "NW");
             ViewBag.PacificStandings = standings
-                .Where(s => s.Division!.Code == "PAC");
+                .Where(s => s.Division!.Code == "PA");
 
             return View();
         }

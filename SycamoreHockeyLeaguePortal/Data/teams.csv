@@ -1,0 +1,34 @@
+﻿Code,City,Name,AlternateName,LogoPath
+ANA,Anaheim,Ducks,NULL,logos/teams/anaheim-ducks-2025.png
+ARI,Arizona,Coyotes,NULL,logos/teams/arizona-coyotes.png
+BOS,Boston,Bruins,NULL,logos/teams/boston-bruins-2023.png
+BUF,Buffalo,Sabres,NULL,logos/teams/buffalo-sabres.png
+CGY,Calgary,Flames,NULL,logos/teams/calgary-flames.png
+CAR,Carolina,Hurricanes,NULL,logos/teams/carolina-hurricanes.png
+CHI,Chicago,Blackhawks,NULL,logos/teams/chicago-blackhawks.png
+COL,Colorado,Avalanche,NULL,logos/teams/colorado-avalanche.png
+CBJ,Columbus,Blue Jackets,NULL,logos/teams/columbus-blue-jackets.png
+DAL,Dallas,Stars,NULL,logos/teams/dallas-stars.png
+DET,Detroit,Red Wings,NULL,logos/teams/detroit-red-wings.png
+EDM,Edmonton,Oilers,NULL,logos/teams/edmonton-oilers.png
+FLA,Florida,Panthers,NULL,logos/teams/florida-panthers.png
+LA,Los Angeles,Kings,NULL,logos/teams/los-angeles-kings-2025.png
+MIN,Minnesota,Wild,NULL,logos/teams/minnesota-wild.png
+MTL,Montreal,Canadiens,NULL,logos/teams/montreal-canadiens.png
+NSH,Nashville,Predators,NULL,logos/teams/nashville-predators.png
+NJ,New Jersey,Devils,NULL,logos/teams/new-jersey-devils.png
+NYI,New York,Islanders,NY Islanders,logos/teams/new-york-islanders.png
+NYR,New York,Rangers,NY Rangers,logos/teams/new-york-rangers.png
+OTT,Ottawa,Senators,NULL,logos/teams/ottawa-senators.png
+PHI,Philadelphia,Flyers,NULL,logos/teams/philadelphia-flyers-2024.png
+PIT,Pittsburgh,Penguins,NULL,logos/teams/pittsburgh-penguins.png
+SJ,San Jose,Sharks,NULL,logos/teams/san-jose-sharks.png
+SEA,Seattle,Kraken,NULL,logos/teams/seattle-kraken.png
+STL,St. Louis,Blues,NULL,logos/teams/st-louis-blues.png
+TB,Tampa Bay,Lightning,NULL,logos/teams/tampa-bay-lightning.png
+TOR,Toronto,Maple Leafs,NULL,logos/teams/toronto-maple-leafs.png
+UTA,Utah,Hockey Club,NULL,logos/teams/utah-hockey-club.png
+VAN,Vancouver,Canucks,NULL,logos/teams/vancouver-canucks.png
+VGK,Vegas,Golden Knights,NULL,logos/teams/vegas-golden-knights.png
+WSH,Washington,Capitals,NULL,logos/teams/washington-capitals.png
+WPG,Winnipeg,Jets,NULL,logos/teams/winnipeg-jets.png

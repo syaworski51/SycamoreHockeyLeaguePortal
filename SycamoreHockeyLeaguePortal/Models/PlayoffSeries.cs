@@ -24,6 +24,9 @@ namespace SycamoreHockeyLeaguePortal.Models
         [Display(Name = "Start Date")]
         public DateTime StartDate { get; set; }
 
+        [Display(Name = "Index")]
+        public string Index { get; set; }
+
         [ForeignKey(nameof(Team1))]
         public Guid Team1Id { get; set; }
 
@@ -52,16 +55,38 @@ namespace SycamoreHockeyLeaguePortal.Models
                     string team1Name = Team1.AlternateName == null ? Team1.City : Team1.AlternateName;
                     string team2Name = Team2.AlternateName == null ? Team2.City : Team2.AlternateName;
                     string leader = (Team1Wins > Team2Wins) ? team1Name : team2Name;
-                    string leadsOrWins = (Status == "In progress") ? "leads" : "wins";
-                    int leadingScore = Math.Max(Team1Wins, Team2Wins);
-                    int trailingScore = Math.Min(Team1Wins, Team2Wins);
+                    string verb = (Status == "In progress") ? "leads" : "wins";
+                    int leadingWins = Math.Max(Team1Wins, Team2Wins);
+                    int trailingWins = Math.Min(Team1Wins, Team2Wins);
 
-                    return $"{leader} {leadsOrWins} series {leadingScore}-{trailingScore}";
+                    return $"{leader} {verb} series {leadingWins}-{trailingWins}";
                 }
 
                 return $"Series is tied {Team1Wins}-{Team2Wins}";
             }
         }
+
+        [Display(Name = "Series")]
+        public string ShortSeriesScoreString
+        {
+            get
+            {
+                if (Team1Wins != Team2Wins)
+                {
+                    string team1Code = Team1.Code;
+                    string team2Code = Team2.Code;
+                    string leader = (Team1Wins > Team2Wins) ? team1Code : team2Code;
+                    string verb = (Status == "In progress") ? "leads" : "wins";
+                    int leadingWins = Math.Max(Team1Wins, Team2Wins);
+                    int trailingWins = Math.Min(Team1Wins, Team2Wins);
+
+                    return $"{leader} {verb} {leadingWins}-{trailingWins}";
+                }
+
+                return $"Series tied {Team1Wins}-{Team2Wins}";
+            }
+        }
+
         [Display(Name = "Status")]
         public string Status
         {

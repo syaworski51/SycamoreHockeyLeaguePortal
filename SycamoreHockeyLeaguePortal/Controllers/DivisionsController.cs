@@ -22,7 +22,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         // GET: Divisions
         public async Task<IActionResult> Index()
         {
-            var divisions = _context.Division
+            var divisions = _context.Divisions
                 .OrderBy(d => d.Name);
 
             return View(await divisions.AsNoTracking().ToListAsync());
@@ -31,12 +31,12 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         // GET: Divisions/Details/5
         public async Task<IActionResult> Details(Guid? id)
         {
-            if (id == null || _context.Division == null)
+            if (id == null || _context.Divisions == null)
             {
                 return NotFound();
             }
 
-            var division = await _context.Division
+            var division = await _context.Divisions
                 .FirstOrDefaultAsync(m => m.Id == id);
             if (division == null)
             {
@@ -72,12 +72,12 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         // GET: Divisions/Edit/5
         public async Task<IActionResult> Edit(Guid? id)
         {
-            if (id == null || _context.Division == null)
+            if (id == null || _context.Divisions == null)
             {
                 return NotFound();
             }
 
-            var division = await _context.Division.FindAsync(id);
+            var division = await _context.Divisions.FindAsync(id);
             if (division == null)
             {
                 return NotFound();
@@ -123,12 +123,12 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         // GET: Divisions/Delete/5
         public async Task<IActionResult> Delete(Guid? id)
         {
-            if (id == null || _context.Division == null)
+            if (id == null || _context.Divisions == null)
             {
                 return NotFound();
             }
 
-            var division = await _context.Division
+            var division = await _context.Divisions
                 .FirstOrDefaultAsync(m => m.Id == id);
             if (division == null)
             {
@@ -143,14 +143,14 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(Guid id)
         {
-            if (_context.Division == null)
+            if (_context.Divisions == null)
             {
                 return Problem("Entity set 'ApplicationDbContext.Division'  is null.");
             }
-            var division = await _context.Division.FindAsync(id);
+            var division = await _context.Divisions.FindAsync(id);
             if (division != null)
             {
-                _context.Division.Remove(division);
+                _context.Divisions.Remove(division);
             }
             
             await _context.SaveChangesAsync();
@@ -159,7 +159,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
 
         private bool DivisionExists(Guid id)
         {
-          return (_context.Division?.Any(e => e.Id == id)).GetValueOrDefault();
+          return (_context.Divisions?.Any(e => e.Id == id)).GetValueOrDefault();
         }
     }
 }

@@ -37,7 +37,7 @@
             <th>
                 Status
             </th>
-            <th class="actions"></th>
+            <th class="actions-regular-season"></th>
         </tr>
     </thead>
     <tbody>
@@ -64,7 +64,7 @@
                 }
                 else
                 {
-                    <td class="schedule-score" colspan="2">
+                    <td class="pregame" colspan="2" style="width: 140px;">
                         @@
                     </td>
                 }
@@ -80,16 +80,16 @@
                 <td>
                     @if (!game.IsFinalized)
                     {
-                        if (game.IsLive)
+                        if (game.Period == 0)
                         {
-                            <a asp-action="GameControls" asp-route-id="@game.Id">Resume Game</a>
+                            <a asp-action="GameControls" asp-route-date="@game.Date.ToShortDateString()" asp-route-awayTeam="@game.AwayTeam.Code" asp-route-homeTeam="@game.HomeTeam.Code">Start Game</a>
                         }
                         else
                         {
-                            <a asp-action="GameControls" asp-route-id="@game.Id">Start Game</a>
+                            <a asp-action="GameControls" asp-route-date="@game.Date.ToShortDateString()" asp-route-awayTeam="@game.AwayTeam.Code" asp-route-homeTeam="@game.HomeTeam.Code">Resume Game</a>
                         }
                     }
-                    <a asp-action="GameCenter" asp-route-id="@game.Id">Game Center</a>
+                    <a asp-action="GameCenter" asp-route-date="@game.Date.ToShortDateString()" asp-route-awayTeam="@game.AwayTeam.Code" asp-route-homeTeam="@game.HomeTeam.Code">Game Center</a>
                 </td>
             </tr>
         }

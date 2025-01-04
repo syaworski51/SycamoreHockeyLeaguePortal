@@ -23,7 +23,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         // GET: Champions
         public async Task<IActionResult> Index()
         {
-            var champions = _context.Champion
+            var champions = _context.Champions
                 .Include(c => c.Season)
                 .Include(c => c.Team)
                 .OrderByDescending(c => c.Season.Year);
@@ -31,7 +31,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             List<List<ChampionsRound>> rounds = new List<List<ChampionsRound>>();
             foreach (var champion in champions)
             {
-                var championsRounds = _context.ChampionsRound
+                var championsRounds = _context.ChampionsRounds
                     .Include(r => r.Champion)
                     .Include(r => r.Opponent)
                     .Where(r => r.Champion.Season.Year == champion.Season.Year)
@@ -47,12 +47,12 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         // GET: Champions/Details/5
         public async Task<IActionResult> Details(Guid? id)
         {
-            if (id == null || _context.Champion == null)
+            if (id == null || _context.Champions == null)
             {
                 return NotFound();
             }
 
-            var champion = await _context.Champion
+            var champion = await _context.Champions
                 .Include(c => c.Season)
                 .Include(c => c.Team)
                 .FirstOrDefaultAsync(m => m.Id == id);
@@ -67,10 +67,10 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         // GET: Champions/Create
         public IActionResult Create()
         {
-            var seasons = _context.Season
+            var seasons = _context.Seasons
                 .OrderByDescending(s => s.Year);
 
-            var teams = _context.Team
+            var teams = _context.Teams
                 .OrderBy(t => t.City)
                 .ThenBy(t => t.Name);
 
@@ -87,8 +87,8 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         public async Task<IActionResult> Create([Bind("Id,SeasonId,TeamId")] Champion champion)
         {
             champion.Id = Guid.NewGuid();
-            champion.Season = _context.Season.FirstOrDefault(s => s.Id == champion.SeasonId);
-            champion.Team = _context.Team.FirstOrDefault(t => t.Id == champion.TeamId);
+            champion.Season = _context.Seasons.FirstOrDefault(s => s.Id == champion.SeasonId);
+            champion.Team = _context.Teams.FirstOrDefault(t => t.Id == champion.TeamId);
 
             var rounds = _context.PlayoffSeries
                 .Include(s => s.Season)
@@ -115,12 +115,12 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                     Champion = champion,
                     RoundIndex = round.Round.Index,
                     OpponentId = opponentId,
-                    Opponent = _context.Team.FirstOrDefault(t => t.Id == opponentId),
+                    Opponent = _context.Teams.FirstOrDefault(t => t.Id == opponentId),
                     SeriesLength = round.Team1Wins + round.Team2Wins,
                     BestOf = 7
                 };
 
-                _context.ChampionsRound.Add(championsRound);
+                _context.ChampionsRounds.Add(championsRound);
             }
 
             await _context.SaveChangesAsync();
@@ -130,18 +130,18 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         // GET: Champions/Edit/5
         public async Task<IActionResult> Edit(Guid? id)
         {
-            if (id == null || _context.Champion == null)
+            if (id == null || _context.Champions == null)
             {
                 return NotFound();
             }
 
-            var champion = await _context.Champion.FindAsync(id);
+            var champion = await _context.Champions.FindAsync(id);
             if (champion == null)
             {
                 return NotFound();
             }
-            ViewData["SeasonId"] = new SelectList(_context.Season, "Id", "Id", champion.SeasonId);
-            ViewData["TeamId"] = new SelectList(_context.Team, "Id", "Id", champion.TeamId);
+            ViewData["SeasonId"] = new SelectList(_context.Seasons, "Id", "Id", champion.SeasonId);
+            ViewData["TeamId"] = new SelectList(_context.Teams, "Id", "Id", champion.TeamId);
             return View(champion);
         }
 
@@ -177,20 +177,20 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["SeasonId"] = new SelectList(_context.Season, "Id", "Id", champion.SeasonId);
-            ViewData["TeamId"] = new SelectList(_context.Team, "Id", "Id", champion.TeamId);
+            ViewData["SeasonId"] = new SelectList(_context.Seasons, "Id", "Id", champion.SeasonId);
+            ViewData["TeamId"] = new SelectList(_context.Teams, "Id", "Id", champion.TeamId);
             return View(champion);
         }
 
         // GET: Champions/Delete/5
         public async Task<IActionResult> Delete(Guid? id)
         {
-            if (id == null || _context.Champion == null)
+            if (id == null || _context.Champions == null)
             {
                 return NotFound();
             }
 
-            var champion = await _context.Champion
+            var champion = await _context.Champions
                 .Include(c => c.Season)
                 .Include(c => c.Team)
                 .FirstOrDefaultAsync(m => m.Id == id);
@@ -207,14 +207,14 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(Guid id)
         {
-            if (_context.Champion == null)
+            if (_context.Champions == null)
             {
                 return Problem("Entity set 'ApplicationDbContext.Champion'  is null.");
             }
-            var champion = await _context.Champion.FindAsync(id);
+            var champion = await _context.Champions.FindAsync(id);
             if (champion != null)
             {
-                _context.Champion.Remove(champion);
+                _context.Champions.Remove(champion);
             }
             
             await _context.SaveChangesAsync();
@@ -223,7 +223,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
 
         private bool ChampionExists(Guid id)
         {
-          return (_context.Champion?.Any(e => e.Id == id)).GetValueOrDefault();
+          return (_context.Champions?.Any(e => e.Id == id)).GetValueOrDefault();
         }
     }
 }

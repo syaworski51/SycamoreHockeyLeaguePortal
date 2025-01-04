@@ -22,11 +22,11 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         // GET: PlayoffRounds
         public async Task<IActionResult> Index(int season)
         {
-            var seasons = _context.Season
+            var seasons = _context.Seasons
                 .OrderByDescending(s => s.Year);
             ViewBag.Seasons = new SelectList(seasons, "Year", "Year");
             
-            var playoffRounds = _context.PlayoffRound
+            var playoffRounds = _context.PlayoffRounds
                 .Include(p => p.Season)
                 .Where(p => p.Season.Year == season)
                 .OrderBy(p => p.Index);
@@ -37,12 +37,12 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         // GET: PlayoffRounds/Details/5
         public async Task<IActionResult> Details(Guid? id)
         {
-            if (id == null || _context.PlayoffRound == null)
+            if (id == null || _context.PlayoffRounds == null)
             {
                 return NotFound();
             }
 
-            var playoffRound = await _context.PlayoffRound
+            var playoffRound = await _context.PlayoffRounds
                 .Include(p => p.Season)
                 .FirstOrDefaultAsync(m => m.Id == id);
             if (playoffRound == null)
@@ -56,7 +56,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         // GET: PlayoffRounds/Create
         public IActionResult Create()
         {
-            var seasons = _context.Season
+            var seasons = _context.Seasons
                 .OrderByDescending(s => s.Year);
 
             ViewData["SeasonId"] = new SelectList(seasons, "Id", "Year");
@@ -71,7 +71,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         public async Task<IActionResult> Create([Bind("Id,SeasonId,Index,Name")] PlayoffRound playoffRound)
         {
             playoffRound.Id = Guid.NewGuid();
-            playoffRound.Season = _context.Season.FirstOrDefault(s => s.Id == playoffRound.SeasonId);
+            playoffRound.Season = _context.Seasons.FirstOrDefault(s => s.Id == playoffRound.SeasonId);
             
             _context.Add(playoffRound);
             await _context.SaveChangesAsync();
@@ -82,17 +82,17 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         // GET: PlayoffRounds/Edit/5
         public async Task<IActionResult> Edit(Guid? id)
         {
-            if (id == null || _context.PlayoffRound == null)
+            if (id == null || _context.PlayoffRounds == null)
             {
                 return NotFound();
             }
 
-            var playoffRound = await _context.PlayoffRound.FindAsync(id);
+            var playoffRound = await _context.PlayoffRounds.FindAsync(id);
             if (playoffRound == null)
             {
                 return NotFound();
             }
-            ViewData["SeasonId"] = new SelectList(_context.Season, "Id", "Id", playoffRound.SeasonId);
+            ViewData["SeasonId"] = new SelectList(_context.Seasons, "Id", "Id", playoffRound.SeasonId);
             return View(playoffRound);
         }
 
@@ -103,7 +103,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(Guid id, [Bind("Id,SeasonId,Index,Name")] PlayoffRound playoffRound)
         {
-            playoffRound.Season = _context.Season.FirstOrDefault(s => s.Id == playoffRound.SeasonId);
+            playoffRound.Season = _context.Seasons.FirstOrDefault(s => s.Id == playoffRound.SeasonId);
 
             _context.Update(playoffRound);
             await _context.SaveChangesAsync();
@@ -114,12 +114,12 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         // GET: PlayoffRounds/Delete/5
         public async Task<IActionResult> Delete(Guid? id)
         {
-            if (id == null || _context.PlayoffRound == null)
+            if (id == null || _context.PlayoffRounds == null)
             {
                 return NotFound();
             }
 
-            var playoffRound = await _context.PlayoffRound
+            var playoffRound = await _context.PlayoffRounds
                 .Include(p => p.Season)
                 .FirstOrDefaultAsync(m => m.Id == id);
             if (playoffRound == null)
@@ -135,14 +135,14 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(Guid id)
         {
-            if (_context.PlayoffRound == null)
+            if (_context.PlayoffRounds == null)
             {
                 return Problem("Entity set 'ApplicationDbContext.PlayoffRound'  is null.");
             }
-            var playoffRound = await _context.PlayoffRound.FindAsync(id);
+            var playoffRound = await _context.PlayoffRounds.FindAsync(id);
             if (playoffRound != null)
             {
-                _context.PlayoffRound.Remove(playoffRound);
+                _context.PlayoffRounds.Remove(playoffRound);
             }
             
             await _context.SaveChangesAsync();
@@ -151,7 +151,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
 
         private bool PlayoffRoundExists(Guid id)
         {
-          return (_context.PlayoffRound?.Any(e => e.Id == id)).GetValueOrDefault();
+          return (_context.PlayoffRounds?.Any(e => e.Id == id)).GetValueOrDefault();
         }
     }
 }

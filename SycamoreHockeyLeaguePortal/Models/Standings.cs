@@ -168,20 +168,26 @@ namespace SycamoreHockeyLeaguePortal.Models
         [Column(TypeName = "decimal(4,1)")]
         public decimal InterConfWinPct { get; set; }
 
-        [Display(Name = "GP_L5")]
-        public int GamesPlayedInLast5Games { get; set; }
+        [Display(Name = "GP_L10")]
+        public int GamesPlayedInLast10Games { get; set; }
 
-        [Display(Name = "W_L5")]
-        public int WinsInLast5Games { get; set; }
+        [Display(Name = "W_L10")]
+        public int WinsInLast10Games { get; set; }
 
-        [Display(Name = "L_L5")]
-        public int LossesInLast5Games { get; set; }
+        [Display(Name = "L_L10")]
+        public int LossesInLast10Games { get; set; }
 
-        [Display(Name = "W%_L5")]
+        [Display(Name = "W%_L10")]
         [Column(TypeName = "decimal(4,1)")]
-        public decimal WinPctInLast5Games { get; set; }
+        public decimal WinPctInLast10Games { get; set; }
 
-        [Display(Name = "Last 5")]
-        public string RecordInLast5Games => $"{WinsInLast5Games}-{LossesInLast5Games}";
+        [Display(Name = "Last 10")]
+        public string RecordInLast10Games => $"{WinsInLast10Games}-{LossesInLast10Games}";
+
+        [ForeignKey(nameof(NextGame))]
+        public Guid? NextGameId { get; set; }
+
+        [Display(Name = "Next Game")]
+        public Schedule? NextGame { get; set; }
     }
 }

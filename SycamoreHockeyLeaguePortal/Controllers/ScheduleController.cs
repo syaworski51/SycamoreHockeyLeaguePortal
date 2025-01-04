@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using SycamoreHockeyLeaguePortal.Data;
@@ -15,6 +16,10 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         private const string REGULAR_SEASON = "Regular Season";
         private const string PLAYOFFS = "Playoffs";
 
+        private const string DIVISION = "division";
+        private const string CONFERENCE = "conference";
+        private const string INTER_CONFERENCE = "inter-conference";
+
         public ScheduleController(ApplicationDbContext context)
         {
             _context = context;
@@ -29,14 +34,14 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             var endOfWeek = weekOf.AddDays(6);
             ViewBag.EndOfWeek = endOfWeek;
 
-            var seasons = await _context.Season
+            var seasons = await _context.Seasons
                 .OrderByDescending(s => s.Year)
                 .ToListAsync();
             ViewBag.Seasons = new SelectList(seasons, "Year", "Year");
 
             var season = weekOf.Year;
 
-            var teams = await _context.Alignment
+            var teams = await _context.Alignments
                 .Include(a => a.Season)
                 .Include(a => a.Conference)
                 .Include(a => a.Division)
@@ -75,26 +80,38 @@ namespace SycamoreHockeyLeaguePortal.Controllers
 
         public async Task<IActionResult> Playoffs(int season, int round, string? team)
         {
+            if (season == 2021 && round == 4)
+            {
+                round--;
+                return RedirectToAction(nameof(Playoffs), new { season = season, round = round, team = team });
+            }
+            
             ViewBag.Season = season;
             ViewBag.Team = team;
             ViewBag.Round = round;
 
-            var seasons = _context.Season
+            var seasons = _context.Seasons
                 .OrderByDescending(s => s.Year);
             ViewBag.Seasons = new SelectList(seasons, "Year", "Year");
 
-            var rounds = _context.PlayoffRound
+            var rounds = _context.PlayoffRounds
                 .Include(r => r.Season)
                 .Where(r => r.Season.Year == season)
                 .OrderBy(r => r.Index);
             ViewBag.Rounds = new SelectList(rounds, "Index", "Name");
+
+            string roundName = rounds
+                .Where(r => r.Index == round)
+                .Select(r => r.Name)
+                .First();
+            ViewBag.RoundName = roundName;
 
             var teams = _context.Schedule
                 .Include(s => s.Season)
                 .Include(s => s.AwayTeam)
                 .Include(s => s.HomeTeam)
                 .Where(s => s.Season.Year == season &&
-                            s.PlayoffRound.Index == round)
+                            s.PlayoffRound!.Index == round)
                 .Select(s => s.HomeTeam)
                 .Distinct()
                 .OrderBy(s => s.City)
@@ -106,11 +123,12 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             {
                 playoffs = _context.Schedule
                     .Include(s => s.Season)
+                    .Include(s => s.PlayoffRound)
                     .Include(s => s.AwayTeam)
                     .Include(s => s.HomeTeam)
                     .Where(s => s.Season.Year == season &&
                                 s.Type == PLAYOFFS &&
-                                s.PlayoffRound.Index == round &&
+                                s.PlayoffRound!.Index == round &&
                                 (s.AwayTeam.Code == team ||
                                  s.HomeTeam.Code == team))
                     .OrderBy(s => s.Date)
@@ -120,22 +138,85 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             {
                 playoffs = _context.Schedule
                     .Include(s => s.Season)
+                    .Include(s => s.PlayoffRound)
                     .Include(s => s.AwayTeam)
                     .Include(s => s.HomeTeam)
                     .Where(s => s.Season.Year == season &&
                                 s.Type == PLAYOFFS &&
-                                s.PlayoffRound.Index == round)
+                                s.PlayoffRound!.Index == round)
                     .OrderBy(s => s.Date)
                     .ThenBy(s => s.GameIndex);
             }
 
+            List<DateTime> dates = await playoffs
+                .Select(p => p.Date.Date)
+                .Distinct()
+                .ToListAsync();
+            ViewBag.Dates = dates;
+
             return View(await playoffs.AsNoTracking().ToListAsync());
         }
 
-        // GET: Schedule/Details/5
-        public async Task<IActionResult> GameCenter(Guid? id)
+        [Route("Schedule/PlayoffSeries/{season}/{team1}/{team2}")]
+        public async Task<IActionResult> PlayoffSeries(int season, string team1, string team2)
         {
-            if (id == null || _context.Schedule == null)
+            var playoffSeries = _context.PlayoffSeries
+                .Include(s => s.Season)
+                .Include(s => s.Round)
+                .Include(s => s.Team1)
+                .Include(s => s.Team2)
+                .Where(s => s.Season.Year == season &&
+                            ((s.Team1.Code == team1 && s.Team2.Code == team2) ||
+                             (s.Team1.Code == team2 && s.Team2.Code == team1)))
+                .FirstOrDefault()!;
+
+            Conference conference = _context.Alignments
+                .Include(a => a.Season)
+                .Include(a => a.Conference)
+                .Include(a => a.Division)
+                .Include(a => a.Team)
+                .Where(a => a.Team == playoffSeries.Team1)
+                .Select(a => a.Conference)
+                .FirstOrDefault()!;
+
+            string conferenceName = conference.Name.Replace(" Conference", "");
+
+            string roundString;
+            if ((season == 2021 && playoffSeries.Round.Index == 3) ||
+                (season >= 2022 && playoffSeries.Round.Index == 4))
+                roundString = $"{season} {playoffSeries.Round.Name}";
+            else
+            {
+                string name = playoffSeries.Round.Name.Replace(" Finals", " Final");
+                roundString = $"{season} {conferenceName} {name}";
+            }
+            ViewBag.RoundString = roundString;
+
+            var schedule = await _context.Schedule
+                .Include(s => s.Season)
+                .Include(s => s.PlayoffRound)
+                .Include(s => s.AwayTeam)
+                .Include(s => s.HomeTeam)
+                .Where(s => s.Season.Year == season &&
+                            s.Type == "Playoffs" &&
+                            ((s.AwayTeam == playoffSeries.Team2 && s.HomeTeam == playoffSeries.Team1) ||
+                             (s.AwayTeam == playoffSeries.Team1 && s.HomeTeam == playoffSeries.Team2)))
+                .OrderBy(s => s.Date)
+                .ThenBy(s => s.GameIndex)
+                .ToListAsync();
+            ViewBag.SeriesSchedule = schedule;
+
+            ViewBag.Season = season;
+
+
+            return View(playoffSeries);
+        }
+
+        // GET: Schedule/Details/5
+        [Route("GameCenter/{date}/{awayTeam}/{homeTeam}")]
+        public async Task<IActionResult> GameCenter(DateTime date, string awayTeam, string homeTeam)
+        {
+            if (_context.Schedule == null)
             {
                 return NotFound();
             }
@@ -145,7 +226,9 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 .Include(s => s.PlayoffRound)
                 .Include(s => s.AwayTeam)
                 .Include(s => s.HomeTeam)
-                .FirstOrDefaultAsync(m => m.Id == id);
+                .FirstOrDefaultAsync(m => m.Date.Date == date &&
+                                          m.AwayTeam.Code == awayTeam &&
+                                          m.HomeTeam.Code == homeTeam);
 
             if (game == null)
             {
@@ -158,11 +241,11 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         // GET: Schedule/Create
         public IActionResult Create()
         {
-            var teams = _context.Team
+            var teams = _context.Teams
                 .OrderBy(t => t.City)
                 .ThenBy(t => t.Name);
 
-            var seasons = _context.Season
+            var seasons = _context.Seasons
                 .OrderByDescending(s => s.Year);
             
             ViewData["AwayTeamId"] = new SelectList(teams, "Id", "FullName");
@@ -184,10 +267,10 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                     .Select(s => s.GameIndex)
                     .Max() + 1 :
                 1;
-            game.Season = _context.Season.FirstOrDefault(s => s.Id == game.SeasonId)!;
-            game.PlayoffRound = _context.PlayoffRound.FirstOrDefault(r => r.Id == game.PlayoffRoundId) ?? null;
-            game.AwayTeam = _context.Team.FirstOrDefault(t => t.Id == game.AwayTeamId)!;
-            game.HomeTeam = _context.Team.FirstOrDefault(t => t.Id == game.HomeTeamId)!;
+            game.Season = _context.Seasons.FirstOrDefault(s => s.Id == game.SeasonId)!;
+            game.PlayoffRound = _context.PlayoffRounds.FirstOrDefault(r => r.Id == game.PlayoffRoundId) ?? null;
+            game.AwayTeam = _context.Teams.FirstOrDefault(t => t.Id == game.AwayTeamId)!;
+            game.HomeTeam = _context.Teams.FirstOrDefault(t => t.Id == game.HomeTeamId)!;
 
             _context.Add(game);
             await _context.SaveChangesAsync();
@@ -195,9 +278,10 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         }
 
         // GET: Schedule/Edit/5
-        public async Task<IActionResult> GameControls(Guid? id)
+        [Route("GameControls/{date}/{awayTeam}/{homeTeam}")]
+        public async Task<IActionResult> GameControls(DateTime date, string awayTeam, string homeTeam)
         {
-            if (id == null || _context.Schedule == null)
+            if (_context.Schedule == null)
             {
                 return NotFound();
             }
@@ -207,8 +291,9 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 .Include(s => s.PlayoffRound)
                 .Include(s => s.AwayTeam)
                 .Include(s => s.HomeTeam)
-                .Where(s => s.Id == id)
-                .FirstOrDefaultAsync()!;
+                .FirstOrDefaultAsync(s => s.Date.Date == date &&
+                                          s.AwayTeam.Code == awayTeam &&
+                                          s.HomeTeam.Code == homeTeam)!;
 
             if (game == null)
             {
@@ -226,10 +311,6 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 await _context.SaveChangesAsync();
             }
 
-            /*ViewData["SeasonId"] = new SelectList(_context.Season, "Id", "Year", game.Season.Year);
-            ViewData["PlayoffRoundId"] = new SelectList(_context.PlayoffRound, "Id", "Name", "Select Round");
-            ViewData["AwayTeamId"] = new SelectList(_context.Team, "Id", "FullName", game.AwayTeam.FullName);
-            ViewData["HomeTeamId"] = new SelectList(_context.Team, "Id", "FullName", game.HomeTeam.FullName);*/
             return View(game);
         }
 
@@ -238,17 +319,17 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> GameControls(Guid id, [Bind("Id,SeasonId,PlayoffRoundId,Date,Type,AwayTeamId,AwayScore,HomeTeamId,HomeScore,Period,IsLive,IsFinalized,Notes,GameIndex")] Schedule game, bool finalized = true)
+        public async Task<IActionResult> GameControls(Guid? id, [Bind("Id,SeasonId,PlayoffRoundId,Date,Type,AwayTeamId,AwayScore,HomeTeamId,HomeScore,Period,IsLive,IsFinalized,Notes,GameIndex")] Schedule game, bool finalized = true)
         {
             if (id != game.Id)
             {
                 return NotFound();
             }
 
-            game.Season = _context.Season.FirstOrDefault(s => s.Id == game.SeasonId)!;
-            game.PlayoffRound = _context.PlayoffRound.FirstOrDefault(r => r.Id == game.PlayoffRoundId) ?? null;
-            game.AwayTeam = _context.Team.FirstOrDefault(t => t.Id == game.AwayTeamId)!;
-            game.HomeTeam = _context.Team.FirstOrDefault(t => t.Id == game.HomeTeamId)!;
+            game.Season = _context.Seasons.FirstOrDefault(s => s.Id == game.SeasonId)!;
+            game.PlayoffRound = _context.PlayoffRounds.FirstOrDefault(r => r.Id == game.PlayoffRoundId) ?? null;
+            game.AwayTeam = _context.Teams.FirstOrDefault(t => t.Id == game.AwayTeamId)!;
+            game.HomeTeam = _context.Teams.FirstOrDefault(t => t.Id == game.HomeTeamId)!;
             
             game.IsFinalized = finalized;
             game.IsLive = false;
@@ -260,66 +341,25 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 await UpdateStandings(game.Season.Year, game.AwayTeam, game.HomeTeam);
 
             if (game.Type == PLAYOFFS && game.IsFinalized)
-            {
-                var playoffSeries = _context.PlayoffSeries
-                    .Include(s => s.Season)
-                    .Include(s => s.Round)
-                    .Include(s => s.Team1)
-                    .Include(s => s.Team2)
-                    .Where(s => s.Season.Year == game.Season.Year &&
-                                (s.Team1Id == game.HomeTeamId && s.Team2Id == game.AwayTeamId) ||
-                                (s.Team1Id == game.AwayTeamId && s.Team2Id == game.HomeTeamId))
-                    .FirstOrDefault();
-
-                var seriesSchedule = _context.Schedule
-                    .Include(s => s.Season)
-                    .Include(s => s.PlayoffRound)
-                    .Include(s => s.AwayTeam)
-                    .Include(s => s.HomeTeam)
-                    .Where(s => s.Season.Year == game.Season.Year &&
-                                s.Type == PLAYOFFS &&
-                                ((s.AwayTeamId == game.AwayTeamId && s.HomeTeamId == game.HomeTeamId) ||
-                                 (s.AwayTeamId == game.HomeTeamId && s.HomeTeamId == game.AwayTeamId)));
-
-                var gamesPlayed = seriesSchedule.Where(g => g.IsFinalized);
-
-                playoffSeries.Team1Wins = gamesPlayed
-                    .Where(g => (g.AwayTeamId == playoffSeries.Team1Id && g.AwayScore > g.HomeScore) ||
-                                (g.HomeTeamId == playoffSeries.Team1Id && g.HomeScore > g.AwayScore))
-                    .Count();
-                playoffSeries.Team2Wins = gamesPlayed
-                    .Where(g => (g.AwayTeamId == playoffSeries.Team2Id && g.AwayScore > g.HomeScore) ||
-                                (g.HomeTeamId == playoffSeries.Team2Id && g.HomeScore > g.AwayScore))
-                    .Count();
-
-                _context.PlayoffSeries.Update(playoffSeries);
-
-                game.Notes = playoffSeries.SeriesScoreString;
-                _context.Schedule.Update(game);
-
-                if (playoffSeries.Team1Wins == 4 || playoffSeries.Team2Wins == 4)
-                {
-                    var remainingGames = seriesSchedule.Where(g => g.Date.Date.CompareTo(game.Date.Date) > 0);
-
-                    if (remainingGames.Any())
-                    {
-                        foreach (var remainingGame in remainingGames)
-                            _context.Schedule.Remove(remainingGame);
-                    }
-                }
-
-                await _context.SaveChangesAsync();
-            }
+                await UpdatePlayoffSeries(game.Season.Year, game);
 
             if (!finalized)
             {
                 if (game.Type == PLAYOFFS)
-                    return RedirectToAction(nameof(Playoffs), new { season = game.Season.Year, round = game.PlayoffRound!.Index });
+                    return RedirectToAction(nameof(Playoffs), new 
+                    { 
+                        season = game.Season.Year, 
+                        round = game.PlayoffRound!.Index 
+                    });
 
                 return RedirectToAction(nameof(Index), new { weekOf = game.Date.ToShortDateString() });
             }
 
-            return RedirectToAction(nameof(GameCenter), new { id = id });
+            return RedirectToAction(nameof(GameCenter), new {
+                date = game.Date.ToShortDateString(),
+                awayTeam = game.AwayTeam.Code,
+                homeTeam = game.HomeTeam.Code
+            });
         }
 
         public async Task<Schedule> GetGame(Guid? id)
@@ -343,19 +383,37 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         public async Task<IActionResult> NextPeriod(Guid id)
         {
             var game = await GetGame(id);
-            game.Period++;
             
-            await UpdateGame(game);
-            return RedirectToAction(nameof(GameControls), new { id = id });
+            if (game.Period < 3 || game.AwayScore == game.HomeScore)
+            {
+                game.Period++;
+                await UpdateGame(game);
+            }
+            
+            return RedirectToAction(nameof(GameControls), new 
+            { 
+                date = game.Date.ToShortDateString(), 
+                awayTeam = game.AwayTeam.Code, 
+                homeTeam = game.HomeTeam.Code 
+            });
         }
 
         public async Task<IActionResult> PreviousPeriod(Guid id)
         {
             var game = await GetGame(id);
-            game.Period--;
+            
+            if (game.Period > 1)
+            {
+                game.Period--;
+                await UpdateGame(game);
+            }
 
-            await UpdateGame(game);
-            return RedirectToAction(nameof(GameControls), new { id = id });
+            return RedirectToAction(nameof(GameControls), new 
+            {
+                date = game.Date.ToShortDateString(),
+                awayTeam = game.AwayTeam.Code,
+                homeTeam = game.HomeTeam.Code
+            });
         }
 
         public async Task<IActionResult> AwayGoal(Guid id)
@@ -364,7 +422,12 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             game.AwayScore++;
 
             await UpdateGame(game);
-            return RedirectToAction(nameof(GameControls), new { id = id });
+            return RedirectToAction(nameof(GameControls), new 
+            {
+                date = game.Date.ToShortDateString(),
+                awayTeam = game.AwayTeam.Code,
+                homeTeam = game.HomeTeam.Code
+            });
         }
 
         public async Task<IActionResult> RemoveAwayGoal(Guid id)
@@ -377,7 +440,12 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 await UpdateGame(game);
             }
             
-            return RedirectToAction(nameof(GameControls), new { id = id });
+            return RedirectToAction(nameof(GameControls), new 
+            {
+                date = game.Date.ToShortDateString(),
+                awayTeam = game.AwayTeam.Code,
+                homeTeam = game.HomeTeam.Code
+            });
         }
 
         public async Task<IActionResult> HomeGoal(Guid id)
@@ -386,7 +454,12 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             game.HomeScore++;
 
             await UpdateGame(game);
-            return RedirectToAction(nameof(GameControls), new { id = id });
+            return RedirectToAction(nameof(GameControls), new 
+            {
+                date = game.Date.ToShortDateString(),
+                awayTeam = game.AwayTeam.Code,
+                homeTeam = game.HomeTeam.Code
+            });
         }
 
         public async Task<IActionResult> RemoveHomeGoal(Guid id)
@@ -399,7 +472,56 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 await UpdateGame(game);
             }
 
-            return RedirectToAction(nameof(GameControls), new { id = id });
+            return RedirectToAction(nameof(GameControls), new 
+            {
+                date = game.Date.ToShortDateString(),
+                awayTeam = game.AwayTeam.Code,
+                homeTeam = game.HomeTeam.Code
+            });
+        }
+
+        public async Task<IActionResult> SaveGame(Guid id)
+        {
+            var game = await GetGame(id);
+
+            game.IsLive = false;
+            await UpdateGame(game);
+
+            if (game.Type == PLAYOFFS)
+                return RedirectToAction(nameof(Playoffs), new { season = game.Date.Year, round = game.PlayoffRound!.Index });
+
+            return RedirectToAction(nameof(Index), new { weekOf = game.Date.ToShortDateString() });
+        }
+
+        public async Task<IActionResult> FinalizeGame(Guid id)
+        {
+            var game = await GetGame(id);
+
+            if (game.Period >= 3 && game.AwayScore != game.HomeScore)
+            {
+                game.IsFinalized = true;
+                await UpdateGame(game);
+
+                if (game.Type == REGULAR_SEASON)
+                    await UpdateStandings(game.Season.Year, game.AwayTeam, game.HomeTeam);
+
+                if (game.Type == PLAYOFFS)
+                    await UpdatePlayoffSeries(game.Season.Year, game);
+
+                return RedirectToAction(nameof(GameCenter), new
+                {
+                    date = game.Date.ToShortDateString(),
+                    awayTeam = game.AwayTeam.Code,
+                    homeTeam = game.HomeTeam.Code
+                });
+            }
+
+            return View(nameof(GameControls), new
+            {
+                date = game.Date.ToShortDateString(),
+                awayTeam = game.AwayTeam.Code,
+                homeTeam = game.HomeTeam.Code
+            });
         }
 
         // GET: Schedule/Delete/5
@@ -461,6 +583,111 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             return View();
         }
 
+        private async Task UpdatePlayoffSeries(int season, Schedule game)
+        {
+            var series = _context.PlayoffSeries
+                .Include(s => s.Season)
+                .Include(s => s.Round)
+                .Include(s => s.Team1)
+                .Include(s => s.Team2)
+                .Where(s => s.Season.Year == season &&
+                            ((s.Team1 == game.HomeTeam && s.Team2 == game.AwayTeam) ||
+                             (s.Team1 == game.AwayTeam && s.Team2 == game.HomeTeam)))
+                .FirstOrDefault()!;
+
+            var schedule = _context.Schedule
+                .Include(s => s.Season)
+                .Include(s => s.PlayoffRound)
+                .Include(s => s.AwayTeam)
+                .Include(s => s.HomeTeam)
+                .Where(s => s.Season.Year == season &&
+                            s.Type == PLAYOFFS &&
+                            ((s.AwayTeam == game.AwayTeam && s.HomeTeam == game.HomeTeam) ||
+                             (s.AwayTeam == game.HomeTeam && s.HomeTeam == game.AwayTeam)))
+                .OrderBy(s => s.Date)
+                .ThenBy(s => s.GameIndex);
+
+            var gamesPlayed = schedule.Where(g => g.IsFinalized);
+
+            series.Team1Wins = gamesPlayed
+                .Count(g => (g.AwayTeam == series.Team1 && g.AwayScore > g.HomeScore) ||
+                            (g.HomeTeam == series.Team1 && g.HomeScore > g.AwayScore));
+            series.Team2Wins = gamesPlayed
+                .Count(g => (g.AwayTeam == series.Team2 && g.AwayScore > g.HomeScore) ||
+                            (g.HomeTeam == series.Team2 && g.HomeScore > g.AwayScore));
+
+            _context.PlayoffSeries.Update(series);
+
+            game.Notes = series.SeriesScoreString;
+            game.PlayoffSeriesScore = series.ShortSeriesScoreString;
+            _context.Schedule.Update(game);
+
+            var remainingGames = schedule.Where(g => g.Date.Date.CompareTo(game.Date.Date) > 0);
+            if (remainingGames.Any())
+            {
+                var nextGame = remainingGames.First();
+
+                nextGame.Notes = remainingGames.Count() > 1 ? series.SeriesScoreString : "Game 7";
+                nextGame.PlayoffSeriesScore = series.ShortSeriesScoreString;
+                _context.Schedule.Update(nextGame);
+            }
+
+            if (series.Team1Wins == 4 || series.Team2Wins == 4)
+            {
+                if (remainingGames.Any())
+                {
+                    foreach (var _game in remainingGames)
+                        _context.Schedule.Remove(_game);
+                }
+
+                if ((series.Season.Year == 2021 && series.Round.Index == 3) ||
+                    (series.Season.Year >= 2022 && series.Round.Index == 4))
+                {
+                    Team _champion = (series.Team1Wins == 4) ? series.Team1 : series.Team2;
+
+                    var champion = new Champion
+                    {
+                        Id = Guid.NewGuid(),
+                        SeasonId = series.SeasonId,
+                        Season = series.Season,
+                        TeamId = _champion.Id,
+                        Team = _champion
+                    };
+                    _context.Champions.Add(champion);
+
+                    var roundsWon = _context.PlayoffSeries
+                        .Include(s => s.Season)
+                        .Include(s => s.Round)
+                        .Include(s => s.Team1)
+                        .Include(s => s.Team2)
+                        .Where(s => s.Season.Year == champion.Season.Year &&
+                                    (s.Team1 == champion.Team ||
+                                     s.Team2 == champion.Team))
+                        .OrderBy(s => s.Round.Index);
+
+                    foreach (var round in roundsWon)
+                    {
+                        Team opponent = (champion.Team == round.Team1) ? round.Team2 : round.Team1;
+
+                        var roundWon = new ChampionsRound
+                        {
+                            Id = Guid.NewGuid(),
+                            ChampionId = champion.Id,
+                            Champion = champion,
+                            RoundIndex = round.Round.Index,
+                            OpponentId = opponent.Id,
+                            Opponent = opponent,
+                            SeriesLength = round.Team1Wins + round.Team2Wins,
+                            BestOf = 7
+                        };
+                        _context.ChampionsRounds.Add(roundWon);
+                    }
+                }
+            }
+
+            await _context.SaveChangesAsync();
+        }
+
         private async Task UpdateStandings(int season, Team awayTeam, Team homeTeam)
         {
             await UpdateTeamStats(season, awayTeam);
@@ -497,34 +724,36 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             teamStats.RegulationWins = winsByType[0];
             teamStats.RegPlusOTWins = winsByType[1];
 
-            teamStats.WinsVsDivision = await GetWins(season, team, "division");
-            teamStats.LossesVsDivision = await GetLosses(season, team, "division");
+            teamStats.WinsVsDivision = await GetWins(season, team, DIVISION);
+            teamStats.LossesVsDivision = await GetLosses(season, team, DIVISION);
             teamStats.GamesPlayedVsDivision = teamStats.WinsVsDivision + teamStats.LossesVsDivision;
             teamStats.WinPctVsDivision = (teamStats.GamesPlayedVsDivision > 0) ?
                 100 * ((decimal)teamStats.WinsVsDivision / teamStats.GamesPlayedVsDivision) :
                 0;
 
-            teamStats.WinsVsConference = await GetWins(season, team, "conference");
-            teamStats.LossesVsConference = await GetLosses(season, team, "conference");
+            teamStats.WinsVsConference = await GetWins(season, team, CONFERENCE);
+            teamStats.LossesVsConference = await GetLosses(season, team, CONFERENCE);
             teamStats.GamesPlayedVsConference = teamStats.WinsVsConference + teamStats.LossesVsConference;
             teamStats.WinPctVsConference = (teamStats.GamesPlayedVsConference > 0) ?
                 100 * ((decimal)teamStats.WinsVsConference / teamStats.GamesPlayedVsConference) :
                 0;
 
-            teamStats.InterConfWins = await GetWins(season, team, "inter-conference");
-            teamStats.InterConfLosses = await GetLosses(season, team, "inter-conference");
+            teamStats.InterConfWins = await GetWins(season, team, INTER_CONFERENCE);
+            teamStats.InterConfLosses = await GetLosses(season, team, INTER_CONFERENCE);
             teamStats.InterConfGamesPlayed = teamStats.InterConfWins + teamStats.InterConfLosses;
             teamStats.InterConfWinPct = (teamStats.InterConfGamesPlayed > 0) ?
                 100 * ((decimal)teamStats.InterConfWins / teamStats.InterConfGamesPlayed) :
                 0;
 
-            int[] recordInLast5Games = await GetRecordInLast5Games(season, team);
-            teamStats.WinsInLast5Games = recordInLast5Games[0];
-            teamStats.LossesInLast5Games = recordInLast5Games[1];
-            teamStats.GamesPlayedInLast5Games = teamStats.WinsInLast5Games + teamStats.LossesInLast5Games;
-            teamStats.WinPctInLast5Games = teamStats.GamesPlayedInLast5Games > 0 ?
-                100 * ((decimal)teamStats.WinsInLast5Games / teamStats.GamesPlayedInLast5Games) :
+            int[] recordInLast10Games = await GetRecordInLast10Games(season, team);
+            teamStats.WinsInLast10Games = recordInLast10Games[0];
+            teamStats.LossesInLast10Games = recordInLast10Games[1];
+            teamStats.GamesPlayedInLast10Games = teamStats.WinsInLast10Games + teamStats.LossesInLast10Games;
+            teamStats.WinPctInLast10Games = teamStats.GamesPlayedInLast10Games > 0 ?
+                100 * ((decimal)teamStats.WinsInLast10Games / teamStats.GamesPlayedInLast10Games) :
                 0;
+
+            Schedule nextGame = await GetNextGame(season, team);
 
             _context.Standings.Update(teamStats);
             await _context.SaveChangesAsync();
@@ -532,7 +761,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             await UpdateGamesBehind(season);
         }
 
-        private async Task<int[]> GetRecordInLast5Games(int season, Team team)
+        private async Task<int[]> GetRecordInLast10Games(int season, Team team)
         {
             var gamesPlayed = await _context.Schedule
                 .Include(s => s.Season)
@@ -542,15 +771,18 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 .Where(s => s.Season.Year == season &&
                             (s.AwayTeam == team || s.HomeTeam == team) &&
                             s.IsFinalized && s.Period >= 3)
+                .OrderBy(s => s.Date)
+                .ThenBy(s => s.GameIndex)
                 .ToListAsync();
 
             int gamesPlayedCount = gamesPlayed.Count;
             int[] record = { 0, 0 };
             const int WINS = 0, LOSSES = 1;
-            for (int index = gamesPlayedCount - 1; index >= 0 && index >= gamesPlayedCount - 5; index--)
+            for (int index = gamesPlayedCount - 1; index >= 0 && index >= gamesPlayedCount - 10; index--)
             {
                 Schedule game = gamesPlayed[index];
                 int recordIndex;
+
                 if (game.HomeTeam == team)
                 {
                     recordIndex = (game.HomeScore > game.AwayScore) ? WINS : LOSSES;
@@ -566,9 +798,23 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             return record;
         }
 
+        private async Task<Schedule> GetNextGame(int season, Team team)
+        {
+            return await _context.Schedule
+                .Include(s => s.Season)
+                .Include(s => s.PlayoffRound)
+                .Include(s => s.AwayTeam)
+                .Include(s => s.HomeTeam)
+                .Where(s => s.Season.Year == season &&
+                            s.Type == REGULAR_SEASON &&
+                            s.Period == 0 &&
+                            (s.AwayTeam == team || s.HomeTeam == team))
+                .FirstOrDefaultAsync()!;
+        }
+
         private IQueryable<Alignment> GetTeams(int season)
         {
-            return _context.Alignment
+            return _context.Alignments
                 .Include(a => a.Season)
                 .Include(a => a.Conference)
                 .Include(a => a.Division)
@@ -627,7 +873,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
 
         private async Task<int> GetWins(int season, Team team, string vsGroup = "overall")
         {
-            var teams = _context.Alignment
+            var teams = _context.Alignments
                 .Include(a => a.Season)
                 .Include(a => a.Conference)
                 .Include(a => a.Division)
@@ -666,19 +912,19 @@ namespace SycamoreHockeyLeaguePortal.Controllers
 
                     switch (vsGroup)
                     {
-                        case "division":
+                        case DIVISION:
                             if (opponentsDivision == division)
                                 wins++;
 
                             break;
 
-                        case "conference":
+                        case CONFERENCE:
                             if (opponentsConference == conference && opponentsDivision != division)
                                 wins++;
 
                             break;
 
-                        case "inter-conference":
+                        case INTER_CONFERENCE:
                             if (opponentsConference != conference)
                                 wins++;
 
@@ -720,7 +966,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
 
         private async Task<int> GetLosses(int season, Team team, string vsGroup="overall")
         {
-            var teams = _context.Alignment
+            var teams = _context.Alignments
                 .Include(a => a.Season)
                 .Include(a => a.Conference)
                 .Include(a => a.Division)
@@ -759,19 +1005,19 @@ namespace SycamoreHockeyLeaguePortal.Controllers
 
                     switch (vsGroup)
                     {
-                        case "division":
+                        case DIVISION:
                             if (opponentsDivision == division)
                                 losses++;
 
                             break;
 
-                        case "conference":
+                        case CONFERENCE:
                             if (opponentsConference == conference && opponentsDivision != division)
                                 losses++;
 
                             break;
 
-                        case "inter-conference":
+                        case INTER_CONFERENCE:
                             if (opponentsConference != conference)
                                 losses++;
 
@@ -863,8 +1109,8 @@ namespace SycamoreHockeyLeaguePortal.Controllers
 
         private async Task UpdateGamesBehind(int season)
         {
-            await UpdateGamesBehind(season, "division");
-            await UpdateGamesBehind(season, "conference");
+            await UpdateGamesBehind(season, DIVISION);
+            await UpdateGamesBehind(season, CONFERENCE);
             await UpdateGamesBehind(season, "league");
 
             await _context.SaveChangesAsync();
@@ -883,7 +1129,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
 
             switch (groupBy)
             {
-                case "division":
+                case DIVISION:
                     standings = standings
                         .OrderByDescending(s => s.WinPct)
                         .ThenByDescending(s => s.Wins)
@@ -925,7 +1171,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
 
                     break;
 
-                case "conference":
+                case CONFERENCE:
                     standings = standings
                         .OrderByDescending(s => s.WinPct)
                         .ThenByDescending(s => s.Wins)
@@ -1003,13 +1249,13 @@ namespace SycamoreHockeyLeaguePortal.Controllers
 
         private async Task StandingsUpdateNowAvailable()
         {
-            var flag = _context.ProgramFlag
+            var flag = _context.ProgramFlags
                 .Where(f => f.Description == "New Standings Update Available")
                 .FirstOrDefault();
 
             flag!.State = true;
 
-            _context.ProgramFlag.Update(flag);
+            _context.ProgramFlags.Update(flag);
             await _context.SaveChangesAsync();
         }
     }

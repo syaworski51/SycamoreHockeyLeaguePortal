@@ -22,7 +22,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         // GET: Conferences
         public async Task<IActionResult> Index()
         {
-            var conferences = _context.Conference
+            var conferences = _context.Conferences
                 .OrderBy(c => c.Name);
 
             return View(await conferences.AsNoTracking().ToListAsync());
@@ -31,12 +31,12 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         // GET: Conferences/Details/5
         public async Task<IActionResult> Details(Guid? id)
         {
-            if (id == null || _context.Conference == null)
+            if (id == null || _context.Conferences == null)
             {
                 return NotFound();
             }
 
-            var conference = await _context.Conference
+            var conference = await _context.Conferences
                 .FirstOrDefaultAsync(m => m.Id == id);
             if (conference == null)
             {
@@ -72,12 +72,12 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         // GET: Conferences/Edit/5
         public async Task<IActionResult> Edit(Guid? id)
         {
-            if (id == null || _context.Conference == null)
+            if (id == null || _context.Conferences == null)
             {
                 return NotFound();
             }
 
-            var conference = await _context.Conference.FindAsync(id);
+            var conference = await _context.Conferences.FindAsync(id);
             if (conference == null)
             {
                 return NotFound();
@@ -123,12 +123,12 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         // GET: Conferences/Delete/5
         public async Task<IActionResult> Delete(Guid? id)
         {
-            if (id == null || _context.Conference == null)
+            if (id == null || _context.Conferences == null)
             {
                 return NotFound();
             }
 
-            var conference = await _context.Conference
+            var conference = await _context.Conferences
                 .FirstOrDefaultAsync(m => m.Id == id);
             if (conference == null)
             {
@@ -143,14 +143,14 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(Guid id)
         {
-            if (_context.Conference == null)
+            if (_context.Conferences == null)
             {
                 return Problem("Entity set 'ApplicationDbContext.Conference'  is null.");
             }
-            var conference = await _context.Conference.FindAsync(id);
+            var conference = await _context.Conferences.FindAsync(id);
             if (conference != null)
             {
-                _context.Conference.Remove(conference);
+                _context.Conferences.Remove(conference);
             }
             
             await _context.SaveChangesAsync();
@@ -159,7 +159,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
 
         private bool ConferenceExists(Guid id)
         {
-          return (_context.Conference?.Any(e => e.Id == id)).GetValueOrDefault();
+          return (_context.Conferences?.Any(e => e.Id == id)).GetValueOrDefault();
         }
     }
 }

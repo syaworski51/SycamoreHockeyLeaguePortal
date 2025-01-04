@@ -10,20 +10,21 @@ namespace SycamoreHockeyLeaguePortal.Data
             : base(options)
         {
         }
-        public DbSet<SycamoreHockeyLeaguePortal.Models.Team> Team { get; set; } = default!;
-        public DbSet<SycamoreHockeyLeaguePortal.Models.Season> Season { get; set; } = default!;
-        public DbSet<SycamoreHockeyLeaguePortal.Models.Conference> Conference { get; set; } = default!;
-        public DbSet<SycamoreHockeyLeaguePortal.Models.Division> Division { get; set; } = default!;
-        public DbSet<SycamoreHockeyLeaguePortal.Models.Alignment> Alignment { get; set; } = default!;
-        public DbSet<SycamoreHockeyLeaguePortal.Models.Schedule> Schedule { get; set; } = default!;
-        public DbSet<SycamoreHockeyLeaguePortal.Models.Standings> Standings { get; set; } = default!;
-        public DbSet<SycamoreHockeyLeaguePortal.Models.StandingsSortOption> StandingsSortOption { get; set; } = default!;
-        public DbSet<SycamoreHockeyLeaguePortal.Models.PlayoffRound> PlayoffRound { get; set; } = default!;
-        public DbSet<SycamoreHockeyLeaguePortal.Models.PlayoffSeries> PlayoffSeries { get; set; } = default!;
-        public DbSet<SycamoreHockeyLeaguePortal.Models.Champion> Champion { get; set; } = default!;
-        public DbSet<SycamoreHockeyLeaguePortal.Models.ChampionsRound> ChampionsRound { get; set; } = default!;
-        public DbSet<SycamoreHockeyLeaguePortal.Models.ProgramFlag> ProgramFlag { get; set; } = default!;
-        public DbSet<SycamoreHockeyLeaguePortal.Models.PlayoffStatus> PlayoffStatus { get; set; } = default!;
-        public DbSet<SycamoreHockeyLeaguePortal.Models.GameType> GameType { get; set; } = default!;
+        public DbSet<Team> Teams { get; set; } = default!;
+        public DbSet<Season> Seasons { get; set; } = default!;
+        public DbSet<Conference> Conferences { get; set; } = default!;
+        public DbSet<Division> Divisions { get; set; } = default!;
+        public DbSet<Alignment> Alignments { get; set; } = default!;
+        public DbSet<Schedule> Schedule { get; set; } = default!;
+        public DbSet<Standings> Standings { get; set; } = default!;
+        public DbSet<StandingsSortOption> StandingsSortOptions { get; set; } = default!;
+        public DbSet<PlayoffRound> PlayoffRounds { get; set; } = default!;
+        public DbSet<PlayoffSeries> PlayoffSeries { get; set; } = default!;
+        public DbSet<Champion> Champions { get; set; } = default!;
+        public DbSet<ChampionsRound> ChampionsRounds { get; set; } = default!;
+        public DbSet<ProgramFlag> ProgramFlags { get; set; } = default!;
+        public DbSet<PlayoffStatus> PlayoffStatuses { get; set; } = default!;
+        public DbSet<GameType> GameTypes { get; set; } = default!;
+        public DbSet<TeamBrandingHistory> TeamBrandingHistory { get; set; } = default!;
     }
 }

@@ -8,11 +8,8 @@
         public decimal WinPct => (GamesPlayed > 0) ? 
             100 * ((decimal)Wins / GamesPlayed) :
             0;
-
-        public GroupH2HStats()
-        {
-            Wins = 0;
-            Losses = 0;
-        }
+        public int GoalsFor { get; set; }
+        public int GoalsAgainst { get; set; }
+        public int GoalDifferential => GoalsFor - GoalsAgainst;
     }
 }

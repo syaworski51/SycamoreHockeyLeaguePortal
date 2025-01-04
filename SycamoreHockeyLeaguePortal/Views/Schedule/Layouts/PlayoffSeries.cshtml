@@ -1,0 +1,103 @@
+﻿@inject SycamoreHockeyLeaguePortal.Data.ApplicationDbContext _context
+
+@{
+    List<Schedule> schedule = ViewBag.SeriesSchedule;
+    int gameNumber = 1;
+
+    string GetDateString(DateTime date)
+    {
+        return $"{GetDayOfWeek(date)}, {GetMonth(date)} {date.Day}";
+    }
+
+    string GetDayOfWeek(DateTime date)
+    {
+        return date.ToString("dddd");
+    }
+
+    string GetMonth(DateTime date)
+    {
+        return date.ToString("MMMM");
+    }
+
+    string GetDisplayName(Team team)
+    {
+        var teamsInSameCity = _context.Teams
+            .Where(t => t.City == team.City);
+
+        if (teamsInSameCity.Count() > 1)
+            return team.AlternateName!;
+
+        return team.City;
+    }
+}
+
+<table class="table schedule">
+    <thead>
+        <tr>
+            <th>
+                Date
+            </th>
+            <th colspan="2" style="text-align: right;">
+                Away Team
+            </th>
+            <th colspan="2">
+                Scores
+            </th>
+            <th colspan="2" style="text-align: left;">
+                Home Team
+            </th>
+            <th>
+                Status
+            </th>
+            <th class="series">
+                Series
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var game in schedule)
+        {
+            <tr>
+                <td style="font-size: 8pt;"> 
+                    <strong style="margin-bottom: 8px;">Game @gameNumber</strong><br /><br />
+                    <a class="muted-link" asp-action="GameCenter" asp-route-date="@game.Date.ToShortDateString()" asp-route-awayTeam="@game.AwayTeam.Code" asp-route-homeTeam="@game.HomeTeam.Code">@GetDateString(game.Date)</a>
+                </td>
+                <td class="schedule-team-name" style="text-align: right;">
+                    <a asp-controller="Teams" asp-action="Details" asp-route-id="@game.AwayTeam.Code" asp-route-season="@game.Season.Year" asp-route-gameType="playoffs">@game.AwayTeam.FullName</a>
+                </td>
+                <td style="width: 30px;">
+                    <img class="schedule-team-logo" src="~/@game.AwayTeam.LogoPath" title="@game.AwayTeam.FullName" alt="@game.AwayTeam.Code" />
+                </td>
+                @if (game.Period > 0)
+                {
+                    <td class="schedule-score">
+                        @game.AwayScore
+                    </td>
+                    <td class="schedule-score">
+                        @game.HomeScore
+                    </td>
+                }
+                else
+                {
+                    <td class="pregame" colspan="2">
+                        @@
+                    </td>
+                }
+                <td style="width: 30px;">
+                    <img class="schedule-team-logo" src="~/@game.HomeTeam.LogoPath" title="@game.HomeTeam.FullName" alt="@game.HomeTeam.Code" />
+                </td>
+                <td class="schedule-team-name" style="text-align: left;">
+                    <a asp-controller="Teams" asp-action="Details" asp-route-id="@game.HomeTeam.Code" asp-route-season="@game.Season.Year" asp-route-gameType="playoffs">@game.HomeTeam.FullName</a>
+                </td>
+                <td>
+                    <a class="muted-link" asp-action="GameCenter" asp-route-date="@game.Date.ToShortDateString()" asp-route-awayTeam="@game.AwayTeam.Code" asp-route-homeTeam="@game.HomeTeam.Code">@game.Status</a>
+                </td>
+                <td>
+                    @game.PlayoffSeriesScore
+                </td>
+            </tr>
+
+            gameNumber++;
+        }
+    </tbody>
+</table>

@@ -64,13 +64,24 @@
             }
         }
     }
+
+    string GetTextColor(int value)
+    {
+        if (value > 0)
+            return "text-success";
+
+        if (value < 0)
+            return "text-danger";
+
+        return "text-black";
+    }
 }
 
 <div class="container team-stats-grid">
     <div class="row">
         <div class="col container team-stat">
             <div class="row">
-                <div class="col">RECORD</div>
+                <div class="col-4">RECORD</div>
                 <div class="col stat">@GetRecordFormat(season, teamStats)</div>
             </div>
         </div>
@@ -78,61 +89,61 @@
             @if (season < 2024)
             {
                 <div class="row">
-                    <div class="col">POINTS</div>
+                    <div class="col-4">POINTS</div>
                     <div class="col stat">@teamStats.Points</div>
                 </div>
             }
             else
             {
                 <div class="row">
-                    <div class="col">WIN %</div>
+                    <div class="col-4">WIN %</div>
                     <div class="col stat">@teamStats.WinPct</div>
                 </div>
             }
         </div>
         <div class="col container team-stat">
             <div class="row">
-                <div class="col">STREAK</div>
-                <div class="col stat">@GetStreakString(teamStats.Streak)</div>
+                <div class="col-4">STREAK</div>
+                <div class="col stat @GetTextColor(teamStats.Streak)">@GetStreakString(teamStats.Streak)</div>
             </div>
         </div>
     </div>
     <div class="row">
         <div class="col container team-stat">
             <div class="row">
-                <div class="col">GF</div>
+                <div class="col-4">GF</div>
                 <div class="col stat">@teamStats.GoalsFor</div>
             </div>
         </div>
         <div class="col container team-stat">
             <div class="row">
-                <div class="col">GA</div>
+                <div class="col-4">GA</div>
                 <div class="col stat">@teamStats.GoalsAgainst</div>
             </div>
         </div>
         <div class="col container team-stat">
             <div class="row">
-                <div class="col">GD</div>
-                <div class="col stat">@GetGoalDifferentialString(teamStats.GoalDifferential)</div>
+                <div class="col-4">GD</div>
+                <div class="col stat @GetTextColor(teamStats.GoalDifferential)">@GetGoalDifferentialString(teamStats.GoalDifferential)</div>
             </div>
         </div>
     </div>
     <div class="row">
         <div class="col container team-stat">
             <div class="row">
-                <div class="col">DIVISION RECORD</div>
+                <div class="col-4">DIVISION RECORD</div>
                 <div class="col stat">@GetRecordFormat(season, teamStats, "division")</div>
             </div>
         </div>
         <div class="col container team-stat">
             <div class="row">
-                <div class="col">CONF RECORD</div>
+                <div class="col-4">CONF RECORD</div>
                 <div class="col stat">@GetRecordFormat(season, teamStats, "conference")</div>
             </div>
         </div>
         <div class="col container team-stat">
             <div class="row">
-                <div class="col">EAST/WEST RECORD</div>
+                <div class="col-4">EC/WC RECORD</div>
                 <div class="col stat">@GetRecordFormat(season, teamStats, "inter-conference")</div>
             </div>
         </div>

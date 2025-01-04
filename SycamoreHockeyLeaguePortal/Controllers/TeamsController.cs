@@ -28,7 +28,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         // GET: Teams
         public async Task<IActionResult> Index()
         {
-            var teams = _context.Team
+            var teams = _context.Teams
                 .OrderBy(t => t.City)
                 .ThenBy(t => t.Name);
 
@@ -62,12 +62,12 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         [Route("Teams/{id}")]
         public async Task<IActionResult> Details(string? id, int season, string gameType, string? opponent)
         {
-            if (id == null || _context.Team == null)
+            if (id == null || _context.Teams == null)
             {
                 return NotFound();
             }
 
-            var team = await _context.Team
+            var team = await _context.Teams
                 .FirstOrDefaultAsync(m => m.Code == id);
 
             if (team == null)
@@ -86,7 +86,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             ViewData["Seasons"] = new SelectList(seasons, "Year", "Year");
             ViewBag.Season = season;
 
-            var gameTypes = _context.GameType
+            var gameTypes = _context.GameTypes
                 .OrderBy(t => t.Index);
             ViewData["GameTypes"] = new SelectList(gameTypes, "ParameterValue", "Name");
 
@@ -112,7 +112,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             }
             ViewBag.GameType = gameType;
 
-            var opponents = _context.Alignment
+            var opponents = _context.Alignments
                 .Include(a => a.Season)
                 .Include(a => a.Conference)
                 .Include(a => a.Division)
@@ -171,12 +171,12 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         // GET: Teams/Edit/5
         public async Task<IActionResult> Edit(Guid? id)
         {
-            if (id == null || _context.Team == null)
+            if (id == null || _context.Teams == null)
             {
                 return NotFound();
             }
 
-            var team = await _context.Team.FindAsync(id);
+            var team = await _context.Teams.FindAsync(id);
             if (team == null)
             {
                 return NotFound();
@@ -222,12 +222,12 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         // GET: Teams/Delete/5
         public async Task<IActionResult> Delete(Guid? id)
         {
-            if (id == null || _context.Team == null)
+            if (id == null || _context.Teams == null)
             {
                 return NotFound();
             }
 
-            var team = await _context.Team
+            var team = await _context.Teams
                 .FirstOrDefaultAsync(m => m.Id == id);
             if (team == null)
             {
@@ -242,14 +242,14 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(Guid id)
         {
-            if (_context.Team == null)
+            if (_context.Teams == null)
             {
                 return Problem("Entity set 'ApplicationDbContext.Team'  is null.");
             }
-            var team = await _context.Team.FindAsync(id);
+            var team = await _context.Teams.FindAsync(id);
             if (team != null)
             {
-                _context.Team.Remove(team);
+                _context.Teams.Remove(team);
             }
             
             await _context.SaveChangesAsync();
@@ -258,7 +258,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
 
         private bool TeamExists(Guid id)
         {
-          return (_context.Team?.Any(e => e.Id == id)).GetValueOrDefault();
+          return (_context.Teams?.Any(e => e.Id == id)).GetValueOrDefault();
         }
     }
 }

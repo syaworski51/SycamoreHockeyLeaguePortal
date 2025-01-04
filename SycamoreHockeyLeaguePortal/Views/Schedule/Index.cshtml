@@ -9,7 +9,7 @@
 
     string GetName(Team team)
     {
-        var teamsInSameCity = _context.Team
+        var teamsInSameCity = _context.Teams
             .Where(t => t.City == team.City);
 
         if (teamsInSameCity.Count() > 1)
@@ -104,7 +104,7 @@
             foreach (var gameDate in dates)
             {
                 ViewBag.Date = gameDate;
-                <partial name="Partials/GameDaySchedule.cshtml" />
+                <partial name="Layouts/RegularSeason.cshtml" />
             }
         }
         else

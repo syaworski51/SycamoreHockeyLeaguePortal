@@ -24,11 +24,11 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         {
             ViewBag.Season = season;
             
-            var seasons = _context.Season
+            var seasons = _context.Seasons
                 .OrderByDescending(s => s.Year);
             ViewBag.Seasons = new SelectList(seasons, "Year", "Year");
             
-            var alignments = _context.Alignment
+            var alignments = _context.Alignments
                 .Include(a => a.Season)
                 .Include(a => a.Conference)
                 .Include(a => a.Division)
@@ -45,12 +45,12 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         // GET: Alignments/Details/5
         public async Task<IActionResult> Details(Guid? id)
         {
-            if (id == null || _context.Alignment == null)
+            if (id == null || _context.Alignments == null)
             {
                 return NotFound();
             }
 
-            var alignment = await _context.Alignment
+            var alignment = await _context.Alignments
                 .Include(a => a.Season)
                 .Include(a => a.Conference)
                 .Include(a => a.Division)
@@ -67,16 +67,16 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         // GET: Alignments/Create
         public IActionResult Create()
         {
-            var seasons = _context.Season
+            var seasons = _context.Seasons
                 .OrderByDescending(s => s.Year);
 
-            var conferences = _context.Conference
+            var conferences = _context.Conferences
                 .OrderBy(c => c.Name);
 
-            var divisions = _context.Division
+            var divisions = _context.Divisions
                 .OrderBy(d => d.Name);
 
-            var teams = _context.Team
+            var teams = _context.Teams
                 .OrderBy(t => t.City)
                 .ThenBy(t => t.Name);
 
@@ -97,10 +97,10 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             //if (ModelState.IsValid)
             //{
             alignment.Id = Guid.NewGuid();
-            alignment.Season = _context.Season.FirstOrDefault(s => s.Id == alignment.SeasonId);
-            alignment.Conference = _context.Conference.FirstOrDefault(c => c.Id == alignment.ConferenceId);
-            alignment.Division = _context.Division.FirstOrDefault(d => d.Id == alignment.DivisionId);
-            alignment.Team = _context.Team.FirstOrDefault(t => t.Id == alignment.TeamId);
+            alignment.Season = _context.Seasons.FirstOrDefault(s => s.Id == alignment.SeasonId);
+            alignment.Conference = _context.Conferences.FirstOrDefault(c => c.Id == alignment.ConferenceId);
+            alignment.Division = _context.Divisions.FirstOrDefault(d => d.Id == alignment.DivisionId);
+            alignment.Team = _context.Teams.FirstOrDefault(t => t.Id == alignment.TeamId);
 
             _context.Add(alignment);
             await _context.SaveChangesAsync();
@@ -131,27 +131,27 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         // GET: Alignments/Edit/5
         public async Task<IActionResult> Edit(Guid? id)
         {
-            if (id == null || _context.Alignment == null)
+            if (id == null || _context.Alignments == null)
             {
                 return NotFound();
             }
 
-            var alignment = await _context.Alignment.FindAsync(id);
+            var alignment = await _context.Alignments.FindAsync(id);
             if (alignment == null)
             {
                 return NotFound();
             }
 
-            var seasons = _context.Season
+            var seasons = _context.Seasons
                 .OrderBy(s => s.Year);
 
-            var conferences = _context.Conference
+            var conferences = _context.Conferences
                 .OrderBy(c => c.Name);
 
-            var divisions = _context.Division
+            var divisions = _context.Divisions
                 .OrderBy(d => d.Name);
 
-            var teams = _context.Team
+            var teams = _context.Teams
                 .OrderBy(t => t.City)
                 .ThenBy(t => t.Name);
 
@@ -178,10 +178,10 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             {
                 try
                 {*/
-            alignment.Season = _context.Season.FirstOrDefault(s => s.Id == alignment.SeasonId);
-            alignment.Conference = _context.Conference.FirstOrDefault(c => c.Id == alignment.ConferenceId);
-            alignment.Division = _context.Division.FirstOrDefault(d => d.Id == alignment.DivisionId);
-            alignment.Team = _context.Team.FirstOrDefault(t => t.Id == alignment.TeamId);
+            alignment.Season = _context.Seasons.FirstOrDefault(s => s.Id == alignment.SeasonId);
+            alignment.Conference = _context.Conferences.FirstOrDefault(c => c.Id == alignment.ConferenceId);
+            alignment.Division = _context.Divisions.FirstOrDefault(d => d.Id == alignment.DivisionId);
+            alignment.Team = _context.Teams.FirstOrDefault(t => t.Id == alignment.TeamId);
 
             _context.Update(alignment);
             await _context.SaveChangesAsync();
@@ -210,12 +210,12 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         // GET: Alignments/Delete/5
         public async Task<IActionResult> Delete(Guid? id)
         {
-            if (id == null || _context.Alignment == null)
+            if (id == null || _context.Alignments == null)
             {
                 return NotFound();
             }
 
-            var alignment = await _context.Alignment
+            var alignment = await _context.Alignments
                 .Include(a => a.Conference)
                 .Include(a => a.Division)
                 .Include(a => a.Team)
@@ -233,14 +233,14 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(Guid id)
         {
-            if (_context.Alignment == null)
+            if (_context.Alignments == null)
             {
                 return Problem("Entity set 'ApplicationDbContext.Alignment'  is null.");
             }
-            var alignment = await _context.Alignment.FindAsync(id);
+            var alignment = await _context.Alignments.FindAsync(id);
             if (alignment != null)
             {
-                _context.Alignment.Remove(alignment);
+                _context.Alignments.Remove(alignment);
             }
             
             await _context.SaveChangesAsync();
@@ -249,7 +249,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
 
         private bool AlignmentExists(Guid id)
         {
-          return (_context.Alignment?.Any(e => e.Id == id)).GetValueOrDefault();
+          return (_context.Alignments?.Any(e => e.Id == id)).GetValueOrDefault();
         }
     }
 }

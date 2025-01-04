@@ -9,11 +9,11 @@
 
     string GetName(Team team)
     {
-        var teamsInSameCity = _context.Team
+        var teamsInSameCity = _context.Teams
             .Where(t => t.City == team.City);
 
         if (teamsInSameCity.Count() > 1)
-            return team.AlternateName;
+            return team.AlternateName!;
 
         return team.City;
     }
@@ -60,7 +60,7 @@
     {
         List<List<Standings>> standings = new List<List<Standings>>();
 
-        var divisions = _context.Alignment
+        var divisions = _context.Alignments
             .Where(s => s.Season.Year == season &&
                         s.Conference.Code == conference)
             .Select(d => d.Division)
@@ -84,7 +84,7 @@
     {
         List<Standings> teams = new List<Standings>();
 
-        var divisions = _context.Alignment
+        var divisions = _context.Alignments
             .Where(s => s.Season.Year == season &&
                         s.Conference.Code == conference)
             .Select(s => s.Division)
@@ -190,7 +190,7 @@
 
     string GetPlayoffStatusDescription(string symbol)
     {
-        var description = _context.PlayoffStatus
+        var description = _context.PlayoffStatuses
             .Where(ps => ps.Symbol == symbol &&
                          season >= ps.ActiveFrom &&
                          (season <= ps.ActiveTo || ps.ActiveTo == null))

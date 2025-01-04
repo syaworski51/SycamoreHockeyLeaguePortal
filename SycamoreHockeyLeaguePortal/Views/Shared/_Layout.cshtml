@@ -11,7 +11,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Sycamore Hockey League</title>
+    <title>@ViewData["Title"] - SHL.com</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/SycamoreHockeyLeaguePortal.styles.css" asp-append-version="true" />
@@ -60,7 +60,7 @@
                                 </div>
                             </div>
                             <div class="row-cols-2 status">
-                                <a class="game-status-link" asp-controller="Schedule" asp-action="GameCenter" asp-route-id="@currentGame.Id">@currentGame.Status</a>
+                                <a class="game-status-link" asp-controller="Schedule" asp-action="GameCenter" asp-route-date="@currentGame.Date.ToShortDateString()" asp-route-awayTeam="@currentGame.AwayTeam.Code" asp-route-homeTeam="@currentGame.HomeTeam.Code">@currentGame.Status</a>
                             </div>
                         </div>
                     }
@@ -84,7 +84,7 @@
                             <a class="nav-link text-light" asp-controller="Standings" asp-action="Index" asp-route-season="@currentYear" asp-route-viewBy="division">Standings</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-light" asp-controller="Standings" asp-action="PlayoffMatchups" asp-route-season="@currentYear">Playoffs</a>
+                            <a class="nav-link text-light" asp-controller="Schedule" asp-action="Playoffs" asp-route-season="@currentYear" asp-route-round="1">Playoffs</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link text-light" asp-controller="Champions" asp-action="Index">Champions</a>
@@ -100,12 +100,14 @@
                         <li class="nav-item">
                             <a class="nav-link text-light" asp-controller="Alignments" asp-action="Index" asp-route-season="2024">Alignments</a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-light" asp-controller="Conferences" asp-action="Index">Conferences</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-light" asp-controller="Divisions" asp-action="Index">Divisions</a>
-                        </li>
+                        <!--
+                            <li class="nav-item">
+                                <a class="nav-link text-light" asp-controller="Conferences" asp-action="Index">Conferences</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-light" asp-controller="Divisions" asp-action="Index">Divisions</a>
+                            </li>
+                        -->
                         <li class="nav-item">
                             <a class="nav-link text-light" asp-controller="Teams" asp-action="Index">Teams</a>
                         </li>

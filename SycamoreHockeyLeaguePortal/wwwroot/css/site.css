@@ -203,9 +203,16 @@ img {
     height: 30px;
 }
 
-.schedule-score {
+.schedule-score, .pregame {
     font-size: 20pt;
+}
+
+.schedule-score {
     width: 70px;
+}
+
+.pregame {
+    width: 140px;
 }
 
 .schedule-controls {
@@ -213,8 +220,16 @@ img {
     margin-top: 0;
 }
 
-.schedule .actions {
-    width: 400px;
+.schedule .actions-regular-season {
+    width: 504px;
+}
+
+.schedule .actions-playoffs {
+    width: 275px;
+}
+
+.schedule .series {
+    width: 200px;
 }
 
 .pagination {
@@ -350,7 +365,7 @@ img {
     text-align: left;
 }
 
-#tiebreakers li:not(.group-record-tiebreakers li) {
+.tiebreakers li:not(.group-record-tiebreakers li) {
     margin-top: 10px;
 }
 
@@ -401,7 +416,7 @@ img {
 }
 
 .team-schedule .opponent-name {
-    width: 200px;
+    width: 215px;
     text-align: right;
 }
 
@@ -476,8 +491,18 @@ img {
     font-family: "Druk Text";
 }
 
+.h2h-logo {
+    width: 150px;
+    height: 150px;
+    margin: 20px;
+}
+
 .h2h-logos .col {
     text-align: center;
+}
+
+.h2h-logos {
+    border-bottom: none;
 }
 
 .h2h-stats .team {
@@ -554,8 +579,13 @@ img {
     font-weight: 100;
 }
 
+#schedule-widget .logo {
+    width: 40px;
+}
+
 #schedule-widget .score {
     font-size: 20pt;
+    width: 65px;
 }
 
 #schedule-widget .table tbody tr {
@@ -567,7 +597,7 @@ img {
     color: black;
 }
 
-.team-stats-grid .col {
+.team-stats-grid .col-4 {
     font-size: 10pt;
     display: table-cell;
     vertical-align: middle;
@@ -608,4 +638,61 @@ img {
 .game-controls .exit-button {
     width: 40%;
     margin-top: 10px;
+}
+
+.muted-link, .muted-link:hover {
+    color: black;
+}
+
+.game #game-notes {
+    font-size: 15pt;
+}
+
+.game .status {
+    font-size: 20pt;
+}
+
+.game-number {
+    font-weight: bold;
+}
+
+.card .container .playoff-matchup {
+    border-radius: 20px;
+    vertical-align: middle;
+
+    width: 175.5px;
+    height: 130.5px;
+}
+
+.card .container .playoff-matchup .col {
+    margin: auto;
+}
+
+.card .container .playoff-matchup .team-code {
+    font-family: "Druk Wide";
+    font-size: 14pt;
+}
+
+.card .container .playoff-matchup .wins {
+    font-family: Aptos;
+    font-size: 20pt;
+}
+
+.playoff-team .logo {
+    width: 30px;
+    height: 30px;
+}
+
+.sycamore-cup-final {
+    border-radius: 20px;
+    text-align: center;
+}
+
+.sycamore-cup-final .logo {
+    width: 75px;
+    height: 75px;
+}
+
+.sycamore-cup-final .series-score {
+    font-size: 40pt;
 }

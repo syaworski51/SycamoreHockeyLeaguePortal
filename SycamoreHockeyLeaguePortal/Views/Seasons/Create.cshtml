@@ -1,7 +1,9 @@
-﻿@model SycamoreHockeyLeaguePortal.Models.Season
+﻿@model Season
 
 @{
     ViewData["Title"] = "Create";
+    int year = ViewBag.Year;
+    int gamesPerTeam = ViewBag.GamesPerTeam;
 }
 
 <h1>Create</h1>
@@ -14,12 +16,12 @@
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <div class="form-group">
                 <label asp-for="Year" class="control-label"></label>
-                <input asp-for="Year" class="form-control" />
+                <input asp-for="Year" class="form-control" value="@year" />
                 <span asp-validation-for="Year" class="text-danger"></span>
             </div>
             <div class="form-group">
                 <label asp-for="GamesPerTeam" class="control-label"></label>
-                <input asp-for="GamesPerTeam" class="form-control" />
+                <input asp-for="GamesPerTeam" class="form-control" value="@gamesPerTeam" />
                 <span asp-validation-for="GamesPerTeam" class="text-danger"></span>
             </div>
             <div class="form-group">

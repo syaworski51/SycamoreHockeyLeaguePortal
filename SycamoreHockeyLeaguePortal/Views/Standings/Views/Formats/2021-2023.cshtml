@@ -8,7 +8,7 @@
 
     string GetName(Team team)
     {
-        var teamsInSameCity = _context.Team
+        var teamsInSameCity = _context.Teams
             .Where(t => t.City == team.City);
 
         if (teamsInSameCity.Count() > 1)
@@ -42,7 +42,7 @@
 
     string IsRowPlayoffCutoff(int rank)
     {
-        int cutoff = viewBy == "conference" ? 8 : 4;
+        int cutoff = viewBy == "playoffs" ? 8 : 4;
 
         if ((season <= 2022 && viewBy == "division") ||
             (season >= 2023 && viewBy == "playoffs"))
@@ -65,7 +65,7 @@
     {
         List<List<Standings>> standings = new List<List<Standings>>();
 
-        var divisions = _context.Alignment
+        var divisions = _context.Alignments
             .Where(s => s.Season.Year == season &&
                         s.Conference.Code == conference)
             .Select(d => d.Division)
@@ -89,7 +89,7 @@
     {
         List<Standings> teams = new List<Standings>();
 
-        var divisions = _context.Alignment
+        var divisions = _context.Alignments
             .Where(s => s.Season.Year == season &&
                         s.Conference.Code == conference)
             .Select(s => s.Division)
@@ -120,8 +120,6 @@
                 teams.Add(divisionStandings[highestPosition - 1]);
             }
         }
-
-
 
         return teams;
     }
@@ -195,7 +193,7 @@
 
     string GetPlayoffStatusDescription(string symbol)
     {
-        var description = _context.PlayoffStatus
+        var description = _context.PlayoffStatuses
             .Where(ps => ps.Symbol == symbol &&
                          season >= ps.ActiveFrom &&
                          (season <= ps.ActiveTo || ps.ActiveTo == null))
@@ -291,7 +289,7 @@
             {
                 <tr class="@IsRowPlayoffCutoff(rank)">
                     <th>
-                        <a class="change-playoff-status" asp-action="PlayoffStatus" asp-route-id="@team.Id" asp-route-currentStatus="@team.PlayoffStatus" asp-route-viewBy="@ViewBag.ViewBy">@rank</a>
+                        <a class="change-playoff-status" asp-action="PlayoffStatus" asp-route-season="@team.Season.Year" asp-route-team="@team.Team.Code" asp-route-currentStatus="@team.PlayoffStatus" asp-route-viewBy="@ViewBag.ViewBy">@rank</a>
                     </th>
                     <td class="team-logo">
                         <img src="~/@team.Team.LogoPath" width="25" height="25" />

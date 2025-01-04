@@ -17,23 +17,31 @@
 
 <h1>@ViewBag.Title</h1>
 
-<div class="container h2h-logos">
-    <div class="row">
-        <div class="col" id="team1-logo">
-            <img src="~/@team1.Team.LogoPath" width="150" height="150" />
-        </div>
-        <div class="col" id="team2-logo">
-            <img src="~/@team2.Team.LogoPath" width="150" height="150" />
+<!--
+    <div class="container h2h-logos">
+        <div class="row">
+            <div class="col" id="team1-logo">
+                <img src="~/team1.Team.LogoPath" width="150" height="150" />
+            </div>
+            <div class="col" id="team2-logo">
+                <img src="~/team2.Team.LogoPath" width="150" height="150" />
+            </div>
         </div>
     </div>
-</div>
+-->
 
 <table class="table h2h-stats">
     <thead>
         <tr>
-            <th class="team">@team1.Team.FullName</th>
+            <th class="team">
+                <img class="h2h-logo" src="~/@team1.Team.LogoPath" width="150" height="150" /><br />
+                @team1.Team.FullName
+            </th>
             <th>Metric</th>
-            <th class="team">@team2.Team.FullName</th>
+            <th class="team">
+                <img class="h2h-logo" src="~/@team2.Team.LogoPath" width="150" height="150" /><br />
+                @team2.Team.FullName
+            </th>
         </tr>
     </thead>
     <tbody>

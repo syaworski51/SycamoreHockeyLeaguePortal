@@ -1,0 +1,25 @@
+﻿@{
+    int season = ViewBag.Season;
+    PlayoffSeries matchup = ViewBag.Matchup;
+}
+
+<div class="row">
+    <div class="col">
+        <img class="logo" src="~/@matchup.Team1.LogoPath" title="@matchup.Team1.FullName" alt="@matchup.Team1.Code" />
+    </div>
+</div>
+<div class="row">
+    <div class="col series-score">
+        @matchup.Team1Wins - @matchup.Team2Wins
+    </div>
+</div>
+<div class="row">
+    <div class="col">
+        <img class="logo" src="~/@matchup.Team2.LogoPath" title="@matchup.Team2.FullName" alt="@matchup.Team2.Code" />
+    </div>
+</div>
+<div class="row">
+    <div class="col">
+        <a asp-controller="Schedule" asp-action="PlayoffSeries" asp-route-season="@season" asp-route-team1="@matchup.Team1.Code" asp-route-team2="@matchup.Team2.Code">Matchup</a>
+    </div>
+</div>

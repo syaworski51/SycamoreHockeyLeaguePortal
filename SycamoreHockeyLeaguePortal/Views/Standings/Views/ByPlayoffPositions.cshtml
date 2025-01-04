@@ -10,7 +10,7 @@
         .OrderBy(c => c!.Name);
 
     List<Standings> leaders = ViewBag.Leaders;
-    List<Standings> nonLeaders = ViewBag.NonLeaders;
+    List<Standings> wildCards = ViewBag.WildCards;
 }
 
 @foreach (var conference in conferences)
@@ -33,10 +33,10 @@
     }
 
 
-    var conferenceNonLeaders = nonLeaders
+    var conferenceNonLeaders = wildCards
             .Where(nl => nl.Conference == conference);
 
-    <h5>Non-Leaders</h5>
+    <h5>Wild Cards</h5>
     ViewBag.Teams = conferenceNonLeaders;
     ViewBag.Rank = conferenceLeaders.Count() + 1;
     @if (season < 2024)

@@ -2,7 +2,9 @@
 @inject SycamoreHockeyLeaguePortal.Data.ApplicationDbContext _context
 
 @{
-    ViewData["Title"] = $"{Model.Date.ToShortDateString()} - {Model.AwayTeam.Code} @ {Model.HomeTeam.Code}";
+    ViewData["Title"] = Model.Period == 0 ?
+        $"{Model.Date.ToShortDateString()} - {Model.AwayTeam.Code} @ {Model.HomeTeam.Code}" :
+        $"{Model.Date.ToShortDateString()} - {Model.AwayTeam.Code} {Model.AwayScore} - {Model.HomeScore} {Model.HomeTeam.Code} ({Model.ShortStatus})";
 }
 
 <div class="container game">
@@ -44,11 +46,11 @@
             <div class="col">
                 @if (Model.Period == 0)
                 {
-                    <a class="btn btn-primary" asp-action="GameControls" asp-route-id="@Model.Id">Start Game</a>
+                    <a class="btn btn-primary" asp-action="GameControls" asp-route-date="@Model.Date.ToShortDateString()" asp-route-awayTeam="@Model.AwayTeam.Code" asp-route-homeTeam="@Model.HomeTeam.Code">Start Game</a>
                 }
                 else
                 {
-                    <a class="btn btn-primary" asp-action="GameControls" asp-route-id="@Model.Id">Resume Game</a>
+                    <a class="btn btn-primary" asp-action="GameControls" asp-route-date="@Model.Date.ToShortDateString()" asp-route-awayTeam="@Model.AwayTeam.Code" asp-route-homeTeam="@Model.HomeTeam.Code">Resume Game</a>
                 }
             </div>
         </div>
@@ -61,7 +63,7 @@
             }
             else
             {
-                <a asp-action="Index" asp-route-season="@Model.Date.Year" asp-route-round="@Model.PlayoffRound!.Index">Back to Playoffs</a>
+                <a asp-action="Playoffs" asp-route-season="@Model.Date.Year" asp-route-round="@Model.PlayoffRound!.Index">Back to Playoffs</a>
             }
         </div>
     </div>

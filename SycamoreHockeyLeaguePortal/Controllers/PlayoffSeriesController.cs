@@ -58,17 +58,17 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         // GET: PlayoffSeries/Create
         public IActionResult Create(int season)
         {
-            var seasons = _context.Season
+            var seasons = _context.Seasons
                 .OrderByDescending(s => s.Year);
             ViewBag.Seasons = new SelectList(seasons, "Id", "Year");
 
-            var rounds = _context.PlayoffRound
+            var rounds = _context.PlayoffRounds
                 .Include(r => r.Season)
                 .Where(r => r.Season.Year == season)
                 .OrderBy(r => r.Index);
             ViewBag.Rounds = new SelectList(rounds, "Id", "Name");
 
-            var teams = _context.Alignment
+            var teams = _context.Alignments
                 .Include(a => a.Season)
                 .Include(a => a.Conference)
                 .Include(a => a.Division)
@@ -87,13 +87,13 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,SeasonId,RoundId,StartDate,Team1Id,Team2Id")] PlayoffSeries playoffSeries, bool complete)
+        public async Task<IActionResult> Create([Bind("Id,SeasonId,RoundId,StartDate,Index,Team1Id,Team2Id")] PlayoffSeries playoffSeries, bool complete)
         {
             playoffSeries.Id = Guid.NewGuid();
-            playoffSeries.Season = _context.Season.FirstOrDefault(s => s.Id == playoffSeries.SeasonId);
-            playoffSeries.Round = _context.PlayoffRound.FirstOrDefault(r => r.Id == playoffSeries.RoundId);
-            playoffSeries.Team1 = _context.Team.FirstOrDefault(t => t.Id == playoffSeries.Team1Id);
-            playoffSeries.Team2 = _context.Team.FirstOrDefault(t => t.Id == playoffSeries.Team2Id);
+            playoffSeries.Season = _context.Seasons.FirstOrDefault(s => s.Id == playoffSeries.SeasonId);
+            playoffSeries.Round = _context.PlayoffRounds.FirstOrDefault(r => r.Id == playoffSeries.RoundId);
+            playoffSeries.Team1 = _context.Teams.FirstOrDefault(t => t.Id == playoffSeries.Team1Id);
+            playoffSeries.Team2 = _context.Teams.FirstOrDefault(t => t.Id == playoffSeries.Team2Id);
             
             if (complete)
             {
@@ -105,24 +105,24 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 return RedirectToAction("Playoffs", "Schedule", new { season = playoffSeries.Season.Year, round = playoffSeries.Round.Index });
             }
 
-            var seasons = _context.Season
+            var seasons = _context.Seasons
                 .OrderByDescending(s => s.Year);
-            var season = _context.Season
+            var season = _context.Seasons
                 .Where(s => s.Id == playoffSeries.SeasonId)
                 .FirstOrDefault();
             ViewBag.Seasons = new SelectList(seasons, "Id", "Year", season.Year);
 
-            var rounds = _context.PlayoffRound
+            var rounds = _context.PlayoffRounds
                 .Include(r => r.Season)
                 .Where(r => r.Season.Year == season.Year)
                 .OrderBy(r => r.Index);
-            var round = _context.PlayoffRound
+            var round = _context.PlayoffRounds
                 .Include(r => r.Season)
                 .Where(r => r.Id == playoffSeries.RoundId)
                 .FirstOrDefault();
             ViewBag.Rounds = new SelectList(rounds, "Id", "Name", round.Name);
 
-            var teams = _context.Alignment
+            var teams = _context.Alignments
                 .Include(a => a.Season)
                 .Include(a => a.Conference)
                 .Include(a => a.Division)
@@ -149,10 +149,10 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             {
                 return NotFound();
             }
-            ViewData["RoundId"] = new SelectList(_context.PlayoffRound, "Id", "Id", playoffSeries.RoundId);
-            ViewData["SeasonId"] = new SelectList(_context.Season, "Id", "Id", playoffSeries.SeasonId);
-            ViewData["Team1Id"] = new SelectList(_context.Team, "Id", "Id", playoffSeries.Team1Id);
-            ViewData["Team2Id"] = new SelectList(_context.Team, "Id", "Id", playoffSeries.Team2Id);
+            ViewData["RoundId"] = new SelectList(_context.PlayoffRounds, "Id", "Id", playoffSeries.RoundId);
+            ViewData["SeasonId"] = new SelectList(_context.Seasons, "Id", "Id", playoffSeries.SeasonId);
+            ViewData["Team1Id"] = new SelectList(_context.Teams, "Id", "Id", playoffSeries.Team1Id);
+            ViewData["Team2Id"] = new SelectList(_context.Teams, "Id", "Id", playoffSeries.Team2Id);
             return View(playoffSeries);
         }
 
@@ -188,10 +188,10 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["RoundId"] = new SelectList(_context.PlayoffRound, "Id", "Id", playoffSeries.RoundId);
-            ViewData["SeasonId"] = new SelectList(_context.Season, "Id", "Id", playoffSeries.SeasonId);
-            ViewData["Team1Id"] = new SelectList(_context.Team, "Id", "Id", playoffSeries.Team1Id);
-            ViewData["Team2Id"] = new SelectList(_context.Team, "Id", "Id", playoffSeries.Team2Id);
+            ViewData["RoundId"] = new SelectList(_context.PlayoffRounds, "Id", "Id", playoffSeries.RoundId);
+            ViewData["SeasonId"] = new SelectList(_context.Seasons, "Id", "Id", playoffSeries.SeasonId);
+            ViewData["Team1Id"] = new SelectList(_context.Teams, "Id", "Id", playoffSeries.Team1Id);
+            ViewData["Team2Id"] = new SelectList(_context.Teams, "Id", "Id", playoffSeries.Team2Id);
             return View(playoffSeries);
         }
 
@@ -245,72 +245,43 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         {
             Schedule[] games = new Schedule[7];
             
-            if (series.Season.Year >= 2024 && series.Round.Name == "Sycamore Cup Final")
+            for (int index = 0; index < games.Length; index++)
             {
-                for (int index = 0; index < games.Length; index++)
+                int gameIndex = index + 1;
+                bool team1IsHome = gameIndex == 1 || gameIndex == 2 || gameIndex == 5 || gameIndex == 7;
+                bool isBackToBack = gameIndex == 2 || gameIndex == 4;
+
+                DateTime gameDate = series.StartDate;
+                DateTime previousGameDate;
+                int daysBetweenGames = 1;
+                if (gameIndex > 1)
                 {
-                    int gameIndex = index + 1;
-                    bool team1IsHome = gameIndex == 1 || gameIndex == 2 || gameIndex == 5 || gameIndex == 7;
-
-                    var game = new Schedule
-                    {
-                        Id = Guid.NewGuid(),
-                        SeasonId = series.SeasonId,
-                        Season = series.Season,
-                        Date = series.StartDate.AddDays(2 * index),
-                        GameIndex = _context.Schedule.Max(s => s.GameIndex) + 1,
-                        Type = "Playoffs",
-                        PlayoffRoundId = series.RoundId,
-                        PlayoffRound = series.Round,
-                        AwayTeamId = team1IsHome ? series.Team2Id : series.Team1Id,
-                        AwayTeam = team1IsHome ? series.Team2 : series.Team1,
-                        HomeTeamId = team1IsHome ? series.Team1Id : series.Team2Id,
-                        HomeTeam = team1IsHome ? series.Team1 : series.Team2,
-                        Notes = $"Game {gameIndex}"
-                    };
-
-                    games[index] = game;
-                    _context.Schedule.Add(game);
+                    previousGameDate = games[index - 1].Date;
+                    daysBetweenGames = isBackToBack ? 0 : 1;
+                    gameDate = previousGameDate.AddDays(1 + daysBetweenGames);
                 }
-            }
-            else
-            {
-                for (int index = 0; index < games.Length; index++)
+
+                string gameString = $"Game {gameIndex}";
+                var game = new Schedule
                 {
-                    int gameIndex = index + 1;
-                    bool team1IsHome = gameIndex == 1 || gameIndex == 2 || gameIndex == 5 || gameIndex == 7;
-                    bool isBackToBack = gameIndex == 2 || gameIndex == 4;
+                    Id = Guid.NewGuid(),
+                    SeasonId = series.SeasonId,
+                    Season = series.Season,
+                    Date = gameDate,
+                    GameIndex = _context.Schedule.Max(s => s.GameIndex) + 1,
+                    Type = "Playoffs",
+                    PlayoffRoundId = series.RoundId,
+                    PlayoffRound = series.Round,
+                    AwayTeamId = team1IsHome ? series.Team2Id : series.Team1Id,
+                    AwayTeam = team1IsHome ? series.Team2 : series.Team1,
+                    HomeTeamId = team1IsHome ? series.Team1Id : series.Team2Id,
+                    HomeTeam = team1IsHome ? series.Team1 : series.Team2,
+                    Notes = gameString,
+                    PlayoffSeriesScore = gameString
+                };
 
-                    DateTime gameDate = series.StartDate;
-                    DateTime previousGameDate;
-                    int daysBetweenGames = 1;
-                    if (gameIndex > 1)
-                    {
-                        previousGameDate = games[index - 1].Date;
-                        daysBetweenGames = isBackToBack ? 0 : 1;
-                        gameDate = previousGameDate.AddDays(1 + daysBetweenGames);
-                    }
-
-                    var game = new Schedule
-                    {
-                        Id = Guid.NewGuid(),
-                        SeasonId = series.SeasonId,
-                        Season = series.Season,
-                        Date = gameDate,
-                        GameIndex = _context.Schedule.Max(s => s.GameIndex) + 1,
-                        Type = "Playoffs",
-                        PlayoffRoundId = series.RoundId,
-                        PlayoffRound = series.Round,
-                        AwayTeamId = team1IsHome ? series.Team2Id : series.Team1Id,
-                        AwayTeam = team1IsHome ? series.Team2 : series.Team1,
-                        HomeTeamId = team1IsHome ? series.Team1Id : series.Team2Id,
-                        HomeTeam = team1IsHome ? series.Team1 : series.Team2,
-                        Notes = $"Game {gameIndex}"
-                    };
-
-                    games[index] = game;
-                    _context.Schedule.Add(game);
-                }
+                games[index] = game;
+                _context.Schedule.Add(game);
             }
 
             await _context.SaveChangesAsync();

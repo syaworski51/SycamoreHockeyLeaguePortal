@@ -1,0 +1,102 @@
+﻿@model IEnumerable<Schedule>
+
+@{
+    var date = ViewBag.Date;
+    var games = Model.Where(g => g.Date.Date == date.Date);
+
+    string GetDateString(DateTime date)
+    {
+        return $"{GetDayOfWeek(date)}, {GetMonth(date)} {date.Day}";
+    }
+
+    string GetDayOfWeek(DateTime date)
+    {
+        return date.ToString("dddd");
+    }
+
+    string GetMonth(DateTime date)
+    {
+        return date.ToString("MMMM");
+    }
+}
+
+<h3 class="schedule-game-date">@GetDateString(date)</h3>
+<table class="table schedule">
+    <thead>
+        <tr>
+            <th colspan="2" style="text-align: right;">
+                Away Team
+            </th>
+            <th colspan="2">
+                Scores
+            </th>
+            <th colspan="2" style="text-align: left;">
+                Home Team
+            </th>
+            <th>
+                Status
+            </th>
+            <th class="series">
+                Series
+            </th>
+            <th class="actions-playoffs"></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var game in games)
+        {
+            var awayTeam = game.AwayTeam;
+            var homeTeam = game.HomeTeam;
+
+            <tr>
+                <td class="schedule-team-name" style="text-align: right;">
+                    <a asp-controller="Teams" asp-action="Details" asp-route-id="@awayTeam.Code" asp-route-season="@game.Season.Year" asp-route-gameType="playoffs">@awayTeam.FullName</a>
+                </td>
+                <td style="width: 30px;">
+                    <img class="schedule-team-logo" src="~/@awayTeam.LogoPath" title="@awayTeam.FullName" alt="@awayTeam.Code" />
+                </td>
+                @if (game.Period > 0)
+                {
+                    <td class="schedule-score">
+                        @game.AwayScore
+                    </td>
+                    <td class="schedule-score">
+                        @game.HomeScore
+                    </td>
+                }
+                else
+                {
+                    <td class="pregame" colspan="2" style="width: 140px;">
+                        @@
+                    </td>
+                }
+                <td style="width: 30px;">
+                    <img class="schedule-team-logo" src="~/@homeTeam.LogoPath" title="@homeTeam.FullName" alt="@homeTeam.Code" />
+                </td>
+                <td class="schedule-team-name" style="text-align: left;">
+                    <a asp-controller="Teams" asp-action="Details" asp-route-id="@homeTeam.Code" asp-route-season="@game.Season.Year" asp-route-gameType="playoffs">@homeTeam.FullName</a>
+                </td>
+                <td>
+                    @game.Status
+                </td>
+                <td>
+                    <a class="muted-link" asp-action="PlayoffSeries" asp-route-season="@game.Season.Year" asp-route-team1="@game.AwayTeam.Code" asp-route-team2="@game.HomeTeam.Code">@game.PlayoffSeriesScore</a>
+                </td>
+                <td>
+                    @if (!game.IsFinalized)
+                    {
+                        if (game.IsLive)
+                        {
+                            <a asp-action="GameControls" asp-route-date="@game.Date.ToShortDateString()" asp-route-awayTeam="@game.AwayTeam.Code" asp-route-homeTeam="@game.HomeTeam.Code">Resume Game</a>
+                        }
+                        else
+                        {
+                            <a asp-action="GameControls" asp-route-date="@game.Date.ToShortDateString()" asp-route-awayTeam="@game.AwayTeam.Code" asp-route-homeTeam="@game.HomeTeam.Code">Start Game</a>
+                        }
+                    }
+                    <a asp-action="GameCenter" asp-route-date="@game.Date.ToShortDateString()" asp-route-awayTeam="@game.AwayTeam.Code" asp-route-homeTeam="@game.HomeTeam.Code">Game Center</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

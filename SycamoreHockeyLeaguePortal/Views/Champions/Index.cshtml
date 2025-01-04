@@ -5,16 +5,12 @@
 
     string GetOpponentFontSize(int roundIndex)
     {
-        double fontSize = 12 - (roundIndex * 0.5);
+        double fontSize = 14 - roundIndex;
         return $"{fontSize}pt";
     }
 }
 
 <h1>@ViewBag.Title</h1>
-
-<p>
-    <a class="btn btn-primary" asp-action="Create">New Champion</a>
-</p>
 
 <div class="text-center align-content-center">
     <div class="container">
@@ -23,12 +19,12 @@
             {
                 int teamIndex = 0;
                 
-                foreach (var item in Model)
+                foreach (var champion in Model)
                 {
                     <div class="col-md-2 card champion-card">
-                        <img class="champions-logo" src="@item.Team.LogoPath" title="@item.Team.FullName" alt="@item.Team.FullName logo" />
-                        <h4>@item.Season.Year</h4>
-                        <h6 class="champion">@item.Team.FullName</h6>
+                        <img class="champions-logo" src="@champion.Team.LogoPath" title="@champion.Team.FullName" alt="@champion.Team.FullName logo" />
+                        <h4>@champion.Season.Year</h4>
+                        <h6 class="champion">@champion.Team.FullName</h6>
 
                         @for (int roundIndex = 0; roundIndex < ViewBag.Rounds[teamIndex].Count; roundIndex++)
                         {
@@ -36,7 +32,7 @@
 
                             @if (roundIndex == 0)
                             {
-                                <strong>
+                                <strong style="font-size: @GetOpponentFontSize(roundIndex);">
                                     4-@(ViewBag.Rounds[teamIndex][roundIndex].SeriesLength - 4) vs <img class="champion-round-logo" src="~/@ViewBag.Rounds[teamIndex][roundIndex].Opponent.LogoPath" title="@ViewBag.Rounds[teamIndex][roundIndex].Opponent.FullName" /> @ViewBag.Rounds[teamIndex][roundIndex].Opponent.Code
                                 </strong>
                             }

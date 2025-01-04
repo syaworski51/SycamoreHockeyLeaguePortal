@@ -6,6 +6,9 @@ namespace SycamoreHockeyLeaguePortal.Models
     [Table("Schedule")]
     public class Schedule
     {
+        private const string REGULAR_SEASON = "Regular Season";
+        private const string PLAYOFFS = "Playoffs";
+
         [Key]
         public Guid Id { get; set; }
 
@@ -29,6 +32,12 @@ namespace SycamoreHockeyLeaguePortal.Models
 
         [Display(Name = "Round")]
         public PlayoffRound? PlayoffRound { get; set; }
+
+        [Display(Name = "Game #")]
+        public int? PlayoffGameIndex { get; set; }
+
+        [Display(Name = "Series")]
+        public string? PlayoffSeriesScore { get; set; }
 
         [ForeignKey(nameof(AwayTeam))]
         public Guid AwayTeamId { get; set; }
@@ -68,16 +77,16 @@ namespace SycamoreHockeyLeaguePortal.Models
                 int ot;
                 string suffix;
                 
-                if (IsLive)
+                if (!IsFinalized)
                 {
                     if (Period == 0)
                         return "Not started";
-
+                    
                     if (Period >= 4)
                     {
                         if (Period > 4)
                         {
-                            if (Type == "Regular Season")
+                            if (Type == REGULAR_SEASON)
                                 return "Shootout";
 
                             ot = Period - 3;
@@ -93,26 +102,74 @@ namespace SycamoreHockeyLeaguePortal.Models
                 }
                 else
                 {
+                    if (Period >= 4)
+                    {
+                        if (Period > 4)
+                        {
+                            if (Type == REGULAR_SEASON)
+                                return "Final - SO";
+
+                            ot = Period - 3;
+                            return $"Final - {ot}OT";
+                        }
+
+                        return "Final - OT";
+                    }
+
+                    return "Final";
+                }
+            }
+        }
+
+        public string ShortStatus
+        {
+            get
+            {
+                int ot;
+                string suffix;
+
+                if (!IsFinalized)
+                {
+                    if (Period == 0)
+                        return "";
+                    
+                    if (Period >= 4)
+                    {
+                        if (Period > 4)
+                        {
+                            if (Type == REGULAR_SEASON)
+                                return "SO";
+
+                            ot = Period - 3;
+                            return $"{ot}OT";
+                        }
+
+                        return "OT";
+                    }
+
+                    suffix = GetOrdinalSuffix(Period);
+                    return $"{Period}{suffix}";
+                }
+                else
+                {
                     if (Period >= 3)
                     {
                         if (Period >= 4)
                         {
                             if (Period > 4)
                             {
-                                if (Type == "Regular Season")
-                                    return "Final - SO";
+                                if (Type == REGULAR_SEASON)
+                                    return "F/SO";
 
                                 ot = Period - 3;
-                                return $"Final - {ot}OT";
+                                return $"F/{ot}OT";
                             }
 
-                            return "Final - OT";
+                            return "F/OT";
                         }
-
-                        return "Final";
                     }
 
-                    return "Not started";
+                    return "F";
                 }
             }
         }
@@ -162,16 +219,17 @@ namespace SycamoreHockeyLeaguePortal.Models
         /// </summary>
         public void PreviousPeriod()
         {
-            ChangeValue(Period, -1);
+            if (Period > 0)
+                ChangeValue(Period, -1);
         }
 
         /// <summary>
         ///     Run when a goal is scored.
         /// </summary>
-        /// <param name="team">The score of the team that scored the goal.</param>
-        private void Goal(int team)
+        /// <param name="teamScore">The score of the team that scored the goal.</param>
+        private void Goal(int teamScore)
         {
-            ChangeValue(team, 1);
+            ChangeValue(teamScore, 1);
         }
 
         /// <summary>
@@ -179,7 +237,7 @@ namespace SycamoreHockeyLeaguePortal.Models
         /// </summary>
         public void AwayGoal()
         {
-            Goal((int)AwayScore);
+            Goal(AwayScore);
         }
 
         /// <summary>
@@ -187,16 +245,17 @@ namespace SycamoreHockeyLeaguePortal.Models
         /// </summary>
         public void HomeGoal()
         {
-            Goal((int)HomeScore);
+            Goal(HomeScore);
         }
 
         /// <summary>
         ///     Run when a team has a goal taken away from them.
         /// </summary>
-        /// <param name="team">The team that is having a goal taken away from them.</param>
-        private void RemoveGoal(int team)
+        /// <param name="teamScore">The team that is having a goal taken away from them.</param>
+        private void RemoveGoal(int teamScore)
         {
-            ChangeValue(team, -1);
+            if (teamScore > 0)
+                ChangeValue(teamScore, -1);
         }
 
         /// <summary>
@@ -204,7 +263,7 @@ namespace SycamoreHockeyLeaguePortal.Models
         /// </summary>
         public void RemoveAwayGoal()
         {
-            RemoveGoal((int)AwayScore);
+            RemoveGoal(AwayScore);
         }
 
         /// <summary>
@@ -212,7 +271,7 @@ namespace SycamoreHockeyLeaguePortal.Models
         /// </summary>
         public void RemoveHomeGoal()
         {
-            RemoveGoal((int)HomeScore);
+            RemoveGoal(HomeScore);
         }
 
         /// <summary>
@@ -222,18 +281,19 @@ namespace SycamoreHockeyLeaguePortal.Models
         /// <returns>The ordinal suffix of the value provided.</returns>
         private string GetOrdinalSuffix(int value)
         {
-            // If value % 100 is outside of 11 and 13...
+            // If the remainder of value/100 is outside the range of 11 and 13...
             if (value % 100 < 11 || value % 100 > 13)
             {
+                // Get the remainder of value/10 and determine what to do next
                 switch (value % 10)
                 {
-                    case 1:
+                    case 1:  // value % 10 == 1 ? "1st"
                         return "st";
 
-                    case 2:
+                    case 2:  // value % 10 == 2 ? "2nd"
                         return "nd";
 
-                    case 3:
+                    case 3:  // value % 10 == 3 ? "3rd"
                         return "rd";
                 }
             }

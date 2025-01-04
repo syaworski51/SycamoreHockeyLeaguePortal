@@ -1,0 +1,15 @@
+﻿@{
+    int season = ViewBag.Season;
+    ViewData["Title"] = $"{season} Sycamore Cup Playoffs";
+}
+
+<h1 class="text-center">@ViewBag.Title</h1>
+
+@if (season == 2021)
+{
+    <partial name="Brackets/2021.cshtml" />
+}
+else
+{
+    <partial name="Brackets/2022-Present.cshtml" />
+}

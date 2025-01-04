@@ -2,15 +2,19 @@
 @inject SycamoreHockeyLeaguePortal.Data.ApplicationDbContext _context
 
 @{
-    ViewData["Title"] = $"{ViewBag.Season} Playoffs";
+    int season = ViewBag.Season;
+    int round = ViewBag.Round;
+    string roundName = ViewBag.RoundName;
+    List<DateTime> dates = ViewBag.Dates;
+    ViewData["Title"] = $"{season} {roundName}";
 
     string GetName(Team team)
     {
-        var teamsInSameCity = _context.Team
+        var teamsInSameCity = _context.Teams
             .Where(t => t.City == team.City);
 
         if (teamsInSameCity.Count() > 1)
-            return team.AlternateName;
+            return team.AlternateName!;
 
         return team.City;
     }
@@ -19,81 +23,48 @@
 <h1>@ViewBag.Title</h1>
 
 <form asp-action="Playoffs" method="get">
+    <div class="container schedule-controls align-items-center">
+        <div class="row">
+            <div class="col">
+                Season:
+                @Html.DropDownList("season", (IEnumerable<SelectListItem>)ViewBag.Seasons, new { onchange = "submit()" })
+            </div>
+            <div class="col">
+                Round:
+                @Html.DropDownList("round", (IEnumerable<SelectListItem>)ViewBag.Rounds, new { onchange = "submit()" })
+            </div>
+            @if ((season == 2021 && round < 3) ||
+                 (season >= 2022 && round < 4))
+            {
+                <div class="col">
+                    <span>Team:</span>
+                    @Html.DropDownList("team", (IEnumerable<SelectListItem>)ViewBag.Teams, "All Teams", new { onchange = "submit()" })
+                </div>
+            }
+            <div class="col text-center">
+                <a asp-controller="Standings" asp-action="PlayoffBracket" asp-route-season="2023">Playoff Bracket</a>
+            </div>
+        </div>
+    </div>
+    
     <p>
-        Season:
-        @Html.DropDownList("season", (IEnumerable<SelectListItem>)ViewBag.Seasons, new { onchange = "submit()" })
-
-        Round:
-        @Html.DropDownList("round", (IEnumerable<SelectListItem>)ViewBag.Rounds, new { onchange = "submit()" })
-
-        @if ((ViewBag.Season == 2021 && ViewBag.Round < 3) || 
-             (ViewBag.Season > 2021 && ViewBag.Round < 4))
-        {
-            <span>Team:</span>
-            @Html.DropDownList("team", (IEnumerable<SelectListItem>)ViewBag.Teams, "All Teams", new { onchange = "submit()" })
-        }
-        
-
-        <br /><br />
-        <a class="btn btn-primary" asp-controller="PlayoffSeries" asp-action="Create" asp-route-season="@ViewBag.Season">New Playoff Series</a>
+        <a class="btn btn-primary" asp-controller="PlayoffSeries" asp-action="Create" asp-route-season="@season">New Playoff Series</a>
     </p>
 </form>
 
-<table class="table schedule">
-    <thead>
-        <tr>
-            <th class="date">
-                @Html.DisplayNameFor(model => model.Date)
-            </th>
-            <th colspan="2">
-                @Html.DisplayNameFor(model => model.AwayTeam)
-            </th>
-            <th colspan="2">
-                Scores
-            </th>
-            <th colspan="2">
-                @Html.DisplayNameFor(model => model.HomeTeam)
-            </th>
-            <th class="status">
-                @Html.DisplayNameFor(model => model.Status)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var item in Model)
+<div class="container">
+    <div class="row d-flex justify-content-center">
+        @if (Model.Any())
         {
-            <tr style="vertical-align: middle;">
-                <td>
-                    @string.Format("{0}", item.Date.ToLongDateString())
-                </td>
-                <td class="schedule-team-name" style="text-align: right;">
-                    @GetName(item.AwayTeam)
-                </td>
-                <td>
-                    <img class="schedule-team-logo" src="~/@item.AwayTeam.LogoPath" />
-                </td>
-                <td class="schedule-score">
-                    @(item.Status != "Not started" ? Html.DisplayFor(modelItem => item.AwayScore) : "-")
-                </td>
-                <td class="schedule-score">
-                    @(item.Status != "Not started" ? Html.DisplayFor(modelItem => item.HomeScore) : "-")
-                </td>
-                <td>
-                    <img class="schedule-team-logo" src="~/@item.HomeTeam.LogoPath" />
-                </td>
-                <td class="schedule-team-name" style="text-align: left;">
-                    @GetName(item.HomeTeam)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.Status)
-                </td>
-                <td>
-                    <a asp-action="GameControls" asp-route-id="@item.Id">Game Controls</a> |
-                    <a asp-action="GameCenter" asp-route-id="@item.Id">Game Center</a> |
-                    <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
-                </td>
-            </tr>
+            foreach (var gameDate in dates)
+            {
+                ViewBag.Date = gameDate;
+                <partial name="Layouts/Playoffs.cshtml" />
+            }
         }
-    </tbody>
-</table>
+        else
+        {
+            <h4 class="text-danger text-center">There are no games available for this date range.</h4>
+        }
+    </div>
+</div>
