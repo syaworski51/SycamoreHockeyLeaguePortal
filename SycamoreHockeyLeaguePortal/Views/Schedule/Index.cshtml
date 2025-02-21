@@ -1,65 +1,29 @@
-﻿@model IEnumerable<SycamoreHockeyLeaguePortal.Models.Schedule>
-@inject SycamoreHockeyLeaguePortal.Data.ApplicationDbContext _context
+﻿@using SycamoreHockeyLeaguePortal.Models.ViewModels
+@model ScheduleViewModel
 
 @{
-    var date = ViewBag.Date;
-    var dates = ViewBag.Dates;
+    ViewBag.Title = "Schedule";
 
-    ViewData["Title"] = $"Schedule - Week of {GetWeekOfString(date)}";
-
-    string GetName(Team team)
-    {
-        var teamsInSameCity = _context.Teams
-            .Where(t => t.City == team.City);
-
-        if (teamsInSameCity.Count() > 1)
-            return team.AlternateName;
-
-        return team.City;
+    string GetDateString(DateTime date, string format) {
+        return date.ToString(format);
     }
 
-    string GetDateString(DateTime date)
-    {
-        return $"{GetDayOfWeek(date)}, {GetMonth(date)} {date.Day}";
-    }
+    string GetDateRangeString() {
+        if (Model.WeekOf.Year != Model.EndOfWeek.Year)
+            return $"{GetDateString(Model.WeekOf, "MMMM d, yyyy")} - {GetDateString(Model.EndOfWeek, "MMMM d, yyyy")}";
 
-    string GetWeekOfString(DateTime date)
-    {
-        return $"{GetShortMonth(date)} {date.Day}, {date.Year}";
-    }
+        if (Model.WeekOf.Month != Model.EndOfWeek.Month)
+            return $"{GetDateString(Model.WeekOf, "MMMM d")} - {GetDateString(Model.EndOfWeek, "MMMM d, yyyy")}";
 
-    string GetDayOfWeek(DateTime date)
-    {
-        return date.ToString("dddd");
-    }
-
-    string GetMonth(DateTime date)
-    {
-        return date.ToString("MMMM");
-    }
-
-    string GetShortMonth(DateTime date)
-    {
-        return date.ToString("MMM");
-    }
-
-    string GetDateRangeString(DateTime start, DateTime end)
-    {
-        if (start.Year != end.Year)
-            return $"{start.ToString("MMMM")} {start.Day}, {start.Year} - {end.ToString("MMMM")} {end.Day}, {end.Year}";
-
-        if (start.Month != end.Month)
-            return $"{start.ToString("MMMM")} {start.Day} - {end.ToString("MMMM")} {end.Day}, {end.Year}";
-
-        return $"{start.ToString("MMMM")} {start.Day} - {end.Day}, {end.Year}";
+        return $"{GetDateString(Model.WeekOf, "MMMM d")}-{Model.EndOfWeek.Day}, {Model.EndOfWeek.Year}";
     }
 }
 
-<h1 style="margin: 0;">Schedule</h1>
-<h4>@GetDateRangeString(ViewBag.Date, ViewBag.EndOfWeek)</h4>
+<h1>Schedule</h1>
+<h4>@GetDateRangeString()</h4>
 
 <form asp-action="Index" method="get">
-    <div class="container schedule-controls align-items-center">
+    <div class="container schedule-controls">
         <div class="row">
             <div class="col">
                 <ul class="pagination">
@@ -67,22 +31,25 @@
                         <a class="page-link"
                            asp-action="Index"
                            asp-route-team="@ViewBag.Team"
-                           asp-route-weekOf="@ViewBag.Date.AddDays(-7).ToShortDateString()">&lang;</a>
+                           asp-route-weekOf="@Model.WeekOf.AddDays(-7).ToShortDateString()">&lang;</a>
                     </li>
                     <li class="page-item">
-                        <input type="date" class="form-control page-link" name="weekOf" value="@ViewBag.Date.ToShortDateString()" onchange="submit()" />
+                        <input type="date" class="form-control page-link" name="weekOf" value="@Model.WeekOf.ToShortDateString()" onchange="EnableGoToDateButton()" />
                     </li>
                     <li class="page-item" id="next-week">
                         <a class="page-link"
                            asp-action="Index"
                            asp-route-team="@ViewBag.Team"
-                           asp-route-weekOf="@ViewBag.Date.AddDays(7).ToShortDateString()">&rang;</a>
+                           asp-route-weekOf="@Model.WeekOf.AddDays(7).ToShortDateString()">&rang;</a>
                     </li>
                     <li class="page-item" id="today">
                         <a class="page-link"
                            asp-action="Index"
                            asp-route-team="@ViewBag.Team"
                            asp-route-weekOf="@DateTime.Now.ToShortDateString()">Today</a>
+                    </li>
+                    <li class="page-item" id="go-to-date">
+                        <button type="submit" class="btn btn-primary disabled" id="btn-go-to-date">Go</button>
                     </li>
                 </ul>
             </div>
@@ -97,19 +64,75 @@
     </div>
 </form>
 
-<div class="container">
-    <div class="row d-flex justify-content-center">
-        @if (Model.Any())
-        {
-            foreach (var gameDate in dates)
-            {
-                ViewBag.Date = gameDate;
-                <partial name="Layouts/RegularSeason.cshtml" />
-            }
-        }
-        else
-        {
-            <h4 class="text-danger text-center">There are no games available for this date range.</h4>
-        }
-    </div>
-</div>
+@if (Model.Games.Any())
+{
+    foreach (var date in Model.Dates) {
+        var games = Model.Games.Where(g => g.Date.Date == date.Date);
+
+        <h3 class="schedule-game-date">@date.ToString("dddd, MMMM d")</h3>
+        <table class="table schedule">
+            <thead>
+                <tr>
+                    <th colspan="2" style="text-align: right;">Away Team</th>
+                    <th colspan="2" style="width: 140px;">Scores</th>
+                    <th colspan="2" style="text-align: left;">Home Team</th>
+                    <th class="status">Status</th>
+                    <th class="actions-regular-season"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var game in games)
+                {
+                    <tr>
+                        <td class="schedule-team-name" style="text-align: right;">
+                            <a class="muted-link" asp-controller="Teams" asp-action="Details" asp-route-id="@game.AwayTeam.Code" asp-route-season="@game.Date.Year" asp-route-gameType="regular-season">@game.AwayTeam</a>
+                        </td>
+                        <td>
+                            <img class="schedule-team-logo" src="~/@game.AwayTeam.LogoPath" />
+                        </td>
+                        @if (game.Period > 0)
+                        {
+                            <td class="schedule-score">
+                                @game.AwayScore
+                            </td>
+                            <td class="schedule-score">
+                                @game.HomeScore
+                            </td>
+                        }
+                        else
+                        {
+                            <td class="pregame" colspan="2">@@</td>
+                        }
+                        <td>
+                            <img class="schedule-team-logo" src="~/@game.HomeTeam.LogoPath" />
+                        </td>
+                        <td class="schedule-team-name" style="text-align: left;">
+                            <a class="muted-link" asp-controller="Teams" asp-action="Details" asp-route-id="@game.HomeTeam.Code" asp-route-season="@game.Date.Year" asp-route-gameType="regular-season">@game.HomeTeam</a>
+                        </td>
+                        <td>
+                            @game.Status
+                        </td>
+                        <td>
+                            <a asp-controller="Schedule" asp-action="GameCenter" asp-route-date="@game.Date.ToShortDateString()" asp-route-awayTeam="@game.AwayTeam.Code" asp-route-homeTeam="@game.HomeTeam.Code">Game Center</a>
+                            @if (!game.IsFinalized)
+                            {
+                                if (game.IsLive)
+                                {
+                                    <a asp-controller="Schedule" asp-action="GameControls" asp-route-date="@game.Date.ToShortDateString()" asp-route-awayTeam="@game.AwayTeam.Code" asp-route-homeTeam="@game.HomeTeam.Code">Resume Game</a>
+                                }
+                                else
+                                {
+                                    <a asp-controller="Schedule" asp-action="GameControls" asp-route-date="@game.Date.ToShortDateString()" asp-route-awayTeam="@game.AwayTeam.Code" asp-route-homeTeam="@game.HomeTeam.Code">Start Game</a>
+                                }
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+}
+else
+{
+    <h3 class="text-center text-danger" style="margin-top: 50px;">There are no games available for this date range.</h3>
+}

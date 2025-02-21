@@ -295,7 +295,7 @@
                         <img src="~/@team.Team.LogoPath" width="25" height="25" />
                     </td>
                     <td class="team-name">
-                        <a class="team-link" asp-controller="Teams" asp-action="Details" asp-route-id="@team.Team.Code" asp-route-season="@season" asp-route-gameType="regular-season">@team.Team.FullName</a>
+                        <a class="team-link" asp-controller="Teams" asp-action="Details" asp-route-id="@team.Team.Code" asp-route-season="@season" asp-route-gameType="regular-season">@team.Team</a>
                         @if (team.PlayoffStatus != "")
                         {
                             <span class="badge @GetBadgeClass(season, team.PlayoffStatus!)" title="@GetPlayoffStatusDescription(team.PlayoffStatus!)">@team.PlayoffStatus</span>

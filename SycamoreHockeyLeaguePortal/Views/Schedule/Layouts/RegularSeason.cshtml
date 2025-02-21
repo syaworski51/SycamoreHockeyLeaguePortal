@@ -1,9 +1,9 @@
-﻿@model IEnumerable<Schedule>
+﻿@using SycamoreHockeyLeaguePortal.Models.ViewModels
+@model ScheduleViewModel
 
 @{
-    var date = ViewBag.Date;
-    var games = Model
-        .Where(g => g.Date.Date == date.Date);
+    DateTime date = ViewBag.Date;
+    var games = Model.Games.Where(g => g.Date.Date == date.Date);
 
     string GetDateString(DateTime date)
     {
@@ -48,10 +48,10 @@
 
             <tr>
                 <td class="schedule-team-name" style="text-align: right;">
-                    <a asp-controller="Teams" asp-action="Details" asp-route-id="@awayTeam.Code" asp-route-season="@game.Season.Year" asp-route-gameType="regular-season">@awayTeam.FullName</a>
+                    <a asp-controller="Teams" asp-action="Details" asp-route-id="@awayTeam.Code" asp-route-season="@game.Season.Year" asp-route-gameType="regular-season">@awayTeam</a>
                 </td>
                 <td style="width: 30px;">
-                    <img class="schedule-team-logo" src="~/@awayTeam.LogoPath" title="@awayTeam.FullName" alt="@awayTeam.Code" />
+                    <img class="schedule-team-logo" src="~/@awayTeam.LogoPath" title="@awayTeam" alt="@awayTeam.Code" />
                 </td>
                 @if (game.Period > 0)
                 {
@@ -69,10 +69,10 @@
                     </td>
                 }
                 <td style="width: 30px;">
-                    <img class="schedule-team-logo" src="~/@homeTeam.LogoPath" title="@homeTeam.FullName" alt="@homeTeam.Code" />
+                    <img class="schedule-team-logo" src="~/@homeTeam.LogoPath" title="@homeTeam" alt="@homeTeam.Code" />
                 </td>
                 <td class="schedule-team-name" style="text-align: left;">
-                    <a asp-controller="Teams" asp-action="Details" asp-route-id="@homeTeam.Code" asp-route-season="@game.Season.Year" asp-route-gameType="regular-season">@homeTeam.FullName</a>
+                    <a asp-controller="Teams" asp-action="Details" asp-route-id="@homeTeam.Code" asp-route-season="@game.Season.Year" asp-route-gameType="regular-season">@homeTeam</a>
                 </td>
                 <td>
                     @game.Status

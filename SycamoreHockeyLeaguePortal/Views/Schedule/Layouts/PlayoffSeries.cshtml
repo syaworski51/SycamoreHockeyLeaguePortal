@@ -63,10 +63,10 @@
                     <a class="muted-link" asp-action="GameCenter" asp-route-date="@game.Date.ToShortDateString()" asp-route-awayTeam="@game.AwayTeam.Code" asp-route-homeTeam="@game.HomeTeam.Code">@GetDateString(game.Date)</a>
                 </td>
                 <td class="schedule-team-name" style="text-align: right;">
-                    <a asp-controller="Teams" asp-action="Details" asp-route-id="@game.AwayTeam.Code" asp-route-season="@game.Season.Year" asp-route-gameType="playoffs">@game.AwayTeam.FullName</a>
+                    <a asp-controller="Teams" asp-action="Details" asp-route-id="@game.AwayTeam.Code" asp-route-season="@game.Season.Year" asp-route-gameType="playoffs">@game.AwayTeam</a>
                 </td>
                 <td style="width: 30px;">
-                    <img class="schedule-team-logo" src="~/@game.AwayTeam.LogoPath" title="@game.AwayTeam.FullName" alt="@game.AwayTeam.Code" />
+                    <img class="schedule-team-logo" src="~/@game.AwayTeam.LogoPath" title="@game.AwayTeam" alt="@game.AwayTeam.Code" />
                 </td>
                 @if (game.Period > 0)
                 {
@@ -84,10 +84,10 @@
                     </td>
                 }
                 <td style="width: 30px;">
-                    <img class="schedule-team-logo" src="~/@game.HomeTeam.LogoPath" title="@game.HomeTeam.FullName" alt="@game.HomeTeam.Code" />
+                    <img class="schedule-team-logo" src="~/@game.HomeTeam.LogoPath" title="@game.HomeTeam" alt="@game.HomeTeam.Code" />
                 </td>
                 <td class="schedule-team-name" style="text-align: left;">
-                    <a asp-controller="Teams" asp-action="Details" asp-route-id="@game.HomeTeam.Code" asp-route-season="@game.Season.Year" asp-route-gameType="playoffs">@game.HomeTeam.FullName</a>
+                    <a asp-controller="Teams" asp-action="Details" asp-route-id="@game.HomeTeam.Code" asp-route-season="@game.Season.Year" asp-route-gameType="playoffs">@game.HomeTeam</a>
                 </td>
                 <td>
                     <a class="muted-link" asp-action="GameCenter" asp-route-date="@game.Date.ToShortDateString()" asp-route-awayTeam="@game.AwayTeam.Code" asp-route-homeTeam="@game.HomeTeam.Code">@game.Status</a>

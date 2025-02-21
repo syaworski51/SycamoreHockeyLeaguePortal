@@ -221,7 +221,7 @@ img {
 }
 
 .schedule .actions-regular-season {
-    width: 504px;
+    width: 450px;
 }
 
 .schedule .actions-playoffs {
@@ -240,6 +240,8 @@ img {
 
 .schedule-controls .col {
     margin: auto;
+    text-align: center;
+    align-items: center;
 }
 
 #date-range {
@@ -370,6 +372,7 @@ img {
 }
 
 .schedule {
+    /*margin-top: 50px;*/
     text-align: center;
 }
 
@@ -379,6 +382,10 @@ img {
 .schedule .col-6,
 .schedule .col-8 {
     margin: auto;
+}
+
+.schedule .team {
+    width: 300px;
 }
 
 .schedule .team-logo {
@@ -393,7 +400,7 @@ img {
 
 .schedule .score {
     font-size: 20pt;
-    text-align: right;
+    text-align: center;
 }
 
 .schedule-game-date {

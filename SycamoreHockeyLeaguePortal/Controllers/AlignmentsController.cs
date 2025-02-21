@@ -158,7 +158,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             ViewData["SeasonId"] = new SelectList(seasons, "Id", "Year", alignment.Season.Year);
             ViewData["ConferenceId"] = new SelectList(conferences, "Id", "Name", alignment.Conference.Name);
             ViewData["DivisionId"] = new SelectList(divisions, "Id", "Name", alignment.Division.Name);
-            ViewData["TeamId"] = new SelectList(teams, "Id", "FullName", alignment.Team.FullName);
+            ViewData["TeamId"] = new SelectList(teams, "Id", "FullName", alignment.Team);
             return View(alignment);
         }
 

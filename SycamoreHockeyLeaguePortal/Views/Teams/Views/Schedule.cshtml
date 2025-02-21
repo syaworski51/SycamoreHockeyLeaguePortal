@@ -22,9 +22,9 @@
     string GetOpponent(Schedule game)
     {
         if (game.AwayTeamId == teamId)
-            return $"@ {game.HomeTeam.FullName}";
+            return $"@ {game.HomeTeam}";
 
-        return game.AwayTeam.FullName;
+        return game.AwayTeam.ToString();
     }
 
     string GetOpponentLogoPath(Schedule game)

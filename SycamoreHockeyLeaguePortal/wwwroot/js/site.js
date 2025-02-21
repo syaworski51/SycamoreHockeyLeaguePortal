@@ -5,3 +5,7 @@
 
 let localDomain = "http://localhost:7210/";
 let liveDomain = "https://shl.azurewebsites.net/";
+
+function EnableGoToDateButton() {
+    $("#btn-go-to-date").removeClass("disabled");
+}

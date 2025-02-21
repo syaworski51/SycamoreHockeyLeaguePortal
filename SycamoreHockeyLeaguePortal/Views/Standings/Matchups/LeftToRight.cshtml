@@ -5,7 +5,7 @@
 
 <div class="row">
     <div class="col-3 playoff-team">
-        <img class="playoff-team logo" src="~/@matchup.Team1.LogoPath" title="@matchup.Team1.FullName" alt="@matchup.Team1.Code" />
+        <img class="playoff-team logo" src="~/@matchup.Team1.LogoPath" title="@matchup.Team1" alt="@matchup.Team1.Code" />
     </div>
     <div class="col-6">
         <a class="team-code" asp-controller="Teams" asp-action="Details" asp-route-id="@matchup.Team1.Code" asp-route-season="@season" asp-route-gameType="playoffs">@matchup.Team1.Code</a>
@@ -16,7 +16,7 @@
 </div>
 <div class="row">
     <div class="col-3 playoff-team">
-        <img class="playoff-team logo" src="~/@matchup.Team2.LogoPath" title="@matchup.Team2.FullName" alt="@matchup.Team2.Code" />
+        <img class="playoff-team logo" src="~/@matchup.Team2.LogoPath" title="@matchup.Team2" alt="@matchup.Team2.Code" />
     </div>
     <div class="col-6">
         <a class="team-code" asp-controller="Teams" asp-action="Details" asp-route-id="@matchup.Team2.Code" asp-route-season="@season" asp-route-gameType="playoffs">@matchup.Team2.Code</a>

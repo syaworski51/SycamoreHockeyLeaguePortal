@@ -24,10 +24,34 @@
             @Html.DisplayFor(model => model.Date)
         </dd>
         <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.GameIndex)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.GameIndex)
+        </dd>
+        <dt class = "col-sm-2">
             @Html.DisplayNameFor(model => model.Type)
         </dt>
         <dd class = "col-sm-10">
             @Html.DisplayFor(model => model.Type)
+        </dd>
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.PlayoffRound)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.PlayoffRound.Id)
+        </dd>
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.PlayoffGameIndex)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.PlayoffGameIndex)
+        </dd>
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.PlayoffSeriesScore)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.PlayoffSeriesScore)
         </dd>
         <dt class = "col-sm-2">
             @Html.DisplayNameFor(model => model.AwayTeam)
@@ -64,6 +88,12 @@
         </dt>
         <dd class = "col-sm-10">
             @Html.DisplayFor(model => model.IsLive)
+        </dd>
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.IsFinalized)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.IsFinalized)
         </dd>
         <dt class = "col-sm-2">
             @Html.DisplayNameFor(model => model.Notes)

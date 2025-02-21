@@ -8,7 +8,16 @@ namespace SycamoreHockeyLeaguePortal.Models
     {
         [Key]
         public Guid Id { get; set; }
+        public string Code { get; set; }
+        public string City { get; set; }
+        public string Name { get; set; }
+        public string FullName => $"{City} {Name}";
+        public string? AlternateName { get; set; }
+        public string? LogoPath { get; set; }
 
-        
+        public override string ToString()
+        {
+            return FullName;
+        }
     }
 }

@@ -89,16 +89,14 @@
                         <li class="nav-item">
                             <a class="nav-link text-light" asp-controller="Champions" asp-action="Index">Champions</a>
                         </li>
-                        <!--
-                            <li class="nav-item">
-                                <a class="nav-link text-light" asp-controller="PlayoffRounds" asp-action="Index" asp-route-season="currentYear">Playoff Rounds</a>
-                            </li>
-                        -->
+                        <li class="nav-item">
+                            <a class="nav-link text-light" asp-controller="PlayoffRounds" asp-action="Index" asp-route-season="@currentYear">Playoff Rounds</a>
+                        </li>
                         <li class="nav-item">
                             <a class="nav-link text-light" asp-controller="Seasons" asp-action="Index">Seasons</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-light" asp-controller="Alignments" asp-action="Index" asp-route-season="2024">Alignments</a>
+                            <a class="nav-link text-light" asp-controller="Alignments" asp-action="Index" asp-route-season="@currentYear">Alignments</a>
                         </li>
                         <!--
                             <li class="nav-item">

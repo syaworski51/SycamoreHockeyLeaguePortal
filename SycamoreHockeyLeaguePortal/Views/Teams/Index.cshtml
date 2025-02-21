@@ -18,8 +18,8 @@
                 foreach (var item in Model)
                 {
                     <div class="col-md-2 card">
-                        <img src="@item.LogoPath" title="@item.Code logo" alt="@item.FullName logo" width="50" height="50" />
-                        <h5 style="font-family: 'Druk Text';">@item.FullName</h5>
+                        <img src="@item.LogoPath" title="@item.Code logo" alt="@item logo" width="50" height="50" />
+                        <h5 style="font-family: 'Druk Text';">@item</h5>
                         <a class="btn btn-outline-primary" asp-action="Details" asp-route-id="@item.Code" asp-route-season="@mostRecentSeasons[index]" asp-route-gameType="regular-season">Details</a>
                     </div>
 

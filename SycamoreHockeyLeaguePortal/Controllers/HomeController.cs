@@ -25,14 +25,15 @@ namespace SycamoreHockeyLeaguePortal.Controllers
 
             var season = currentDate.Year;
             ViewBag.Season = season;
-            var firstDayOfSeason = _context.Schedule
+            var firstDayOfSeason = new DateTime(2025, 4, 10);
+            /*var firstDayOfSeason = _context.Schedule
                 .Include(s => s.Season)
                 .Include(s => s.PlayoffRound)
                 .Include(s => s.AwayTeam)
                 .Include(s => s.HomeTeam)
                 .Where(s => s.Season.Year == season)
                 .Select(s => s.Date.Date)
-                .Min();
+                .Min();*/
 
             bool seasonHasStarted = currentDate.CompareTo(firstDayOfSeason) >= 0;
             var rangeStart = seasonHasStarted ? 

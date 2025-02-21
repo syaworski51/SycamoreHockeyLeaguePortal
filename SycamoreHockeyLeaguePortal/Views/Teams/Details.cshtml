@@ -7,7 +7,7 @@
     var schedule = ViewBag.Schedule;
     Standings teamStats = ViewBag.TeamStats;
 
-    ViewData["Title"] = $"{season} {Model.FullName}";
+    ViewData["Title"] = $"{season} {Model}";
 
     string GetDayOfWeek(DateTime date)
     {
@@ -27,9 +27,9 @@
     string GetOpponent(Schedule game)
     {
         if (game.AwayTeamId == teamId)
-            return $"@ {game.HomeTeam.FullName}";
+            return $"@ {game.HomeTeam}";
 
-        return game.AwayTeam.FullName;
+        return game.AwayTeam.ToString();
     }
 
     string GetOpponentLogoPath(Schedule game)
@@ -53,9 +53,9 @@
         return "";
     }
 
-    string GetResultColor(Schedule game)
+    string GetResultColor(Schedule game, string? result)
     {
-        var result = GetResult(game);
+        result = result ?? GetResult(game);
 
         switch (result)
         {
@@ -74,10 +74,10 @@
 <div class="container">
     <div class="row">
         <div class="col-sm-1">
-            <img src="~/@Model.LogoPath" title="@Model.FullName logo" alt="@Model.FullName logo" width="70" height="70" />
+            <img src="~/@Model.LogoPath" title="@Model logo" alt="@Model logo" width="70" height="70" />
         </div>
         <div class="col" style="margin: auto;">
-            <h1>@Model.FullName</h1>
+            <h1>@Model</h1>
         </div>
     </div>
 </div>
