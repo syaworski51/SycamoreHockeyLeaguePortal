@@ -2,12 +2,17 @@
 
 @{
     ViewData["Title"] = $"{Model.Date.ToShortDateString()} - {Model.AwayTeam.Code} {Model.AwayScore} - {Model.HomeScore} {Model.HomeTeam.Code} ({Model.ShortStatus})";
+
+    string CanGameBeFinalized() {
+        return (Model.IsLive && !Model.IsFinalized && Model.Period >= 3 && Model.AwayScore != Model.HomeScore) ?
+            "" : "disabled";
+    }
 }
 
 <div class="container game">
     <div class="row">
         <div class="col-12" id="game-notes">
-            @Html.DisplayFor(model => model.Notes)
+            @(Model.Notes != "" ? Model.Notes : Model.Date.ToLongDateString())
         </div>
     </div>
     <div class="row">
@@ -40,52 +45,62 @@
 </div>
 <hr />
 
-<div class="row">
-    <form asp-action="GameControls">
-        <div class="col-md-4 container game-controls">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <input type="hidden" asp-for="Id" />
-            <input type="hidden" asp-for="SeasonId" />
-            <input type="hidden" asp-for="PlayoffRoundId" />
-            <input type="hidden" asp-for="Date" />
-            <input type="hidden" asp-for="Type" />
-            <input type="hidden" asp-for="AwayTeamId" />
-            <input type="hidden" asp-for="AwayScore" />
-            <input type="hidden" asp-for="HomeTeamId" />
-            <input type="hidden" asp-for="HomeScore" />
-            <input type="hidden" asp-for="Period" />
-            <input type="hidden" asp-for="GameIndex" />
-            <input type="hidden" asp-for="IsLive" />
-            <input type="hidden" asp-for="IsFinalized" />
-            <div class="row">
-                <div class="col form-group">
-                    <label asp-for="AwayScore" class="control-label"></label><br />
-                    <a class="btn btn-primary" asp-action="AwayGoal" asp-route-id="@Model.Id">+1</a>
-                    <br />
-                    <a class="btn btn-secondary" asp-action="RemoveAwayGoal" asp-route-id="@Model.Id">-1</a>
+@if (Model.IsLive && !Model.IsFinalized)
+{
+    <div class="row">
+        <form asp-action="GameControls">
+            <div class="col-md-4 container game-controls">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                <input type="hidden" asp-for="Id" />
+                <input type="hidden" asp-for="SeasonId" />
+                <input type="hidden" asp-for="PlayoffRoundId" />
+                <input type="hidden" asp-for="Date" />
+                <input type="hidden" asp-for="Type" />
+                <input type="hidden" asp-for="AwayTeamId" />
+                <input type="hidden" asp-for="AwayScore" />
+                <input type="hidden" asp-for="HomeTeamId" />
+                <input type="hidden" asp-for="HomeScore" />
+                <input type="hidden" asp-for="Period" />
+                <input type="hidden" asp-for="GameIndex" />
+                <input type="hidden" asp-for="IsLive" />
+                <input type="hidden" asp-for="IsFinalized" />
+                <div class="row">
+                    <div class="col form-group">
+                        <label asp-for="AwayScore" class="control-label"></label><br />
+                        <a class="btn btn-primary" asp-action="AwayGoal" asp-route-id="@Model.Id">+1</a>
+                        <br />
+                        <a class="btn btn-secondary" asp-action="RemoveAwayGoal" asp-route-id="@Model.Id">-1</a>
+                    </div>
+                    <div class="col form-group">
+                        <label asp-for="Period" class="control-label"></label><br />
+                        <a class="btn btn-primary" asp-action="NextPeriod" asp-route-id="@Model.Id">+1</a>
+                        <br />
+                        <a class="btn btn-secondary" asp-action="PreviousPeriod" asp-route-id="@Model.Id">-1</a>
+                    </div>
+                    <div class="col form-group">
+                        <label asp-for="HomeScore" class="control-label"></label><br />
+                        <a class="btn btn-primary" asp-action="HomeGoal" asp-route-id="@Model.Id">+1</a>
+                        <br />
+                        <a class="btn btn-secondary" asp-action="RemoveHomeGoal" asp-route-id="@Model.Id">-1</a>
+                    </div>
                 </div>
-                <div class="col form-group">
-                    <label asp-for="Period" class="control-label"></label><br />
-                    <a class="btn btn-primary" asp-action="NextPeriod" asp-route-id="@Model.Id">+1</a>
-                    <br />
-                    <a class="btn btn-secondary" asp-action="PreviousPeriod" asp-route-id="@Model.Id">-1</a>
-                </div>
-                <div class="col form-group">
-                    <label asp-for="HomeScore" class="control-label"></label><br />
-                    <a class="btn btn-primary" asp-action="HomeGoal" asp-route-id="@Model.Id">+1</a>
-                    <br />
-                    <a class="btn btn-secondary" asp-action="RemoveHomeGoal" asp-route-id="@Model.Id">-1</a>
+                <div class="row">
+                    <div class="col form-group">
+                        <a class="btn btn-secondary exit-button" asp-action="SaveGame" asp-route-id="@Model.Id">Save</a>
+                        <a class="btn btn-primary exit-button @CanGameBeFinalized()" asp-action="FinalizeGame" asp-route-id="@Model.Id">Finalize</a>
+                    </div>
                 </div>
             </div>
-            <div class="row">
-                <div class="col form-group">
-                    <a class="btn btn-secondary exit-button" asp-action="SaveGame" asp-route-id="@Model.Id">Save</a>
-                    <a class="btn btn-primary exit-button" asp-action="FinalizeGame" asp-route-id="@Model.Id">Finalize</a>
-                </div>
-            </div>
-        </div>
-    </form>
-</div>
+        </form>
+    </div>
+}
+else
+{
+    <div class="text-center" style="margin-top: 50px; margin-bottom: 50px;">
+        <h4 class="text-danger">This game is not currently live and cannot be manipulated.</h4>
+        <a asp-controller="Schedule" asp-action="Index" asp-route-weekOf="@Model.Date.ToShortDateString()">Back to Schedule</a>
+    </div>
+}
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}

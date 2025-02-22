@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Identity.Client;
 using SycamoreHockeyLeaguePortal.Data;
 using SycamoreHockeyLeaguePortal.Models;
 using SycamoreHockeyLeaguePortal.Models.ViewModels;
@@ -287,6 +288,46 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             return RedirectToAction(nameof(Index), new { season = game.Season.Year });
         }
 
+        [Route("StartOrResumeGame/{date}/{awayTeam}/{homeTeam}")]
+        public async Task<IActionResult> StartOrResumeGame(DateTime date, string awayTeam, string homeTeam)
+        {
+            if (_context.Schedule == null)
+            {
+                return NotFound();
+            }
+
+            var game = await _context.Schedule
+                .Include(s => s.Season)
+                .Include(s => s.PlayoffRound)
+                .Include(s => s.AwayTeam)
+                .Include(s => s.HomeTeam)
+                .FirstOrDefaultAsync(s => s.Date.Date == date &&
+                                          s.AwayTeam.Code == awayTeam &&
+                                          s.HomeTeam.Code == homeTeam)!;
+
+            if (game == null)
+            {
+                return NotFound();
+            }
+
+            if (!game.IsLive && !game.IsFinalized)
+            {
+                game.IsLive = true;
+
+                if (game.Period < 1)
+                    game.Period = 1;
+
+                await UpdateGameAsync(game);
+            }
+
+            return RedirectToAction(nameof(GameControls), new
+            {
+                date = game.Date.ToShortDateString(),
+                awayTeam = game.AwayTeam.Code,
+                homeTeam = game.HomeTeam.Code
+            });
+        }
+
         // GET: Schedule/Edit/5
         [Route("GameControls/{date}/{awayTeam}/{homeTeam}")]
         public async Task<IActionResult> GameControls(DateTime date, string awayTeam, string homeTeam)
@@ -310,26 +351,15 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 return NotFound();
             }
 
-            if (!game.IsFinalized && !game.IsLive)
-            {
-                game.IsLive = true;
-
-                if (game.Period == 0)
-                    game.Period = 1;
-
-                _context.Schedule.Update(game);
-                await _context.SaveChangesAsync();
-            }
-
             return View(game);
         }
 
         // POST: Schedule/Edit/5
         // To protect from overposting attacks, enable the specific properties you want to bind to.
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
+        /*[HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> GameControls(Guid? id, [Bind("Id,SeasonId,PlayoffRoundId,Date,Type,AwayTeamId,AwayScore,HomeTeamId,HomeScore,Period,IsLive,IsFinalized,Notes,GameIndex")] Schedule game, bool finalized = true)
+        public async Task<IActionResult> GameControls(Guid? id, [Bind("Id,SeasonId,PlayoffRoundId,Date,Type,AwayTeamId,AwayScore,HomeTeamId,HomeScore,Period,IsLive,IsFinalized,Notes,GameIndex")] Schedule game, bool finalizing = true)
         {
             if (id != game.Id)
             {
@@ -341,28 +371,24 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             game.AwayTeam = _context.Teams.FirstOrDefault(t => t.Id == game.AwayTeamId)!;
             game.HomeTeam = _context.Teams.FirstOrDefault(t => t.Id == game.HomeTeamId)!;
 
-            game.IsFinalized = finalized;
-            game.IsLive = false;
-
-            _context.Update(game);
-            await _context.SaveChangesAsync();
-
-            if (game.Type == REGULAR_SEASON && game.IsFinalized && game.Period >= 3)
-                await UpdateStandings(game.Season.Year, game.AwayTeam, game.HomeTeam);
-
-            if (game.Type == PLAYOFFS && game.IsFinalized)
-                await UpdatePlayoffSeries(game.Season.Year, game);
-
-            if (!finalized)
+            if (IsGameLive(game))
             {
-                if (game.Type == PLAYOFFS)
-                    return RedirectToAction(nameof(Playoffs), new
-                    {
-                        season = game.Season.Year,
-                        round = game.PlayoffRound!.Index
-                    });
+                if (finalizing)
+                {
+                    if (game.Period >= 3 && game.AwayScore != game.HomeScore)
+                        return await FinalizeGameAsync(game.Id);
+                }   
+                else
+                {
+                    if (game.Type == PLAYOFFS)
+                        return RedirectToAction(nameof(Playoffs), new
+                        {
+                            season = game.Season.Year,
+                            round = game.PlayoffRound!.Index
+                        });
 
-                return RedirectToAction(nameof(Index), new { weekOf = game.Date.ToShortDateString() });
+                    return RedirectToAction(nameof(Index), new { weekOf = game.Date.ToShortDateString() });
+                }
             }
 
             return RedirectToAction(nameof(GameCenter), new
@@ -371,9 +397,9 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 awayTeam = game.AwayTeam.Code,
                 homeTeam = game.HomeTeam.Code
             });
-        }
+        }*/
 
-        public async Task<Schedule> GetGame(Guid? id)
+        public async Task<Schedule> GetGameAsync(Guid? id)
         {
             var game = await _context.Schedule
                 .Include(s => s.Season)
@@ -385,20 +411,20 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             return game!;
         }
 
-        public async Task UpdateGame(Schedule game)
+        public async Task UpdateGameAsync(Schedule game)
         {
-            _context.Update(game);
+            _context.Schedule.Update(game);
             await _context.SaveChangesAsync();
         }
 
         public async Task<IActionResult> NextPeriod(Guid id)
         {
-            var game = await GetGame(id);
+            var game = await GetGameAsync(id);
 
-            if (game.Period < 3 || game.AwayScore == game.HomeScore)
+            if (game.IsLive && (game.Period < 3 || game.AwayScore == game.HomeScore))
             {
                 game.Period++;
-                await UpdateGame(game);
+                await UpdateGameAsync(game);
             }
 
             return RedirectToAction(nameof(GameControls), new
@@ -411,12 +437,12 @@ namespace SycamoreHockeyLeaguePortal.Controllers
 
         public async Task<IActionResult> PreviousPeriod(Guid id)
         {
-            var game = await GetGame(id);
+            var game = await GetGameAsync(id);
 
-            if (game.Period > 1)
+            if (game.IsLive && game.Period > 1)
             {
                 game.Period--;
-                await UpdateGame(game);
+                await UpdateGameAsync(game);
             }
 
             return RedirectToAction(nameof(GameControls), new
@@ -429,10 +455,14 @@ namespace SycamoreHockeyLeaguePortal.Controllers
 
         public async Task<IActionResult> AwayGoal(Guid id)
         {
-            var game = await GetGame(id);
-            game.AwayScore++;
+            var game = await GetGameAsync(id);
+            
+            if (game.IsLive)
+            {
+                game.AwayScore++;
+                await UpdateGameAsync(game);
+            }
 
-            await UpdateGame(game);
             return RedirectToAction(nameof(GameControls), new
             {
                 date = game.Date.ToShortDateString(),
@@ -443,12 +473,12 @@ namespace SycamoreHockeyLeaguePortal.Controllers
 
         public async Task<IActionResult> RemoveAwayGoal(Guid id)
         {
-            var game = await GetGame(id);
+            var game = await GetGameAsync(id);
 
-            if (game.AwayScore > 0)
+            if (game.IsLive && game.AwayScore > 0)
             {
                 game.AwayScore--;
-                await UpdateGame(game);
+                await UpdateGameAsync(game);
             }
 
             return RedirectToAction(nameof(GameControls), new
@@ -461,10 +491,14 @@ namespace SycamoreHockeyLeaguePortal.Controllers
 
         public async Task<IActionResult> HomeGoal(Guid id)
         {
-            var game = await GetGame(id);
-            game.HomeScore++;
+            var game = await GetGameAsync(id);
+            
+            if (game.IsLive)
+            {
+                game.HomeScore++;
+                await UpdateGameAsync(game);
+            }
 
-            await UpdateGame(game);
             return RedirectToAction(nameof(GameControls), new
             {
                 date = game.Date.ToShortDateString(),
@@ -475,12 +509,12 @@ namespace SycamoreHockeyLeaguePortal.Controllers
 
         public async Task<IActionResult> RemoveHomeGoal(Guid id)
         {
-            var game = await GetGame(id);
+            var game = await GetGameAsync(id);
 
-            if (game.HomeScore > 0)
+            if (game.IsLive && game.HomeScore > 0)
             {
                 game.HomeScore--;
-                await UpdateGame(game);
+                await UpdateGameAsync(game);
             }
 
             return RedirectToAction(nameof(GameControls), new
@@ -493,10 +527,13 @@ namespace SycamoreHockeyLeaguePortal.Controllers
 
         public async Task<IActionResult> SaveGame(Guid id)
         {
-            var game = await GetGame(id);
+            var game = await GetGameAsync(id);
 
-            game.IsLive = false;
-            await UpdateGame(game);
+            if (game.IsLive)
+            {
+                game.IsLive = false;
+                await UpdateGameAsync(game);
+            }
 
             if (game.Type == PLAYOFFS)
                 return RedirectToAction(nameof(Playoffs), new { season = game.Date.Year, round = game.PlayoffRound!.Index });
@@ -506,12 +543,13 @@ namespace SycamoreHockeyLeaguePortal.Controllers
 
         public async Task<IActionResult> FinalizeGame(Guid id)
         {
-            var game = await GetGame(id);
+            var game = await GetGameAsync(id);
 
-            if (game.Period >= 3 && game.AwayScore != game.HomeScore)
+            if (IsGameLive(game) && game.Period >= 3 && game.AwayScore != game.HomeScore)
             {
+                game.IsLive = false;
                 game.IsFinalized = true;
-                await UpdateGame(game);
+                await UpdateGameAsync(game);
 
                 if (game.Type == REGULAR_SEASON)
                     await UpdateStandings(game.Season.Year, game.AwayTeam, game.HomeTeam);
@@ -527,12 +565,17 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 });
             }
 
-            return View(nameof(GameControls), new
+            return RedirectToAction(nameof(GameControls), new
             {
                 date = game.Date.ToShortDateString(),
                 awayTeam = game.AwayTeam.Code,
                 homeTeam = game.HomeTeam.Code
             });
+        }
+
+        private bool IsGameLive(Schedule game)
+        {
+            return game.IsLive && !game.IsFinalized;
         }
 
         // GET: Schedule/Delete/5
