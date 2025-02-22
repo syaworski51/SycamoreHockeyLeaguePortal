@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Razor.TagHelpers;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Identity.Client;
 using SHLAPI.Data;
 using SHLAPI.Models;
 
@@ -22,171 +23,112 @@ namespace SHLAPI.Controllers
             _context = context;
         }
 
-        // GET: api/Schedule
-        [HttpGet("{season}")]
-        public async Task<ActionResult<IEnumerable<Schedule>>> GetSchedule(int season)
+        private async Task<Schedule> GetGameAsync(Guid id)
         {
-            if (_context.Schedule == null)
-                return NotFound();
-
-            var schedule = from s in _context.Schedule
-                           where s.Season.Year == season
-                           orderby s.Date, s.GameIndex
-                           select s;
-
-            if (schedule == null)
-                return NotFound();
-
-            return await schedule.ToListAsync();
-        }
-
-        [HttpGet("{season}/{type}")]
-        public async Task<ActionResult<IEnumerable<Schedule>>> GetSchedule(int season, string type)
-        {
-            if (_context.Schedule == null)
-                return NotFound();
-
-            switch (type)
-            {
-                case "regular-season":
-                    type = "Regular Season";
-                    break;
-
-                case "playoffs":
-                    type = "Playoffs";
-                    break;
-
-                default:
-                    return BadRequest();
-            }
-
-            var schedule = _context.Schedule
-                .Include(s => s.Season)
-                .Include(s => s.PlayoffRound)
-                .Include(s => s.AwayTeam)
-                .Include(s => s.HomeTeam)
-                .Where(s => s.Season.Year == season &&
-                            s.Type == type)
-                .OrderBy(s => s.Date)
-                .ThenBy(s => s.GameIndex);
-
-            if (schedule == null)
-                return NotFound();
-
-            return await schedule.ToListAsync();
-        }
-
-        // GET: api/Schedule/5
-        [HttpGet("{date}/{awayCode}/{homeCode}")]
-        public async Task<ActionResult<Schedule>> GetGame(DateTime date, string awayCode, string homeCode)
-        {
-            if (_context.Schedule == null)
-            {
-                return NotFound();
-            }
-
             var game = await _context.Schedule
                 .Include(s => s.Season)
                 .Include(s => s.PlayoffRound)
                 .Include(s => s.AwayTeam)
                 .Include(s => s.HomeTeam)
-                .Where(s => s.Date == date &&
-                            s.AwayTeam.Code == awayCode &&
-                            s.HomeTeam.Code == homeCode)
-                .FirstOrDefaultAsync();
+                .FirstOrDefaultAsync(s => s.Id == id);
 
-            if (game == null)
-            {
-                return NotFound();
-            }
-
-            return game;
+            return game!;
         }
 
-        // PUT: api/Schedule/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutGame(Guid id, Schedule schedule)
+        private async Task UpdateGameAsync(Schedule game)
         {
-            if (id != schedule.Id)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(schedule).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!ScheduleExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent();
-        }
-
-        // POST: api/Schedule
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost]
-        public async Task<ActionResult<Schedule>> PostGame(Schedule schedule)
-        {
-            if (_context.Schedule == null)
-            {
-                return Problem("Entity set 'SHLPortalDbContext.Schedules'  is null.");
-            }
-            _context.Schedule.Add(schedule);
-            
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateException)
-            {
-                if (ScheduleExists(schedule.Id))
-                {
-                    return Conflict();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return CreatedAtAction("GetSchedule", new { id = schedule.Id }, schedule);
-        }
-
-        // DELETE: api/Schedule/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteGame(Guid id)
-        {
-            if (_context.Schedule == null)
-            {
-                return NotFound();
-            }
-            var schedule = await _context.Schedule.FindAsync(id);
-            if (schedule == null)
-            {
-                return NotFound();
-            }
-
-            _context.Schedule.Remove(schedule);
+            _context.Schedule.Update(game);
             await _context.SaveChangesAsync();
-
-            return NoContent();
         }
 
-        private bool ScheduleExists(Guid id)
+        [Route("NextPeriod/{id}")]
+        [HttpPost]
+        public async Task<IActionResult> NextPeriod(Guid id)
         {
-            return (_context.Schedule?.Any(e => e.Id == id)).GetValueOrDefault();
+            var game = await GetGameAsync(id);
+
+            if (game.IsLive)
+            {
+                game.Period++;
+                await UpdateGameAsync(game);
+            }
+
+            return Ok(game);
+        }
+
+        [Route("PreviousPeriod/{id}")]
+        [HttpPost]
+        public async Task<IActionResult> PreviousPeriod(Guid id)
+        {
+            var game = await GetGameAsync(id);
+
+            if (game.IsLive && game.Period > 1)
+            {
+                game.Period--;
+                await UpdateGameAsync(game);
+            }
+
+            return Ok(game);
+        }
+
+        [Route("AwayGoal/{id}")]
+        [HttpPost]
+        public async Task<IActionResult> AwayGoal(Guid id)
+        {
+            var game = await GetGameAsync(id);
+
+            if (game.IsLive)
+            {
+                game.AwayScore++;
+                await UpdateGameAsync(game);
+            }
+
+            return Ok(game);
+        }
+
+        [Route("RemoveAwayGoal/{id}")]
+        [HttpPost]
+        public async Task<IActionResult> RemoveAwayGoal(Guid id)
+        {
+            var game = await GetGameAsync(id);
+
+            if (game.IsLive && game.AwayScore > 0)
+            {
+                game.AwayScore--;
+                await UpdateGameAsync(game);
+            }
+
+            return Ok(game);
+        }
+
+        [Route("HomeGoal/{id}")]
+        [HttpPost]
+        public async Task<IActionResult> HomeGoal(Guid id)
+        {
+            var game = await GetGameAsync(id);
+
+            if (game.IsLive)
+            {
+                game.HomeScore++;
+                await UpdateGameAsync(game);
+            }
+
+            return Ok(game);
+        }
+
+        [Route("RemoveHomeGoal/{id}")]
+        [HttpPost]
+        public async Task<IActionResult> RemoveHomeGoal(Guid id)
+        {
+            var game = await GetGameAsync(id);
+
+            if (game.IsLive && game.HomeScore > 0)
+            {
+                game.HomeScore--;
+                await UpdateGameAsync(game);
+            }
+
+            return Ok(game);
         }
     }
 }

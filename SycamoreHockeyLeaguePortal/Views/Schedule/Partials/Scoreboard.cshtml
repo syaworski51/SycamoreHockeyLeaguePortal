@@ -1,0 +1,37 @@
+﻿@model Schedule
+
+<div class="container game">
+    <div class="row">
+        <div class="col-12" id="game-notes">
+            @(Model.Notes != "" ? Model.Notes : Model.Date.ToLongDateString())
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-3 away-team">
+            <h5>@Model.AwayTeam.City</h5>
+            <h1 class="team-name">@Model.AwayTeam.Name</h1>
+        </div>
+        <div class="col-2 team-logo">
+            <img class="logo" src="~/@Model.AwayTeam.LogoPath" />
+        </div>
+        <div class="col score" id="away-score">
+            @(Model.Period > 0 ? Model.AwayScore : "-")
+        </div>
+        <div class="col score" id="home-score">
+            @(Model.Period > 0 ? Model.HomeScore : "-")
+        </div>
+        <div class="col-2 team-logo">
+            <img class="logo" src="~/@Model.HomeTeam.LogoPath" />
+        </div>
+        <div class="col-3 home-team">
+            <h5>@Model.HomeTeam.City</h5>
+            <h1 class="team-name">@Model.HomeTeam.Name</h1>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-12" id="game-status">
+            <div class="status" id="current-status">@Model.Status</div>
+        </div>
+    </div>
+</div>
+<hr />

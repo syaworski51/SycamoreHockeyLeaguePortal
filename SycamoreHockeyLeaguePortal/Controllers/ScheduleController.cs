@@ -427,6 +427,8 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 await UpdateGameAsync(game);
             }
 
+            //return PartialView("~/Views/Schedule/Partials/Scoreboard.cshtml", game);
+
             return RedirectToAction(nameof(GameControls), new
             {
                 date = game.Date.ToShortDateString(),
@@ -444,6 +446,8 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 game.Period--;
                 await UpdateGameAsync(game);
             }
+
+            //return PartialView("~/Views/Schedule/Partials/Scoreboard.cshtml", game);
 
             return RedirectToAction(nameof(GameControls), new
             {
@@ -463,6 +467,8 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 await UpdateGameAsync(game);
             }
 
+            //return PartialView("~/Views/Schedule/Partials/Scoreboard.cshtml", game);
+
             return RedirectToAction(nameof(GameControls), new
             {
                 date = game.Date.ToShortDateString(),
@@ -480,6 +486,8 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 game.AwayScore--;
                 await UpdateGameAsync(game);
             }
+
+            //return PartialView("~/Views/Schedule/Partials/Scoreboard.cshtml", game);
 
             return RedirectToAction(nameof(GameControls), new
             {
@@ -499,6 +507,8 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 await UpdateGameAsync(game);
             }
 
+            //return PartialView("~/Views/Schedule/Partials/Scoreboard.cshtml", game);
+
             return RedirectToAction(nameof(GameControls), new
             {
                 date = game.Date.ToShortDateString(),
@@ -516,6 +526,8 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 game.HomeScore--;
                 await UpdateGameAsync(game);
             }
+
+            //return PartialView("~/Views/Schedule/Partials/Scoreboard.cshtml", game);
 
             return RedirectToAction(nameof(GameControls), new
             {

@@ -9,6 +9,14 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers().AddJsonOptions(options =>
     options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles);
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", 
+        policy => policy.WithOrigins("https://localhost:7210")
+                        .AllowAnyMethod()
+                        .AllowAnyHeader());
+});
+
 var connectionString = builder.Configuration.GetConnectionString("SHL_DB") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 builder.Services.AddDbContext<SHLPortalDbContext>(options =>
     options.UseSqlServer(connectionString));
@@ -27,6 +35,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseCors("AllowFrontend");
 
 app.UseAuthorization();
 

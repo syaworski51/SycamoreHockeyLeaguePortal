@@ -17,12 +17,6 @@ public partial class Team
 
     public string? AlternateName { get; set; }
 
-    public string PrimaryColor { get; set; } = null!;
-
-    public string? SecondaryColor { get; set; }
-
-    public string? TertiaryColor { get; set; }
-
     public virtual ICollection<Alignment> Alignments { get; set; } = new List<Alignment>();
 
     public virtual ICollection<Champion> Champions { get; set; } = new List<Champion>();
