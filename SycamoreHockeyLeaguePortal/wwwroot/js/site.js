@@ -3,18 +3,13 @@
 
 // Write your JavaScript code.
 
-let localDomain = "https://localhost:7210/";
-let liveDomain = "https://shl.azurewebsites.net/";
-
-let localAPIDomain = "https://localhost:7008/api/"
-
 function EnableGoToDateButton() {
     $("#btn-go-to-date").removeClass("disabled");
 }
 
 function UpdateDisplay(endpoint) {
     $.ajax({
-        url: localAPIDomain + endpoint,
+        url: endpoint,
         type: "POST",
         success: function (data) {
             $("#away-score").html(data.awayScore);
@@ -35,7 +30,7 @@ function UpdateDisplay(endpoint) {
 
         },
         error: function () {
-            alert(`Could not update display. Endpoint: ${localAPIDomain + endpoint}`);
+            alert(`Could not update display. Endpoint: ${endpoint}`);
         }
     });
 }

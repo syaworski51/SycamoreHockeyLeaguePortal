@@ -22,9 +22,12 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         private const string CONFERENCE = "conference";
         private const string INTER_CONFERENCE = "inter-conference";
 
-        public ScheduleController(ApplicationDbContext context)
+        private readonly IConfigurationSection _secrets;
+
+        public ScheduleController(ApplicationDbContext context, IConfiguration config)
         {
             _context = context;
+            _secrets = config.GetSection("Secrets");
         }
 
         // GET: Schedule
@@ -351,53 +354,10 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 return NotFound();
             }
 
+            ViewBag.APIDomain = _secrets.GetValue<string>("API:LocalURL");
+
             return View(game);
         }
-
-        // POST: Schedule/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        /*[HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> GameControls(Guid? id, [Bind("Id,SeasonId,PlayoffRoundId,Date,Type,AwayTeamId,AwayScore,HomeTeamId,HomeScore,Period,IsLive,IsFinalized,Notes,GameIndex")] Schedule game, bool finalizing = true)
-        {
-            if (id != game.Id)
-            {
-                return NotFound();
-            }
-
-            game.Season = _context.Seasons.FirstOrDefault(s => s.Id == game.SeasonId)!;
-            game.PlayoffRound = _context.PlayoffRounds.FirstOrDefault(r => r.Id == game.PlayoffRoundId) ?? null;
-            game.AwayTeam = _context.Teams.FirstOrDefault(t => t.Id == game.AwayTeamId)!;
-            game.HomeTeam = _context.Teams.FirstOrDefault(t => t.Id == game.HomeTeamId)!;
-
-            if (IsGameLive(game))
-            {
-                if (finalizing)
-                {
-                    if (game.Period >= 3 && game.AwayScore != game.HomeScore)
-                        return await FinalizeGameAsync(game.Id);
-                }   
-                else
-                {
-                    if (game.Type == PLAYOFFS)
-                        return RedirectToAction(nameof(Playoffs), new
-                        {
-                            season = game.Season.Year,
-                            round = game.PlayoffRound!.Index
-                        });
-
-                    return RedirectToAction(nameof(Index), new { weekOf = game.Date.ToShortDateString() });
-                }
-            }
-
-            return RedirectToAction(nameof(GameCenter), new
-            {
-                date = game.Date.ToShortDateString(),
-                awayTeam = game.AwayTeam.Code,
-                homeTeam = game.HomeTeam.Code
-            });
-        }*/
 
         public async Task<Schedule> GetGameAsync(Guid? id)
         {

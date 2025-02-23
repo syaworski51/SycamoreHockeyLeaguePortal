@@ -6,13 +6,16 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
+var secrets = builder.Configuration.GetSection("Secrets");
+var mvcDomain = secrets.GetValue<string>("MVC:LocalURL")!;
+
 builder.Services.AddControllers().AddJsonOptions(options =>
     options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles);
 
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", 
-        policy => policy.WithOrigins("https://localhost:7210")
+        policy => policy.WithOrigins(mvcDomain)
                         .AllowAnyMethod()
                         .AllowAnyHeader());
 });

@@ -2,6 +2,13 @@
 
 @{
     ViewData["Title"] = $"{Model.Date.ToShortDateString()} - {Model.AwayTeam.Code} {Model.AwayScore} - {Model.HomeScore} {Model.HomeTeam.Code} ({Model.ShortStatus})";
+
+    string domain = ViewBag.APIDomain;
+
+    string CanGameBeFinalized() {
+        return (Model.IsLive && !Model.IsFinalized && Model.Period >= 3 && Model.AwayScore != Model.HomeScore) ?
+            "" : "disabled";
+    }
 }
 
 @Html.Partial("Partials/Scoreboard.cshtml", Model)
@@ -9,68 +16,34 @@
 @if (Model.IsLive && !Model.IsFinalized)
 {
     <div class="row">
-        <form asp-action="GameControls">
-            <div class="col-md-4 container game-controls">
-                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-                <input type="hidden" asp-for="Id" />
-                <input type="hidden" asp-for="SeasonId" />
-                <input type="hidden" asp-for="PlayoffRoundId" />
-                <input type="hidden" asp-for="Date" />
-                <input type="hidden" asp-for="Type" />
-                <input type="hidden" asp-for="AwayTeamId" />
-                <input type="hidden" asp-for="AwayScore" />
-                <input type="hidden" asp-for="HomeTeamId" />
-                <input type="hidden" asp-for="HomeScore" />
-                <input type="hidden" asp-for="Period" />
-                <input type="hidden" asp-for="GameIndex" />
-                <input type="hidden" asp-for="IsLive" />
-                <input type="hidden" asp-for="IsFinalized" />
-                <div class="row">
-                    <div class="col form-group">
-                        <label asp-for="AwayScore" class="control-label"></label><br />
-                        <a class="btn btn-primary" id="btn-away-goal" data-url="@($"Schedule/AwayGoal/{Model.Id}")">+1</a>
-                        <br />
-                        <a class="btn btn-secondary" id="btn-remove-away-goal" data-url="@( $"Schedule/RemoveAwayGoal/{Model.Id}")">-1</a>
-                        <!--
-                            <a class="btn btn-primary" asp-action="AwayGoal" asp-route-id="@Model.Id.ToString()">+1</a>
-                            <br />
-                            <a class="btn btn-secondary" asp-action="RemoveAwayGoal" asp-route-id="@Model.Id.ToString()">-1</a>
-                        -->
-                        
-                    </div>
-                    <div class="col form-group">
-                        <label asp-for="Period" class="control-label"></label><br />
-                        <a class="btn btn-primary" id="btn-next-period" data-url="@($"Schedule/NextPeriod/{Model.Id}")">+1</a>
-                        <br />
-                        <a class="btn btn-secondary" id="btn-previous-period" data-url="@($"Schedule/PreviousPeriod/{Model.Id}")">-1</a>
-                        <!--
-                            <a class="btn btn-primary" asp-action="NextPeriod" asp-route-id="@Model.Id.ToString()">+1</a>
-                            <br />
-                            <a class="btn btn-secondary" asp-action="PreviousPeriod" asp-route-id="@Model.Id.ToString()">-1</a>
-                        -->
-                        
-                    </div>
-                    <div class="col form-group">
-                        <label asp-for="HomeScore" class="control-label"></label><br />
-                        <a class="btn btn-primary" id="btn-home-goal" data-url="@($"Schedule/HomeGoal/{Model.Id}")">+1</a>
-                        <br />
-                        <a class="btn btn-secondary" id="btn-remove-home-goal" data-url="@($"Schedule/RemoveHomeGoal/{Model.Id}")">-1</a>
-                        <!--
-                            <a class="btn btn-primary" asp-action="HomeGoal" asp-route-id="@Model.Id.ToString()">+1</a>
-                            <br />
-                            <a class="btn btn-secondary" asp-action="RemoveHomeGoal" asp-route-id="@Model.Id.ToString()">-1</a>
-                        -->
-                        
-                    </div>
+        <div class="col-md-4 container game-controls">
+            <div class="row">
+                <div class="col form-group">
+                    <label asp-for="AwayScore" class="control-label"></label><br />
+                    <a class="btn btn-primary" id="btn-away-goal" data-url="@(domain + $"Schedule/AwayGoal/{Model.Id}")">+1</a>
+                    <br />
+                    <a class="btn btn-secondary" id="btn-remove-away-goal" data-url="@(domain + $"Schedule/RemoveAwayGoal/{Model.Id}")">-1</a>
                 </div>
-                <div class="row">
-                    <div class="col form-group">
-                        <a class="btn btn-secondary exit-button" id="btn-save-game" asp-action="SaveGame" asp-route-id="@Model.Id">Save</a>
-                        <a class="btn btn-primary exit-button" id="btn-finalize-game" asp-action="FinalizeGame" asp-route-id="@Model.Id">Finalize</a>
-                    </div>
+                <div class="col form-group">
+                    <label asp-for="Period" class="control-label"></label><br />
+                    <a class="btn btn-primary" id="btn-next-period" data-url="@(domain + $"Schedule/NextPeriod/{Model.Id}")">+1</a>
+                    <br />
+                    <a class="btn btn-secondary" id="btn-previous-period" data-url="@(domain + $"Schedule/PreviousPeriod/{Model.Id}")">-1</a>
+                </div>
+                <div class="col form-group">
+                    <label asp-for="HomeScore" class="control-label"></label><br />
+                    <a class="btn btn-primary" id="btn-home-goal" data-url="@(domain + $"Schedule/HomeGoal/{Model.Id}")">+1</a>
+                    <br />
+                    <a class="btn btn-secondary" id="btn-remove-home-goal" data-url="@(domain + $"Schedule/RemoveHomeGoal/{Model.Id}")">-1</a>
                 </div>
             </div>
-        </form>
+            <div class="row">
+                <div class="col form-group">
+                    <a class="btn btn-secondary exit-button" id="btn-save-game" asp-action="SaveGame" asp-route-id="@Model.Id">Save</a>
+                    <a class="btn btn-primary exit-button @CanGameBeFinalized()" id="btn-finalize-game" asp-action="FinalizeGame" asp-route-id="@Model.Id">Finalize</a>
+                </div>
+            </div>
+        </div>
     </div>
 }
 else
