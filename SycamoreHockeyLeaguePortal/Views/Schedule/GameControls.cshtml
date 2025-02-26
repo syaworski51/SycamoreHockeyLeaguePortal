@@ -7,6 +7,7 @@
 
     string apiDomain = ViewBag.APIDomain;
     string mvcDomain = ViewBag.MVCDomain;
+    IConfigurationSection endpoints = ViewBag.Endpoints;
     bool userIsAdmin = User.IsInRole("Admin");
     bool isRegularSeasonGame = Model.Type == "Regular Season";
 
@@ -45,46 +46,35 @@
                                 <label asp-for="AwayScore" class="control-label"></label><br />
                                 <a class="btn btn-primary" 
                                     id="btn-away-goal" 
-                                    data-url="@GetFullEndpointURL("Schedule/AwayGoal")">+1</a>
+                                    data-url="@GetFullEndpointURL(endpoints["AwayGoal"]!)">+1</a>
                                 <br />
                                 <a class="btn btn-secondary" 
-                                    id="btn-remove-away-goal" 
-                                    data-url="@GetFullEndpointURL("Schedule/RemoveAwayGoal")">-1</a>
+                                    id="btn-remove-away-goal"
+                                   data-url="@GetFullEndpointURL(endpoints["RemoveAwayGoal"]!)">-1</a>
                             </div>
                             <div class="col form-group">
                                 <label asp-for="Period" class="control-label"></label><br />
                                 <a class="btn btn-primary" 
                                     id="btn-next-period"
-                                    data-url="@GetFullEndpointURL("Schedule/NextPeriod")">+1</a>
+                                   data-url="@GetFullEndpointURL(endpoints["NextPeriod"]!)">+1</a>
                                 <br />
                                 <a class="btn btn-secondary" 
                                     id="btn-previous-period"
-                                    data-url="@GetFullEndpointURL("Schedule/PreviousPeriod")"> -1 </a>
+                                   data-url="@GetFullEndpointURL(endpoints["PreviousPeriod"]!)"> -1 </a>
                             </div>
                             <div class="col form-group">
                                 <label asp-for="HomeScore" class="control-label"></label><br />
                                 <a class="btn btn-primary" 
                                     id="btn-home-goal"
-                                    data-url="@GetFullEndpointURL("Schedule/HomeGoal")"> +1 </a>
+                                   data-url="@GetFullEndpointURL(endpoints["HomeGoal"]!)"> +1 </a>
                                 <br />
                                 <a class="btn btn-secondary" 
                                     id="btn-remove-home-goal"
-                                    data-url="@GetFullEndpointURL("Schedule/RemoveHomeGoal")">-1</a>
+                                   data-url="@GetFullEndpointURL(endpoints["RemoveHomeGoal"]!)">-1</a>
                             </div>
                         </div>
                         <div class="row">
                             <div class="col form-group">
-                                @*<a class="btn btn-secondary exit-button" 
-                                    id="btn-save-game" 
-                                    data-url="@GetFullEndpointURL("Schedule/SaveGame")"
-                                    data-redirect="@GetFullRedirectURL(isRegularSeasonGame ? 
-                                        $"Schedule/Index?weekOf={Model.Date.ToShortDateString()}" : 
-                                        $"Schedule/Playoffs?season={Model.Season.Year}&round={Model.PlayoffRound!.Index}")">
-                                    Save</a>
-                                <a class="btn btn-primary exit-button @CanGameBeFinalized()" 
-                                    id="btn-finalize-game"
-                                    data-url="@GetFullEndpointURL("Schedule/FinalizeGame")"
-                                    data-redirect="@GetFullRedirectURL($"GameCenter/{Model.Date.ToShortDateString()}/{Model.AwayTeam.Code}/{Model.HomeTeam.Code}")">Finalize</a>*@
                                 <a class="btn btn-secondary exit-button" 
                                     id="btn-save-game" 
                                     asp-action="SaveGame" 

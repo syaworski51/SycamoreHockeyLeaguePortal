@@ -362,6 +362,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
 
             ViewBag.APIDomain = _secrets.GetValue<string>("API:LocalURL");
             ViewBag.MVCDomain = _secrets.GetValue<string>("MVC:LocalURL");
+            ViewBag.Endpoints = _secrets.GetSection("API:Endpoints");
 
             return View(game);
         }
