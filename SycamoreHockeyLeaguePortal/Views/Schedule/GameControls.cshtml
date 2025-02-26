@@ -17,8 +17,18 @@
     }
 
     string CanPeriodAdvance() {
-        return (Model.Period < 3 || Model.AwayScore == Model.HomeScore) ?
+        return ((Model.Period < 3 || Model.AwayScore == Model.HomeScore) &&
+                ((Model.Type == "Regular Season" && Model.Period < 5) || Model.Type == "Playoffs")) ?
             "" : "disabled";
+    }
+
+    string CanScoresBeIncremented() {
+        return (Model.Period <= 3 || Model.AwayScore == Model.HomeScore) ?
+            "" : "disabled";
+    }
+
+    string GetEndpoint(string key) {
+        return endpoints.GetValue<string>(key)!;
     }
 
     string GetFullEndpointURL(string endpoint) {
@@ -44,33 +54,33 @@
                         <div class="row">
                             <div class="col form-group">
                                 <label asp-for="AwayScore" class="control-label"></label><br />
-                                <a class="btn btn-primary" 
+                                <a class="btn btn-primary @CanScoresBeIncremented()" 
                                     id="btn-away-goal" 
-                                    data-url="@GetFullEndpointURL(endpoints["AwayGoal"]!)">+1</a>
+                                    data-url="@GetFullEndpointURL(GetEndpoint("AwayGoal"))">+1</a>
                                 <br />
                                 <a class="btn btn-secondary" 
                                     id="btn-remove-away-goal"
-                                   data-url="@GetFullEndpointURL(endpoints["RemoveAwayGoal"]!)">-1</a>
+                                   data-url="@GetFullEndpointURL(GetEndpoint("RemoveAwayGoal"))">-1</a>
                             </div>
                             <div class="col form-group">
                                 <label asp-for="Period" class="control-label"></label><br />
-                                <a class="btn btn-primary" 
+                                <a class="btn btn-primary @CanPeriodAdvance()" 
                                     id="btn-next-period"
-                                   data-url="@GetFullEndpointURL(endpoints["NextPeriod"]!)">+1</a>
+                                   data-url="@GetFullEndpointURL(GetEndpoint("NextPeriod"))">+1</a>
                                 <br />
                                 <a class="btn btn-secondary" 
                                     id="btn-previous-period"
-                                   data-url="@GetFullEndpointURL(endpoints["PreviousPeriod"]!)"> -1 </a>
+                                   data-url="@GetFullEndpointURL(GetEndpoint("PreviousPeriod"))"> -1 </a>
                             </div>
                             <div class="col form-group">
                                 <label asp-for="HomeScore" class="control-label"></label><br />
-                                <a class="btn btn-primary" 
+                                <a class="btn btn-primary @CanScoresBeIncremented()" 
                                     id="btn-home-goal"
-                                   data-url="@GetFullEndpointURL(endpoints["HomeGoal"]!)"> +1 </a>
+                                   data-url="@GetFullEndpointURL(GetEndpoint("HomeGoal"))"> +1 </a>
                                 <br />
                                 <a class="btn btn-secondary" 
                                     id="btn-remove-home-goal"
-                                   data-url="@GetFullEndpointURL(endpoints["RemoveHomeGoal"]!)">-1</a>
+                                   data-url="@GetFullEndpointURL(GetEndpoint("RemoveHomeGoal"))">-1</a>
                             </div>
                         </div>
                         <div class="row">

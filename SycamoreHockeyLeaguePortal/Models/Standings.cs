@@ -27,6 +27,18 @@ namespace SycamoreHockeyLeaguePortal.Models
         [Display(Name = "Division")]
         public Division? Division { get; set; }
 
+        [Display(Name = "Div. Ranking")]
+        public int DivisionRanking { get; set; }
+
+        [Display(Name = "Conf. Ranking")]
+        public int ConferenceRanking { get; set; }
+        
+        [Display(Name = "Playoff Ranking")]
+        public int PlayoffRanking { get; set; }
+
+        [Display(Name = "League Ranking")]
+        public int LeagueRanking { get; set; }
+
         [ForeignKey(nameof(Team))]
         public Guid TeamId { get; set; }
 

@@ -3,6 +3,9 @@
 
 // Write your JavaScript code.
 
+let REGULAR_SEASON = "Regular Season";
+let PLAYOFFS = "Playoffs";
+
 function EnableGoToDateButton() {
     $("#btn-go-to-date").removeClass("disabled");
 }
@@ -21,8 +24,15 @@ function UpdateDisplay(endpoint) {
             EnableOrDisableButton(finalizeButton, condition);
 
             let nextPeriodButton = $("#btn-next-period");
-            condition = data.period < 3 || data.awayScore == data.homeScore;
+            condition = (data.period < 3 || data.awayScore == data.homeScore) &&
+                ((data.type == REGULAR_SEASON && data.period < 5) || data.type == PLAYOFFS);
             EnableOrDisableButton(nextPeriodButton, condition);
+
+            let awayGoalButton = $("#btn-away-goal");
+            let homeGoalButton = $("#btn-home-goal");
+            condition = data.period <= 3 || data.awayScore == data.homeScore;
+            EnableOrDisableButton(awayGoalButton, condition);
+            EnableOrDisableButton(homeGoalButton, condition);
         },
         error: function () {
             alert(`Could not update display. Endpoint: ${endpoint}`);
@@ -30,10 +40,10 @@ function UpdateDisplay(endpoint) {
     });
 }
 
-function EnableOrDisableButton(button, shouldDisable) {
+function EnableOrDisableButton(button, shouldEnable) {
     let disabled = "disabled";
 
-    if (shouldDisable) {
+    if (shouldEnable) {
         if (button.hasClass(disabled))
             button.removeClass(disabled);
     } else {
