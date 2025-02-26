@@ -16,29 +16,30 @@ function UpdateDisplay(endpoint) {
             $("#home-score").html(data.homeScore);
             $("#current-status").html(data.status);
 
-            let disabled = "disabled";
             let finalizeButton = $("#btn-finalize-game");
-            if (data.isLive && !data.isFinalized && data.period >= 3 && data.awayScore != data.homeScore) {
-                if (finalizeButton.hasClass(disabled))
-                    finalizeButton.removeClass(disabled);
-            } else {
-                if (!finalizeButton.hasClass(disabled))
-                    finalizeButton.addClass(disabled);
-            }
+            var condition = data.isLive && !data.isFinalized && data.period >= 3 && data.awayScore != data.homeScore;
+            EnableOrDisableButton(finalizeButton, condition);
 
             let nextPeriodButton = $("#btn-next-period");
-            if (data.period < 3 || data.awayScore == data.homeScore) {
-                if (nextPeriodButton.hasClass(disabled))
-                    nextPeriodButton.removeClass(disabled)
-            } else {
-                if (!nextPeriodButton.hasClass(disabled))
-                    nextPeriodButton.addClass(disabled);
-            }
+            condition = data.period < 3 || data.awayScore == data.homeScore;
+            EnableOrDisableButton(nextPeriodButton, condition);
         },
         error: function () {
             alert(`Could not update display. Endpoint: ${endpoint}`);
         }
     });
+}
+
+function EnableOrDisableButton(button, shouldDisable) {
+    let disabled = "disabled";
+
+    if (shouldDisable) {
+        if (button.hasClass(disabled))
+            button.removeClass(disabled);
+    } else {
+        if (!button.hasClass(disabled))
+            button.addClass(disabled);
+    }
 }
 
 $("#btn-away-goal").click(function (event) {
