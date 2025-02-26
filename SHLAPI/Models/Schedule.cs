@@ -118,4 +118,8 @@ public partial class Schedule
     public virtual PlayoffRound? PlayoffRound { get; set; }
 
     public virtual Season Season { get; set; } = null!;
+
+    public int? PlayoffGameIndex { get; set; }
+
+    public string? PlayoffSeriesScore { get; set; }
 }

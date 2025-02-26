@@ -4,7 +4,7 @@ using SycamoreHockeyLeaguePortal.Models;
 
 namespace SycamoreHockeyLeaguePortal.Data
 {
-    public class ApplicationDbContext : IdentityDbContext
+    public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
@@ -26,5 +26,6 @@ namespace SycamoreHockeyLeaguePortal.Data
         public DbSet<PlayoffStatus> PlayoffStatuses { get; set; } = default!;
         public DbSet<GameType> GameTypes { get; set; } = default!;
         public DbSet<TeamBrandingHistory> TeamBrandingHistory { get; set; } = default!;
+        public DbSet<HeadToHeadSeries> HeadToHeadSeries { get; set; } = default!;
     }
 }

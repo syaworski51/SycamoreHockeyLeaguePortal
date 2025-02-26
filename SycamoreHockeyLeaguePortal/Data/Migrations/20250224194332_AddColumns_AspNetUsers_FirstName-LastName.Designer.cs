@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SycamoreHockeyLeaguePortal.Data;
 
@@ -11,9 +12,11 @@ using SycamoreHockeyLeaguePortal.Data;
 namespace SycamoreHockeyLeaguePortal.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250224194332_AddColumns_AspNetUsers_FirstName-LastName")]
+    partial class AddColumns_AspNetUsers_FirstNameLastName
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -368,38 +371,6 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("GameTypes");
-                });
-
-            modelBuilder.Entity("SycamoreHockeyLeaguePortal.Models.HeadToHeadSeries", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("SeasonId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("Team1Id")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<int>("Team1Wins")
-                        .HasColumnType("int");
-
-                    b.Property<Guid>("Team2Id")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<int>("Team2Wins")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("SeasonId");
-
-                    b.HasIndex("Team1Id");
-
-                    b.HasIndex("Team2Id");
-
-                    b.ToTable("HeadToHeadSeries");
                 });
 
             modelBuilder.Entity("SycamoreHockeyLeaguePortal.Models.PlayoffRound", b =>
@@ -968,33 +939,6 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
                     b.Navigation("Champion");
 
                     b.Navigation("Opponent");
-                });
-
-            modelBuilder.Entity("SycamoreHockeyLeaguePortal.Models.HeadToHeadSeries", b =>
-                {
-                    b.HasOne("SycamoreHockeyLeaguePortal.Models.Season", "Season")
-                        .WithMany()
-                        .HasForeignKey("SeasonId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("SycamoreHockeyLeaguePortal.Models.Team", "Team1")
-                        .WithMany()
-                        .HasForeignKey("Team1Id")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("SycamoreHockeyLeaguePortal.Models.Team", "Team2")
-                        .WithMany()
-                        .HasForeignKey("Team2Id")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Season");
-
-                    b.Navigation("Team1");
-
-                    b.Navigation("Team2");
                 });
 
             modelBuilder.Entity("SycamoreHockeyLeaguePortal.Models.PlayoffRound", b =>

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
@@ -10,6 +11,7 @@ using SycamoreHockeyLeaguePortal.Models.ViewModels;
 
 namespace SycamoreHockeyLeaguePortal.Controllers
 {
+    [Authorize(Roles = "Admin")]
     public class ScheduleController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -31,6 +33,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         }
 
         // GET: Schedule
+        [AllowAnonymous]
         public async Task<IActionResult> Index(DateTime weekOf, string? team)
         {
             ViewBag.Team = team;
@@ -92,6 +95,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             return View(scheduleViewModel);
         }
 
+        [AllowAnonymous]
         public async Task<IActionResult> Playoffs(int season, int round, string? team)
         {
             if (season == 2021 && round == 4)
@@ -172,6 +176,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         }
 
         [Route("Schedule/PlayoffSeries/{season}/{team1}/{team2}")]
+        [AllowAnonymous]
         public async Task<IActionResult> PlayoffSeries(int season, string team1, string team2)
         {
             var playoffSeries = _context.PlayoffSeries
@@ -228,6 +233,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
 
         // GET: Schedule/Details/5
         [Route("GameCenter/{date}/{awayTeam}/{homeTeam}")]
+        [AllowAnonymous]
         public async Task<IActionResult> GameCenter(DateTime date, string awayTeam, string homeTeam)
         {
             if (_context.Schedule == null)
@@ -355,6 +361,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             }
 
             ViewBag.APIDomain = _secrets.GetValue<string>("API:LocalURL");
+            ViewBag.MVCDomain = _secrets.GetValue<string>("MVC:LocalURL");
 
             return View(game);
         }
@@ -375,126 +382,6 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         {
             _context.Schedule.Update(game);
             await _context.SaveChangesAsync();
-        }
-
-        public async Task<IActionResult> NextPeriod(Guid id)
-        {
-            var game = await GetGameAsync(id);
-
-            if (game.IsLive && (game.Period < 3 || game.AwayScore == game.HomeScore))
-            {
-                game.Period++;
-                await UpdateGameAsync(game);
-            }
-
-            //return PartialView("~/Views/Schedule/Partials/Scoreboard.cshtml", game);
-
-            return RedirectToAction(nameof(GameControls), new
-            {
-                date = game.Date.ToShortDateString(),
-                awayTeam = game.AwayTeam.Code,
-                homeTeam = game.HomeTeam.Code
-            });
-        }
-
-        public async Task<IActionResult> PreviousPeriod(Guid id)
-        {
-            var game = await GetGameAsync(id);
-
-            if (game.IsLive && game.Period > 1)
-            {
-                game.Period--;
-                await UpdateGameAsync(game);
-            }
-
-            //return PartialView("~/Views/Schedule/Partials/Scoreboard.cshtml", game);
-
-            return RedirectToAction(nameof(GameControls), new
-            {
-                date = game.Date.ToShortDateString(),
-                awayTeam = game.AwayTeam.Code,
-                homeTeam = game.HomeTeam.Code
-            });
-        }
-
-        public async Task<IActionResult> AwayGoal(Guid id)
-        {
-            var game = await GetGameAsync(id);
-            
-            if (game.IsLive)
-            {
-                game.AwayScore++;
-                await UpdateGameAsync(game);
-            }
-
-            //return PartialView("~/Views/Schedule/Partials/Scoreboard.cshtml", game);
-
-            return RedirectToAction(nameof(GameControls), new
-            {
-                date = game.Date.ToShortDateString(),
-                awayTeam = game.AwayTeam.Code,
-                homeTeam = game.HomeTeam.Code
-            });
-        }
-
-        public async Task<IActionResult> RemoveAwayGoal(Guid id)
-        {
-            var game = await GetGameAsync(id);
-
-            if (game.IsLive && game.AwayScore > 0)
-            {
-                game.AwayScore--;
-                await UpdateGameAsync(game);
-            }
-
-            //return PartialView("~/Views/Schedule/Partials/Scoreboard.cshtml", game);
-
-            return RedirectToAction(nameof(GameControls), new
-            {
-                date = game.Date.ToShortDateString(),
-                awayTeam = game.AwayTeam.Code,
-                homeTeam = game.HomeTeam.Code
-            });
-        }
-
-        public async Task<IActionResult> HomeGoal(Guid id)
-        {
-            var game = await GetGameAsync(id);
-            
-            if (game.IsLive)
-            {
-                game.HomeScore++;
-                await UpdateGameAsync(game);
-            }
-
-            //return PartialView("~/Views/Schedule/Partials/Scoreboard.cshtml", game);
-
-            return RedirectToAction(nameof(GameControls), new
-            {
-                date = game.Date.ToShortDateString(),
-                awayTeam = game.AwayTeam.Code,
-                homeTeam = game.HomeTeam.Code
-            });
-        }
-
-        public async Task<IActionResult> RemoveHomeGoal(Guid id)
-        {
-            var game = await GetGameAsync(id);
-
-            if (game.IsLive && game.HomeScore > 0)
-            {
-                game.HomeScore--;
-                await UpdateGameAsync(game);
-            }
-
-            //return PartialView("~/Views/Schedule/Partials/Scoreboard.cshtml", game);
-
-            return RedirectToAction(nameof(GameControls), new
-            {
-                date = game.Date.ToShortDateString(),
-                awayTeam = game.AwayTeam.Code,
-                homeTeam = game.HomeTeam.Code
-            });
         }
 
         public async Task<IActionResult> SaveGame(Guid id)
@@ -524,7 +411,10 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 await UpdateGameAsync(game);
 
                 if (game.Type == REGULAR_SEASON)
+                {
                     await UpdateStandings(game.Season.Year, game.AwayTeam, game.HomeTeam);
+                    await UpdateH2HSeries(game);
+                }   
 
                 if (game.Type == PLAYOFFS)
                     await UpdatePlayoffSeries(game.Season.Year, game);
@@ -543,6 +433,35 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 awayTeam = game.AwayTeam.Code,
                 homeTeam = game.HomeTeam.Code
             });
+        }
+
+        private async Task UpdateH2HSeries(Schedule game)
+        {
+            var matchup = await _context.HeadToHeadSeries
+                .Include(s => s.Season)
+                .Include(s => s.Team1)
+                .Include(s => s.Team2)
+                .FirstOrDefaultAsync(s => s.Season.Year == game.Season.Year &&
+                                          ((s.Team1 == game.AwayTeam && s.Team2 == game.HomeTeam) ||
+                                           (s.Team1 == game.HomeTeam && s.Team2 == game.AwayTeam)));
+
+            if (matchup!.Team1 == game.HomeTeam)
+            {
+                if (game.HomeScore > game.AwayScore)
+                    matchup.Team1Wins++;
+                else
+                    matchup.Team2Wins++;
+            }
+            else
+            {
+                if (game.HomeScore > game.AwayScore)
+                    matchup.Team2Wins++;
+                else
+                    matchup.Team1Wins++;
+            }
+
+            _context.HeadToHeadSeries.Update(matchup);
+            await _context.SaveChangesAsync();
         }
 
         private bool IsGameLive(Schedule game)

@@ -1,9 +1,13 @@
-﻿@inject SycamoreHockeyLeaguePortal.Data.ApplicationDbContext _context
+﻿@using Microsoft.AspNetCore.Identity
+@inject SycamoreHockeyLeaguePortal.Data.ApplicationDbContext _context
+@inject UserManager<ApplicationUser> UserManager
 
 @{
     DateTime currentDate = DateTime.Now.Date;
     int currentYear = currentDate.Year;
     ViewData["BackgroundImage"] = "calgary-vs-nyrangers.png";
+
+    bool userIsAdmin = User.IsInRole("Admin");
 }
 
 <!DOCTYPE html>
@@ -60,7 +64,12 @@
                                 </div>
                             </div>
                             <div class="row-cols-2 status">
-                                <a class="game-status-link" asp-controller="Schedule" asp-action="GameCenter" asp-route-date="@currentGame.Date.ToShortDateString()" asp-route-awayTeam="@currentGame.AwayTeam.Code" asp-route-homeTeam="@currentGame.HomeTeam.Code">@currentGame.Status</a>
+                                <a class="game-status-link" 
+                                    asp-controller="Schedule" 
+                                    asp-action="@(userIsAdmin ? "GameControls" : "GameCenter")" 
+                                    asp-route-date="@currentGame.Date.ToShortDateString()" 
+                                    asp-route-awayTeam="@currentGame.AwayTeam.Code" 
+                                    asp-route-homeTeam="@currentGame.HomeTeam.Code">@currentGame.Status</a>
                             </div>
                         </div>
                     }
@@ -89,25 +98,21 @@
                         <li class="nav-item">
                             <a class="nav-link text-light" asp-controller="Champions" asp-action="Index">Champions</a>
                         </li>
-                        <!--
-                            <li class="nav-item">
-                                <a class="nav-link text-light" asp-controller="PlayoffRounds" asp-action="Index" asp-route-season="@currentYear">Playoff Rounds</a>
-                            </li>
-                        -->
+                        @*<li class="nav-item">
+                            <a class="nav-link text-light" asp-controller="PlayoffRounds" asp-action="Index" asp-route-season="@currentYear">Playoff Rounds</a>
+                        </li>*@
                         <li class="nav-item">
                             <a class="nav-link text-light" asp-controller="Seasons" asp-action="Index">Seasons</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link text-light" asp-controller="Alignments" asp-action="Index" asp-route-season="@currentYear">Alignments</a>
                         </li>
-                        <!--
-                            <li class="nav-item">
-                                <a class="nav-link text-light" asp-controller="Conferences" asp-action="Index">Conferences</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-light" asp-controller="Divisions" asp-action="Index">Divisions</a>
-                            </li>
-                        -->
+                        @*<li class="nav-item">
+                            <a class="nav-link text-light" asp-controller="Conferences" asp-action="Index">Conferences</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-light" asp-controller="Divisions" asp-action="Index">Divisions</a>
+                        </li>*@
                         <li class="nav-item">
                             <a class="nav-link text-light" asp-controller="Teams" asp-action="Index">Teams</a>
                         </li>

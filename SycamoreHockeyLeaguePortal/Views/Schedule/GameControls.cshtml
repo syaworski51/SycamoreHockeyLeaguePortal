@@ -1,19 +1,135 @@
-﻿@model SycamoreHockeyLeaguePortal.Models.Schedule
+﻿@using Microsoft.AspNetCore.Identity
+@model SycamoreHockeyLeaguePortal.Models.Schedule
+@inject UserManager<ApplicationUser> UserManager
 
 @{
     ViewData["Title"] = $"{Model.Date.ToShortDateString()} - {Model.AwayTeam.Code} {Model.AwayScore} - {Model.HomeScore} {Model.HomeTeam.Code} ({Model.ShortStatus})";
 
-    string domain = ViewBag.APIDomain;
+    string apiDomain = ViewBag.APIDomain;
+    string mvcDomain = ViewBag.MVCDomain;
+    bool userIsAdmin = User.IsInRole("Admin");
+    bool isRegularSeasonGame = Model.Type == "Regular Season";
 
     string CanGameBeFinalized() {
         return (Model.IsLive && !Model.IsFinalized && Model.Period >= 3 && Model.AwayScore != Model.HomeScore) ?
             "" : "disabled";
     }
+
+    string CanPeriodAdvance() {
+        return (Model.Period < 3 || Model.AwayScore == Model.HomeScore) ?
+            "" : "disabled";
+    }
+
+    string GetFullEndpointURL(string endpoint) {
+        return apiDomain + $"{endpoint}/{Model.Id}";
+    }
+
+    string GetFullRedirectURL(string page) {
+        return mvcDomain + $"/{page}";
+    }
 }
 
 @Html.Partial("Partials/Scoreboard.cshtml", Model)
 
-@if (Model.IsLive && !Model.IsFinalized)
+<div class="container" id="game-controls-area">
+    @if (userIsAdmin)
+    {
+        if (!Model.IsFinalized)
+        {
+            if (Model.IsLive)
+            {
+                <div class="row">
+                    <div class="col-md-4 container game-controls">
+                        <div class="row">
+                            <div class="col form-group">
+                                <label asp-for="AwayScore" class="control-label"></label><br />
+                                <a class="btn btn-primary" 
+                                    id="btn-away-goal" 
+                                    data-url="@GetFullEndpointURL("Schedule/AwayGoal")">+1</a>
+                                <br />
+                                <a class="btn btn-secondary" 
+                                    id="btn-remove-away-goal" 
+                                    data-url="@GetFullEndpointURL("Schedule/RemoveAwayGoal")">-1</a>
+                            </div>
+                            <div class="col form-group">
+                                <label asp-for="Period" class="control-label"></label><br />
+                                <a class="btn btn-primary" 
+                                    id="btn-next-period"
+                                    data-url="@GetFullEndpointURL("Schedule/NextPeriod")">+1</a>
+                                <br />
+                                <a class="btn btn-secondary" 
+                                    id="btn-previous-period"
+                                    data-url="@GetFullEndpointURL("Schedule/PreviousPeriod")"> -1 </a>
+                            </div>
+                            <div class="col form-group">
+                                <label asp-for="HomeScore" class="control-label"></label><br />
+                                <a class="btn btn-primary" 
+                                    id="btn-home-goal"
+                                    data-url="@GetFullEndpointURL("Schedule/HomeGoal")"> +1 </a>
+                                <br />
+                                <a class="btn btn-secondary" 
+                                    id="btn-remove-home-goal"
+                                    data-url="@GetFullEndpointURL("Schedule/RemoveHomeGoal")">-1</a>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col form-group">
+                                @*<a class="btn btn-secondary exit-button" 
+                                    id="btn-save-game" 
+                                    data-url="@GetFullEndpointURL("Schedule/SaveGame")"
+                                    data-redirect="@GetFullRedirectURL(isRegularSeasonGame ? 
+                                        $"Schedule/Index?weekOf={Model.Date.ToShortDateString()}" : 
+                                        $"Schedule/Playoffs?season={Model.Season.Year}&round={Model.PlayoffRound!.Index}")">
+                                    Save</a>
+                                <a class="btn btn-primary exit-button @CanGameBeFinalized()" 
+                                    id="btn-finalize-game"
+                                    data-url="@GetFullEndpointURL("Schedule/FinalizeGame")"
+                                    data-redirect="@GetFullRedirectURL($"GameCenter/{Model.Date.ToShortDateString()}/{Model.AwayTeam.Code}/{Model.HomeTeam.Code}")">Finalize</a>*@
+                                <a class="btn btn-secondary exit-button" 
+                                    id="btn-save-game" 
+                                    asp-action="SaveGame" 
+                                    asp-route-id="@Model.Id">Save</a>
+                                <a class="btn btn-primary exit-button @CanGameBeFinalized()" 
+                                    id="btn-finalize-game" 
+                                    asp-action="FinalizeGame" 
+                                    asp-route-id="@Model.Id">Finalize</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="row" style="margin-top: 30px;">
+                    <div class="col text-center">
+                        <a class="btn btn-primary"
+                            id="btn-start-or-resume-game"
+                            data-url="@GetFullEndpointURL("Schedule/StartOrResumeGame")">
+                                @(Model.Period == 0 ? "Start Game" : "Resume Game")
+                        </a>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="text-center" style="margin-top: 50px; margin-bottom: 50px;">
+                <h4 class="text-danger">This game has been finalized and cannot be manipulated.</h4>
+                <a asp-controller="Schedule" asp-action="Index" asp-route-weekOf="@Model.Date.ToShortDateString()">Back to Schedule</a>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="text-center" style="margin-top: 50px; margin-bottom: 50px;">
+            <h4 class="text-danger">You are not authorized to edit the data for this game.</h4>
+            <a asp-controller="Schedule" asp-action="Index" asp-route-weekOf="@Model.Date.ToShortDateString()">Back to Schedule</a>
+        </div>
+    }
+</div>
+
+
+@*@if (Model.IsLive && !Model.IsFinalized)
 {
     <div class="row">
         <div class="col-md-4 container game-controls">
@@ -52,7 +168,7 @@ else
         <h4 class="text-danger">This game is not currently live and cannot be manipulated.</h4>
         <a asp-controller="Schedule" asp-action="Index" asp-route-weekOf="@Model.Date.ToShortDateString()">Back to Schedule</a>
     </div>
-}
+}*@
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}

@@ -17,7 +17,7 @@ public partial class Standings
 
     public int Losses { get; set; }
 
-    public int Otlosses { get; set; }
+    public int OTLosses { get; set; }
 
     public decimal DivisionGamesBehind { get; set; }
 
@@ -31,21 +31,21 @@ public partial class Standings
 
     public int LossesVsDivision { get; set; }
 
-    public int OtlossesVsDivision { get; set; }
+    public int OTLossesVsDivision { get; set; }
 
     public int WinsVsConference { get; set; }
 
     public int LossesVsConference { get; set; }
 
-    public int OtlossesVsConference { get; set; }
+    public int OTLossesVsConference { get; set; }
 
     public int InterConfWins { get; set; }
 
     public int InterConfLosses { get; set; }
 
-    public int InterConfOtlosses { get; set; }
+    public int InterConfOTLosses { get; set; }
 
-    public int RegPlusOtwins { get; set; }
+    public int RegPlusOTWins { get; set; }
 
     public int RegulationWins { get; set; }
 
@@ -87,13 +87,13 @@ public partial class Standings
 
     public int StreakGoalsFor { get; set; }
 
-    public int GamesPlayedInLast5Games { get; set; }
+    public int GamesPlayedInLast10Games { get; set; }
 
-    public int LossesInLast5Games { get; set; }
+    public int LossesInLast10Games { get; set; }
 
-    public decimal WinPctInLast5Games { get; set; }
+    public decimal WinPctInLast10Games { get; set; }
 
-    public int WinsInLast5Games { get; set; }
+    public int WinsInLast10Games { get; set; }
 
     public decimal PlayoffsGamesBehind { get; set; }
 

@@ -386,14 +386,13 @@ namespace SycamoreHockeyLeaguePortal.Controllers
 
             List<Standings> standingsList = standings.ToList();
 
-            // Note: Head-to-head tiebreaking system is suspended indefinitely.
-            //if (season >= 2025)
-                //standingsList = await ApplyTiebreakers(standingsList);
+            if (season >= 2025)
+                standingsList = ApplyHeadToHeadTiebreakers(standingsList);
 
             return standingsList;
         }
 
-        private async Task<List<Standings>> ApplyTiebreakers(List<Standings> standings)
+        private List<Standings> ApplyHeadToHeadTiebreakers(List<Standings> standings)
         {
             SEASON = GetSeason(standings);
 
@@ -414,25 +413,27 @@ namespace SycamoreHockeyLeaguePortal.Controllers
 
                     if (index == standings.Count - 2)
                     {
-                        if (tiedTeams.Count == standings.Count &&
-                            tiedTeams.First().GamesPlayed == 0)
+                        if (tiedTeams.Count == standings.Count)
                             return standings;
 
                         indexes = GetIndexesInLeagueStandings(standings, tiedTeams);
 
                         standings = tiedTeams.Count == 2 ?
-                            ApplyTwoWayTiebreakers(standings, indexes[0], tiedTeams[0], indexes[1], tiedTeams[1]) :
-                            ApplyMultiWayTiebreakers(standings, indexes, tiedTeams);
+                            ApplyTwoWayH2HTiebreaker(standings, indexes[0], tiedTeams[0], indexes[1], tiedTeams[1]) :
+                            ApplyMultiWayH2HTiebreaker(standings, indexes, tiedTeams);
                     }
                 }
                 else
                 {
                     if (tiedTeams.Any())
                     {
-                        indexes = GetIndexesInLeagueStandings(standings, tiedTeams);
-                        standings = tiedTeams.Count == 2 ?
-                            ApplyTwoWayTiebreakers(standings, indexes[0], tiedTeams[0], indexes[1], tiedTeams[1]) :
-                            ApplyMultiWayTiebreakers(standings, indexes, tiedTeams);
+                        if (tiedTeams.First().GamesPlayed > 0)
+                        {
+                            indexes = GetIndexesInLeagueStandings(standings, tiedTeams);
+                            standings = tiedTeams.Count == 2 ?
+                                ApplyTwoWayH2HTiebreaker(standings, indexes[0], tiedTeams[0], indexes[1], tiedTeams[1]) :
+                                ApplyMultiWayH2HTiebreaker(standings, indexes, tiedTeams);
+                        }
 
                         tiedTeams.Clear();
                     }
@@ -442,68 +443,147 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             return standings;
         }
 
-        private List<Standings> ApplyTwoWayTiebreakers(List<Standings> standings, 
-                                                       int index1, Standings team1, 
-                                                       int index2, Standings team2)
+        private List<Standings> ApplyTwoWayH2HTiebreaker(List<Standings> standings, 
+                                                         int index1, Standings team1, 
+                                                         int index2, Standings team2)
         {
-            if (team1.Division == team2.Division)
-                return ApplyHeadToHeadTiebreaker(standings, index1, team1, index2, team2);
+            var matchup = _context.HeadToHeadSeries
+                .Include(m => m.Season)
+                .Include(m => m.Team1)
+                .Include(m => m.Team2)
+                .FirstOrDefault(m => m.Season.Year == SEASON &&
+                                     ((m.Team1 == team1.Team && m.Team2 == team2.Team) ||
+                                      (m.Team1 == team2.Team && m.Team2 == team1.Team)))!;
 
-            return ApplyDivisionLeaderTiebreaker(standings, index1, team1, index2, team2);
+            if (matchup.Team1Wins == matchup.Team2Wins)
+                return standings;
+
+            if (team1.Team == matchup.Team1)
+            {
+                if (matchup.Team1Wins < matchup.Team2Wins)
+                    return SwapTeams(standings, index1, team1, index2, team2);
+            }
+            else
+            {
+                if (matchup.Team1Wins > matchup.Team2Wins)
+                    return SwapTeams(standings, index1, team1, index2, team2);
+            }
+
+            return standings;
         }
 
-        private List<Standings> ApplyMultiWayTiebreakers(List<Standings> standings, 
+        private List<Standings> ApplyMultiWayH2HTiebreaker(List<Standings> standings, 
                                                          List<int> indexes, 
                                                          List<Standings> tiedTeams)
         {
+            const int GAMES_PLAYED = 0, WINS = 1, LOSSES = 2;
             
+            Dictionary<Team, int[]> records = new();
 
-            /*var tiedTeamsByDivision = GetTiedTeamsByDivision(tiedTeams);
-            var tiedTeamsByConference = GetTiedTeamsByConference(tiedTeams);
+            foreach (var team in tiedTeams)
+                records.Add(team.Team, new int[] { 0, 0, 0 });
 
-            List<Standings> teams;
-            List<int> indexesInTie;
-            foreach (var division in tiedTeamsByDivision)
+            int gamesPlayed = 0;
+            for (int index = 0; index < tiedTeams.Count - 1; index++)
             {
-                teams = division.Value;
-
-                if (teams.Count >= 2)
+                for (int nextIndex = index + 1; nextIndex < tiedTeams.Count; nextIndex++)
                 {
-                    bool tiebreakerCanDetermineDivisionLeader = CanTiebreakerDetermineDivisionLeader(standings, teams);
-                    
-                    if (tiebreakerCanDetermineDivisionLeader)
+                    Team currentTeam = tiedTeams[index].Team;
+                    Team nextTeam = tiedTeams[nextIndex].Team;
+
+                    var matchup = _context.HeadToHeadSeries
+                        .Include(s => s.Season)
+                        .Include(s => s.Team1)
+                        .Include(s => s.Team2)
+                        .FirstOrDefault(s => s.Season.Year == SEASON &&
+                                             ((s.Team1 == currentTeam && s.Team2 == nextTeam) ||
+                                              (s.Team1 == nextTeam && s.Team2 == currentTeam)))!;
+
+                    gamesPlayed = matchup.Team1Wins + matchup.Team2Wins;
+                    if (gamesPlayed > 0)
                     {
-                        indexesInTie = GetIndexesInLeagueStandings(standings, teams);
-                        standings = teams.Count == 2 ?
-                            ApplyTwoWayTiebreakers(standings,
-                                                   indexesInTie[0], teams[0],
-                                                   indexesInTie[1], teams[1]) :
-                            ApplyMultiWayTiebreakers(standings, indexesInTie, teams);
+                        records[currentTeam][GAMES_PLAYED] += gamesPlayed;
+                        records[nextTeam][GAMES_PLAYED] += gamesPlayed;
+
+                        if (currentTeam == matchup!.Team1)
+                        {
+                            records[currentTeam][WINS] += matchup.Team1Wins;
+                            records[currentTeam][LOSSES] += matchup.Team2Wins;
+
+                            records[nextTeam][WINS] += matchup.Team2Wins;
+                            records[nextTeam][LOSSES] += matchup.Team1Wins;
+                        }
+                        else
+                        {
+                            records[currentTeam][WINS] += matchup.Team2Wins;
+                            records[currentTeam][LOSSES] += matchup.Team1Wins;
+
+                            records[nextTeam][WINS] += matchup.Team1Wins;
+                            records[nextTeam][LOSSES] += matchup.Team2Wins;
+                        }
                     }
                 }
             }
 
-            foreach (var conference in tiedTeamsByConference)
+            if (gamesPlayed > 0)
             {
-                teams = conference.Value;
+                var tiebreaker = records
+                    .OrderByDescending(r => (r.Value[GAMES_PLAYED] > 0) ? 
+                                                (decimal)(r.Value[WINS] / r.Value[GAMES_PLAYED]) : 0)
+                    .ThenByDescending(r => r.Value[WINS])
+                    .ThenBy(r => r.Value[LOSSES])
+                    .ToList();
+                var teamStatLines = ExtractStatLines(SEASON, tiebreaker);
+                standings = ReorderTeams(standings, indexes, teamStatLines);
 
-                if (teams.Count >= 2)
+                List<Standings> teamsStillTied = new();
+                for (int index = 0; index < tiebreaker.Count - 1; index++)
                 {
-                    bool tiebreakerCanDeterminePlayoffTeams = CanTiebreakerDeterminePlayoffTeams(standings, teams);
-                    
-                    if (tiebreakerCanDeterminePlayoffTeams)
+                    KeyValuePair<Team, int[]> currentTeam = tiebreaker[index];
+                    KeyValuePair<Team, int[]> nextTeam = tiebreaker[index + 1];
+
+                    if (currentTeam.Value[WINS] == nextTeam.Value[WINS] &&
+                        currentTeam.Value[LOSSES] == nextTeam.Value[LOSSES])
                     {
-                        indexesInTie = GetIndexesInLeagueStandings(standings, teams);
-                        standings = teams.Count == 2 ?
-                            ApplyTwoWayTiebreakers(standings,
-                                                   indexesInTie[0], teams[0],
-                                                   indexesInTie[1], teams[1]) :
-                            ApplyMultiWayTiebreakers(standings, indexesInTie, teams);
+                        if (teamsStillTied.IsNullOrEmpty())
+                            teamsStillTied.Add(GetTeamStatLine(SEASON, currentTeam.Key));
+
+                        teamsStillTied.Add(GetTeamStatLine(SEASON, nextTeam.Key));
+
+                        if (index == tiebreaker.Count - 2)
+                        {
+                            if (teamsStillTied.Count == tiebreaker.Count)
+                                return standings;
+
+                            indexes = GetIndexesInLeagueStandings(standings, teamsStillTied);
+
+                            standings = teamsStillTied.Count == 2 ?
+                                ApplyTwoWayH2HTiebreaker(standings,
+                                                         indexes[0], teamsStillTied[0],
+                                                         indexes[1], teamsStillTied[1]) :
+                                ApplyMultiWayH2HTiebreaker(standings, indexes, teamsStillTied);
+                        }
+                    }
+                    else
+                    {
+                        if (teamsStillTied.Any())
+                        {
+                            if (records[teamsStillTied.First().Team][GAMES_PLAYED] > 0)
+                            {
+                                indexes = GetIndexesInLeagueStandings(standings, teamsStillTied);
+
+                                standings = teamsStillTied.Count == 2 ?
+                                    ApplyTwoWayH2HTiebreaker(standings,
+                                                             indexes[0], teamsStillTied[0],
+                                                             indexes[1], teamsStillTied[1]) :
+                                    ApplyMultiWayH2HTiebreaker(standings, indexes, teamsStillTied);
+                            }
+
+                            teamsStillTied.Clear();
+                        }
                     }
                 }
-            }*/
-
-
+            }
 
             return standings;
         }
@@ -1200,7 +1280,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             return teams;
         }
 
-        private List<Standings> ExtractStatLines(int season, List<KeyValuePair<Team, GroupH2HStats>> teamList)
+        private List<Standings> ExtractStatLines(int season, List<KeyValuePair<Team, int[]>> teamList)
         {
             List<Standings> teams = new List<Standings>();
 

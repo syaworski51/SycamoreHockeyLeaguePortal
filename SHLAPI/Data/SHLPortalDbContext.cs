@@ -216,17 +216,17 @@ public partial class SHLPortalDbContext : DbContext
             entity.Property(e => e.Id).ValueGeneratedNever();
             entity.Property(e => e.ConferenceGamesBehind).HasColumnType("decimal(3, 1)");
             entity.Property(e => e.DivisionGamesBehind).HasColumnType("decimal(3, 1)");
-            entity.Property(e => e.InterConfOtlosses).HasColumnName("InterConfOTLosses");
+            entity.Property(e => e.InterConfOTLosses).HasColumnName("InterConfOTLosses");
             entity.Property(e => e.InterConfWinPct).HasColumnType("decimal(4, 1)");
             entity.Property(e => e.LeagueGamesBehind).HasColumnType("decimal(3, 1)");
-            entity.Property(e => e.Otlosses).HasColumnName("OTLosses");
-            entity.Property(e => e.OtlossesVsConference).HasColumnName("OTLossesVsConference");
-            entity.Property(e => e.OtlossesVsDivision).HasColumnName("OTLossesVsDivision");
+            entity.Property(e => e.OTLosses).HasColumnName("OTLosses");
+            entity.Property(e => e.OTLossesVsConference).HasColumnName("OTLossesVsConference");
+            entity.Property(e => e.OTLossesVsDivision).HasColumnName("OTLossesVsDivision");
             entity.Property(e => e.PlayoffsGamesBehind).HasColumnType("decimal(3, 1)");
             entity.Property(e => e.PointsPct).HasColumnType("decimal(4, 1)");
-            entity.Property(e => e.RegPlusOtwins).HasColumnName("RegPlusOTWins");
+            entity.Property(e => e.RegPlusOTWins).HasColumnName("RegPlusOTWins");
             entity.Property(e => e.WinPct).HasColumnType("decimal(4, 1)");
-            entity.Property(e => e.WinPctInLast5Games).HasColumnType("decimal(4, 1)");
+            entity.Property(e => e.WinPctInLast10Games).HasColumnType("decimal(4, 1)");
             entity.Property(e => e.WinPctVsConference).HasColumnType("decimal(4, 1)");
             entity.Property(e => e.WinPctVsDivision).HasColumnType("decimal(4, 1)");
 

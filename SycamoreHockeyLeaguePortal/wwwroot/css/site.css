@@ -289,6 +289,10 @@ img {
     text-align: center;
 }
 
+.standings .ranking {
+    width: 46px;
+}
+
 .standings .team-logo {
     width: 45px;
     height: 45px;

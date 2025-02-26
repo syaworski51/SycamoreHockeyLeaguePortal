@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -10,6 +11,7 @@ using SycamoreHockeyLeaguePortal.Models;
 
 namespace SycamoreHockeyLeaguePortal.Controllers
 {
+    [Authorize(Roles = "Admin")]
     public class AlignmentsController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -20,6 +22,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         }
 
         // GET: Alignments
+        [AllowAnonymous]
         public async Task<IActionResult> Index(int season)
         {
             ViewBag.Season = season;
@@ -94,8 +97,6 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Id,SeasonId,ConferenceId,DivisionId,TeamId")] Alignment alignment)
         {
-            //if (ModelState.IsValid)
-            //{
             alignment.Id = Guid.NewGuid();
             alignment.Season = _context.Seasons.FirstOrDefault(s => s.Id == alignment.SeasonId);
             alignment.Conference = _context.Conferences.FirstOrDefault(c => c.Id == alignment.ConferenceId);
@@ -121,11 +122,6 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             await _context.SaveChangesAsync();
 
             return RedirectToAction(nameof(Index), new { season = alignment.Season.Year });
-            //}
-            /*ViewData["ConferenceId"] = new SelectList(_context.Conference, "Id", "Id", alignment.ConferenceId);
-            ViewData["DivisionId"] = new SelectList(_context.Division, "Id", "Id", alignment.DivisionId);
-            ViewData["TeamId"] = new SelectList(_context.Team, "Id", "Id", alignment.TeamId);
-            return View(alignment);*/
         }
 
         // GET: Alignments/Edit/5

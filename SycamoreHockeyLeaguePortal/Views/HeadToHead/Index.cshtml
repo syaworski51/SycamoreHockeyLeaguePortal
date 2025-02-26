@@ -1,0 +1,57 @@
+﻿@model IEnumerable<HeadToHeadSeries>
+
+@{
+    ViewData["Title"] = "Head-to-Head Results";
+}
+
+<h1>@ViewBag.Title</h1>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Season)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Team1)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Team1Wins)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Team2)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Team2Wins)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var matchup in Model) {
+            <tr>
+                <td>
+                    @Html.DisplayFor(modelItem => matchup.Season.Year)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => matchup.Team1.FullName)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => matchup.Team1Wins)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => matchup.Team2.FullName)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => matchup.Team2Wins)
+                </td>
+                <td>
+                    <a asp-action="Details" 
+                        asp-route-season="@matchup.Season.Year" 
+                        asp-route-team1="@matchup.Team1.Code"
+                        asp-route-team2="@matchup.Team2.Code">Details</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
