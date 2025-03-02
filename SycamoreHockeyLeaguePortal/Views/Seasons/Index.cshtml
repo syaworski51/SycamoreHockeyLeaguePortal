@@ -1,17 +1,22 @@
-﻿@using SycamoreHockeyLeaguePortal.Data
+﻿@using Microsoft.AspNetCore.Identity
+@using SycamoreHockeyLeaguePortal.Data
 @model IEnumerable<Season>
 @inject ApplicationDbContext _context
+@inject UserManager<ApplicationUser> UserManager
 
 @{
     ViewData["Title"] = "Seasons";
     Dictionary<int, DateTime?> firstDaysOfSeasons = ViewBag.FirstDaysOfSeasons;
+    bool userIsAdmin = User.IsInRole("Admin");
 }
 
 <h1>@ViewBag.Title</h1>
 
-<p>
-    <a class="btn btn-primary" asp-action="Create">+ Season</a>
-</p>
+@if (userIsAdmin) {
+    <p>
+        <a class="btn btn-primary" asp-action="Create">+ Season</a>
+    </p>
+}
 
 <div class="container">
     <div class="row d-flex justify-content-center">
@@ -23,22 +28,17 @@
                 <div class="container">
                     <div class="row">
                         <div class="col">
-                            @if (firstDaysOfSeasons[season.Year] != null) {
-                                <a class="text-primary" asp-controller="Schedule" asp-action="Index" asp-route-weekOf="@firstDaysOfSeasons[season.Year]">Schedule</a>
+                            @if (firstDaysOfSeasons[season.Year] != DateTime.MinValue) {
+                                <a class="text-primary" asp-controller="Schedule" asp-action="Index" asp-route-weekOf="@firstDaysOfSeasons[season.Year]!.Value.ToShortDateString()">Schedule</a>
                             }
                             else {
-                                <a class="text-primary" href="#">Upload Schedule</a>
+                                <a class="text-primary" asp-controller="Schedule" asp-action="UploadSchedule" asp-route-season="@season.Year">Upload Schedule</a>
                             }
                         </div>
                     </div>
                     <div class="row">
                         <div class="col">
-                            <a class="text-primary" asp-controller="Standings" asp-action="Index" asp-route-season="@season.Year" asp-route-viewBy="division">Schedule</a>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col">
-                            <a class="text-primary" asp-controller="Schedule" asp-action="Index" asp-route-weekOf="@DateTime.Now.ToShortDateString()">Schedule</a>
+                            <a class="text-primary" asp-controller="Standings" asp-action="Index" asp-route-season="@season.Year" asp-route-viewBy="division">Standings</a>
                         </div>
                     </div>
                 </div>

@@ -185,10 +185,72 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             return View(await playoffs.AsNoTracking().ToListAsync());
         }
 
+        [Route("Schedule/UploadSchedule/{season}")]
         public IActionResult UploadSchedule(int season)
         {
-            ViewBag.Season = season;
-            return View();
+            var form = new Schedule_UploadForm
+            {
+                Season = season
+            };
+            return View(form);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UploadSchedule(Schedule_UploadForm form)
+        {
+            var season = _context.Seasons.FirstOrDefault(s => s.Year == form.Season)!;
+
+            if (season == null)
+                return NotFound($"There is no {form.Season} season in the database.");
+
+            var schedule = _context.Schedule.Where(s => s.Season == season);
+            if (schedule.Any())
+                return BadRequest($"There is already a schedule for the {season.Year} season.");
+
+            DateTime firstDay = DateTime.Now;
+            if (form.File != null && form.File.Length > 0)
+            {
+                var extension = Path.GetExtension(form.File.FileName).ToLower();
+                if (extension == ".csv") 
+                {
+                    using (var streamReader = new StreamReader(form.File.OpenReadStream()))
+                    using (var csvReader = new CsvReader(streamReader, CultureInfo.InvariantCulture))
+                    {
+                        var games = csvReader.GetRecords<ScheduleCSV>().ToList();
+                        firstDay = games.First().Date;
+
+                        int gameIndex = _context.Schedule.Max(s => s.GameIndex);
+                        int index = 1;
+                        foreach (var _game in games)
+                        {
+                            var awayTeam = _context.Teams.FirstOrDefault(t => t.Code == _game.AwayTeam)!;
+                            var homeTeam = _context.Teams.FirstOrDefault(t => t.Code == _game.HomeTeam)!;
+
+                            var game = new Schedule
+                            {
+                                Id = Guid.NewGuid(),
+                                SeasonId = season.Id,
+                                Season = season,
+                                Date = _game.Date,
+                                GameIndex = gameIndex + index,
+                                Type = "Regular Season",
+                                AwayTeamId = awayTeam.Id,
+                                AwayTeam = awayTeam,
+                                HomeTeamId = homeTeam.Id,
+                                HomeTeam = homeTeam
+                            };
+                            _context.Schedule.Add(game);
+
+                            index++;
+                        }
+                    }
+
+                    await _context.SaveChangesAsync();
+                    return RedirectToAction(nameof(Index), new { weekOf = firstDay.ToShortDateString() });
+                }
+            }
+
+            return View(season.Year);
         }
 
         [Route("Schedule/PlayoffSeries/{season}/{team1}/{team2}")]
