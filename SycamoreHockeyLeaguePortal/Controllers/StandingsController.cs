@@ -71,13 +71,14 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         public async Task<IActionResult> PlayoffBracket(int season)
         {
             ViewBag.Season = season;
-            
+
             var matchups = await _context.PlayoffSeries
                 .Include(ps => ps.Season)
                 .Include(ps => ps.Round)
                 .Include(ps => ps.Team1)
                 .Include(ps => ps.Team2)
                 .Where(ps => ps.Season.Year == season)
+                .OrderBy(ps => ps.Index)
                 .ToListAsync();
 
             return View(matchups);

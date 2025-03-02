@@ -14,6 +14,7 @@ namespace SycamoreHockeyLeaguePortal.Models
         public string FullName => $"{City} {Name}";
         public string? AlternateName { get; set; }
         public string? LogoPath { get; set; }
+        public bool IsActive { get; set; }
 
         public override string ToString()
         {

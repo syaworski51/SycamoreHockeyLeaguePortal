@@ -1,32 +1,61 @@
-﻿@{
+﻿@using Microsoft.AspNetCore.Identity
+@inject UserManager<ApplicationUser> UserManager
+
+@{
     int season = ViewBag.Season;
     PlayoffSeries matchup = ViewBag.Matchup;
+
+    bool userIsAdmin = User.IsInRole("Admin");
+    bool hasStartDate = matchup.StartDate != null;
+    bool hasTeam1 = matchup.Team1 != null;
+    bool hasTeam2 = matchup.Team2 != null;
 }
 
-<div class="row">
+<div class="row team">
     <div class="col-3 wins">
         @matchup.Team1Wins
     </div>
-    <div class="col-6">
-        <a class="team-code" asp-controller="Teams" asp-action="Details" asp-route-id="@matchup.Team1.Code" asp-route-season="@season" asp-route-gameType="playoffs">@matchup.Team1.Code</a>
-    </div>
-    <div class="col-3 playoff-team">
-        <img class="playoff-team logo" src="~/@matchup.Team1.LogoPath" title="@matchup.Team1" alt="@matchup.Team1.Code" />
-    </div>
+    @if (hasTeam1) {
+        <div class="col-6">
+            <a class="team-code" asp-controller="Teams" asp-action="Details" asp-route-id="@matchup.Team1!.Code" asp-route-season="@season" asp-route-gameType="playoffs">@matchup.Team1.Code</a>
+        </div>
+        <div class="col-3 playoff-team">
+            <img class="playoff-team logo" src="~/@matchup.Team1!.LogoPath" title="@matchup.Team1" alt="@matchup.Team1.Code" />
+        </div>
+    }
+    else {
+        <div class="col-9">
+            <p>Team #1</p>
+        </div>
+    }
 </div>
-<div class="row">
+<div class="row team">
     <div class="col-3">
         @matchup.Team2Wins
     </div>
-    <div class="col-6">
-        <a class="team-code" asp-controller="Teams" asp-action="Details" asp-route-id="@matchup.Team2.Code" asp-route-season="@season" asp-route-gameType="playoffs">@matchup.Team2.Code</a>
-    </div>
-    <div class="col-3 playoff-team">
-        <img class="playoff-team logo" src="~/@matchup.Team2.LogoPath" title="@matchup.Team2" alt="@matchup.Team2.Code" />
-    </div>
+    @if (hasTeam2)
+    {
+        <div class="col-6">
+            <a class="team-code" asp-controller="Teams" asp-action="Details" asp-route-id="@matchup.Team2!.Code" asp-route-season="@season" asp-route-gameType="playoffs">@matchup.Team2.Code</a>
+        </div>
+        <div class="col-3 playoff-team">
+            <img class="playoff-team logo" src="~/@matchup.Team2!.LogoPath" title="@matchup.Team2" alt="@matchup.Team2.Code" />
+        </div>
+    }
+    else
+    {
+        <div class="col-9">
+            <p>Team #2</p>
+        </div>
+    }
 </div>
 <div class="row">
     <div class="col">
-        <a asp-controller="Schedule" asp-action="PlayoffSeries" asp-route-season="@season" asp-route-team1="@matchup.Team1.Code" asp-route-team2="@matchup.Team2.Code">Matchup</a>
+        @if (hasStartDate && hasTeam1 && hasTeam2) {
+            <a asp-controller="Schedule" asp-action="PlayoffSeries" asp-route-season="@season" asp-route-team1="@matchup.Team1!.Code" asp-route-team2="@matchup.Team2!.Code">Matchup</a>
+        }
+        @if (userIsAdmin && !matchup.IsConfirmed) {
+            <a asp-controller="PlayoffSeries" asp-action="Edit" asp-route-id="@matchup.Id">Edit</a>
+        }
     </div>
 </div>

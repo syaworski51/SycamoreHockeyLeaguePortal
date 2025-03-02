@@ -104,7 +104,42 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             ViewBag.PacificStandings = standings
                 .Where(s => s.Division!.Code == "PA");
 
+            //await Create2025PlayoffSeries();
+
             return View();
+        }
+
+        private async Task Create2025PlayoffSeries()
+        {
+            var season = await _context.Seasons.FirstOrDefaultAsync(s => s.Year == 2025);
+            var rounds = _context.PlayoffRounds
+                .Where(r => r.Season == season)
+                .OrderBy(r => r.Index);
+
+            int ascii = 65;
+            foreach (var round in rounds)
+            {
+                int numberOfMatchups = (int)Math.Pow(2, 4 - round.Index);
+                
+                for (int index = 0; index < numberOfMatchups; index++)
+                {
+                    var series = new PlayoffSeries
+                    {
+                        Id = Guid.NewGuid(),
+                        SeasonId = season.Id,
+                        Season = season,
+                        RoundId = round.Id,
+                        Round = round,
+                        Index = ((char)ascii).ToString(),
+                        IsConfirmed = false
+                    };
+                    _context.PlayoffSeries.Add(series);
+
+                    ascii++;
+                }
+            }
+
+            await _context.SaveChangesAsync();
         }
 
         public IActionResult Privacy()

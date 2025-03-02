@@ -20,5 +20,8 @@ namespace SycamoreHockeyLeaguePortal.Models
 
         [Display(Name = "Name")]
         public string Name { get; set; }
+
+        [Display(Name = "All Matchups Confirmed?")]
+        public bool MatchupsConfirmed { get; set; }
     }
 }

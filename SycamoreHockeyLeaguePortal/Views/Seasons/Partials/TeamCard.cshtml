@@ -1,0 +1,17 @@
+﻿@model Team
+
+@{
+}
+
+<div class="row" id="@Model.Code.ToLower()" draggable="true" ondragstart="DragTeam(event)">
+    <div class="col card container team-card">
+        <div class="row">
+            <div class="col-2">
+                <img src="~/@Model.LogoPath" style="width: 30px; height: 30px;" />
+            </div>
+            <div class="col-10 text-center">
+                <h5 style="font-family: 'Druk Wide Trial'">@Model.Code</h5>
+            </div>
+        </div>
+    </div>
+</div>

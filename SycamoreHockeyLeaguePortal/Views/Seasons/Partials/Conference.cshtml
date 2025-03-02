@@ -1,0 +1,18 @@
+﻿@using SycamoreHockeyLeaguePortal.Models.InputForms
+@model Season_CreateForm
+
+@{
+    int index = ViewBag.Index;
+    List<Division> divisions = ViewBag.Divisions;
+}
+
+<h3>@Model.Conferences[index].Name</h3>
+<div class="container">
+    <div class="row d-flex align-items-start">
+        @for (int divIndex = 0; divIndex < divisions.Count; divIndex++) {
+            var division = divisions[divIndex];
+            ViewBag.Division = division;
+            @Html.Partial("Division.cshtml", Model.TeamAlignments.ElementAt(divIndex))
+        }
+    </div>
+</div>

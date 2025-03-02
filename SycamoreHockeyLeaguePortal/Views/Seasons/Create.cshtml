@@ -1,39 +1,57 @@
-﻿@model Season
+﻿@using SycamoreHockeyLeaguePortal.Models.InputForms
+@model Season_CreateForm
 
 @{
-    ViewData["Title"] = "Create";
-    int year = ViewBag.Year;
-    int gamesPerTeam = ViewBag.GamesPerTeam;
+    ViewData["Title"] = "New Season";
+    List<Team> teams = ViewBag.Teams;
+    List<List<Division>> divisionLists = ViewBag.DivisionLists;
 }
 
-<h1>Create</h1>
-
-<h4>Season</h4>
+<h1>@ViewBag.Title</h1>
 <hr />
-<div class="row">
-    <div class="col-md-4">
-        <form asp-action="Create">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+<form asp-action="Create">
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+    @* Season Info section *@
+    <div class="row form-group">
+        <div class="col">
             <div class="form-group">
                 <label asp-for="Year" class="control-label"></label>
-                <input asp-for="Year" class="form-control" value="@year" />
+                <input asp-for="Year" class="form-control" value="@Model.Year" />
                 <span asp-validation-for="Year" class="text-danger"></span>
             </div>
+        </div>
+        <div class="col">
             <div class="form-group">
                 <label asp-for="GamesPerTeam" class="control-label"></label>
-                <input asp-for="GamesPerTeam" class="form-control" value="@gamesPerTeam" />
+                <input asp-for="GamesPerTeam" class="form-control" value="@Model.GamesPerTeam" />
                 <span asp-validation-for="GamesPerTeam" class="text-danger"></span>
             </div>
-            <div class="form-group">
-                <input type="submit" value="Create" class="btn btn-primary" />
-            </div>
-        </form>
+        </div>
     </div>
-</div>
 
-<div>
-    <a asp-action="Index">Back to List</a>
-</div>
+    @* Alignments section *@
+    <div class="row container form-group">
+        <div class="row">
+            <div class="col-2 card container">
+                @foreach (var team in teams) {
+                    @Html.Partial("Partials/TeamCard.cshtml", team);
+                }
+            </div>
+            <div class="col-9">
+                @for (int index = 0; index < Model.Conferences.Count; index++) {
+                    ViewBag.Index = index;
+                    ViewBag.Divisions = divisionLists[index];
+                    var conference = Model.Conferences[index];
+                    @Html.Partial("Partials/Conference.cshtml", Model)
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <button type="submit" class="btn btn-primary">Create</button>
+    </div>
+</form>
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}

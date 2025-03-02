@@ -5,9 +5,9 @@
 @{
     ViewData["Title"] = $"{Model.Date.ToShortDateString()} - {Model.AwayTeam.Code} {Model.AwayScore} - {Model.HomeScore} {Model.HomeTeam.Code} ({Model.ShortStatus})";
 
-    string apiDomain = ViewBag.APIDomain;
-    string mvcDomain = ViewBag.MVCDomain;
-    IConfigurationSection endpoints = ViewBag.Endpoints;
+    string apiDomain = (string)TempData["APIDomain"]!;
+    string mvcDomain = (string)TempData["MVCDomain"]!;
+    IConfigurationSection endpoints = (IConfigurationSection)TempData["Endpoints"]!;
     bool userIsAdmin = User.IsInRole("Admin");
     bool isRegularSeasonGame = Model.Type == "Regular Season";
 
@@ -17,9 +17,17 @@
     }
 
     string CanPeriodAdvance() {
-        return ((Model.Period < 3 || Model.AwayScore == Model.HomeScore) &&
-                ((Model.Type == "Regular Season" && Model.Period < 5) || Model.Type == "Playoffs")) ?
+        return (Model.Period < 3 || Model.AwayScore == Model.HomeScore) &&
+                ((Model.Type == "Regular Season" && Model.Period < 5) || Model.Type == "Playoffs") ?
             "" : "disabled";
+    }
+
+    string CanPeriodMoveBack() {
+        return (Model.Period > 1) ? "" : "disabled";
+    }
+
+    string CanScoreBeDecremented(int score) {
+        return (score > 0) ? "" : "disabled";
     }
 
     string CanScoresBeIncremented() {
@@ -33,10 +41,6 @@
 
     string GetFullEndpointURL(string endpoint) {
         return apiDomain + $"{endpoint}/{Model.Id}";
-    }
-
-    string GetFullRedirectURL(string page) {
-        return mvcDomain + $"/{page}";
     }
 }
 
@@ -58,7 +62,7 @@
                                     id="btn-away-goal" 
                                     data-url="@GetFullEndpointURL(GetEndpoint("AwayGoal"))">+1</a>
                                 <br />
-                                <a class="btn btn-secondary" 
+                                <a class="btn btn-secondary @CanScoreBeDecremented(Model.AwayScore)" 
                                     id="btn-remove-away-goal"
                                    data-url="@GetFullEndpointURL(GetEndpoint("RemoveAwayGoal"))">-1</a>
                             </div>
@@ -68,8 +72,8 @@
                                     id="btn-next-period"
                                    data-url="@GetFullEndpointURL(GetEndpoint("NextPeriod"))">+1</a>
                                 <br />
-                                <a class="btn btn-secondary" 
-                                    id="btn-previous-period"
+                                <a class="btn btn-secondary @CanPeriodMoveBack()"
+                                   id="btn-previous-period"
                                    data-url="@GetFullEndpointURL(GetEndpoint("PreviousPeriod"))"> -1 </a>
                             </div>
                             <div class="col form-group">
@@ -78,7 +82,7 @@
                                     id="btn-home-goal"
                                    data-url="@GetFullEndpointURL(GetEndpoint("HomeGoal"))"> +1 </a>
                                 <br />
-                                <a class="btn btn-secondary" 
+                                <a class="btn btn-secondary @CanScoreBeDecremented(Model.HomeScore)" 
                                     id="btn-remove-home-goal"
                                    data-url="@GetFullEndpointURL(GetEndpoint("RemoveHomeGoal"))">-1</a>
                             </div>
@@ -104,7 +108,7 @@
                     <div class="col text-center">
                         <a class="btn btn-primary"
                             id="btn-start-or-resume-game"
-                            data-url="@GetFullEndpointURL("Schedule/StartOrResumeGame")">
+                            data-url="@GetFullEndpointURL(GetEndpoint("StartOrResumeGame"))">
                                 @(Model.Period == 0 ? "Start Game" : "Resume Game")
                         </a>
                     </div>
@@ -127,48 +131,6 @@
         </div>
     }
 </div>
-
-
-@*@if (Model.IsLive && !Model.IsFinalized)
-{
-    <div class="row">
-        <div class="col-md-4 container game-controls">
-            <div class="row">
-                <div class="col form-group">
-                    <label asp-for="AwayScore" class="control-label"></label><br />
-                    <a class="btn btn-primary" id="btn-away-goal" data-url="@(domain + $"Schedule/AwayGoal/{Model.Id}")">+1</a>
-                    <br />
-                    <a class="btn btn-secondary" id="btn-remove-away-goal" data-url="@(domain + $"Schedule/RemoveAwayGoal/{Model.Id}")">-1</a>
-                </div>
-                <div class="col form-group">
-                    <label asp-for="Period" class="control-label"></label><br />
-                    <a class="btn btn-primary" id="btn-next-period" data-url="@(domain + $"Schedule/NextPeriod/{Model.Id}")">+1</a>
-                    <br />
-                    <a class="btn btn-secondary" id="btn-previous-period" data-url="@(domain + $"Schedule/PreviousPeriod/{Model.Id}")">-1</a>
-                </div>
-                <div class="col form-group">
-                    <label asp-for="HomeScore" class="control-label"></label><br />
-                    <a class="btn btn-primary" id="btn-home-goal" data-url="@(domain + $"Schedule/HomeGoal/{Model.Id}")">+1</a>
-                    <br />
-                    <a class="btn btn-secondary" id="btn-remove-home-goal" data-url="@(domain + $"Schedule/RemoveHomeGoal/{Model.Id}")">-1</a>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col form-group">
-                    <a class="btn btn-secondary exit-button" id="btn-save-game" asp-action="SaveGame" asp-route-id="@Model.Id">Save</a>
-                    <a class="btn btn-primary exit-button @CanGameBeFinalized()" id="btn-finalize-game" asp-action="FinalizeGame" asp-route-id="@Model.Id">Finalize</a>
-                </div>
-            </div>
-        </div>
-    </div>
-}
-else
-{
-    <div class="text-center" style="margin-top: 50px; margin-bottom: 50px;">
-        <h4 class="text-danger">This game is not currently live and cannot be manipulated.</h4>
-        <a asp-controller="Schedule" asp-action="Index" asp-route-weekOf="@Model.Date.ToShortDateString()">Back to Schedule</a>
-    </div>
-}*@
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}

@@ -1,7 +1,10 @@
-﻿@model IEnumerable<Season>
+﻿@using SycamoreHockeyLeaguePortal.Data
+@model IEnumerable<Season>
+@inject ApplicationDbContext _context
 
 @{
     ViewData["Title"] = "Seasons";
+    Dictionary<int, DateTime?> firstDaysOfSeasons = ViewBag.FirstDaysOfSeasons;
 }
 
 <h1>@ViewBag.Title</h1>
@@ -17,53 +20,29 @@
             <div class="col-2 card text-center align-content-center">
                 <h4>@season.Year</h4>
                 <p class="text-secondary">@season.GamesPerTeam games</p>
+                <div class="container">
+                    <div class="row">
+                        <div class="col">
+                            @if (firstDaysOfSeasons[season.Year] != null) {
+                                <a class="text-primary" asp-controller="Schedule" asp-action="Index" asp-route-weekOf="@firstDaysOfSeasons[season.Year]">Schedule</a>
+                            }
+                            else {
+                                <a class="text-primary" href="#">Upload Schedule</a>
+                            }
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <a class="text-primary" asp-controller="Standings" asp-action="Index" asp-route-season="@season.Year" asp-route-viewBy="division">Schedule</a>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <a class="text-primary" asp-controller="Schedule" asp-action="Index" asp-route-weekOf="@DateTime.Now.ToShortDateString()">Schedule</a>
+                        </div>
+                    </div>
+                </div>
             </div>
         }
     </div>
 </div>
-<!--
-    <table class="table">
-    <thead>
-        <tr>
-            <th>
-@Html.DisplayNameFor(model => model.Year)
-            </th>
-            <th>
-@Html.DisplayNameFor(model => model.LongName)
-            </th>
-            <th>
-@Html.DisplayNameFor(model => model.ShortName)
-            </th>
-            <th>
-@Html.DisplayNameFor(model => model.GamesPerTeam)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model)
-{
-            <tr>
-                <td>
-            @Html.DisplayFor(modelItem => item.Year)
-                </td>
-                <td>
-            @Html.DisplayFor(modelItem => item.LongName)
-                </td>
-                <td>
-            @Html.DisplayFor(modelItem => item.ShortName)
-                </td>
-                <td>
-            @Html.DisplayFor(modelItem => item.GamesPerTeam)
-                </td>
-                <td>
-                    <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
-                    <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
-                    <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
-                </td>
-            </tr>
-}
-    </tbody>
-</table>
-
--->

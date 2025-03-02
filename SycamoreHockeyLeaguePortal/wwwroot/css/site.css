@@ -125,7 +125,7 @@ img {
     display: inline;
 }
 
-.card:hover:not(#home-page .card) {
+.card:hover:not(#home-page .card, #team-drop-zone) {
     box-shadow: 0 0 10px black;
 }
 
@@ -261,6 +261,7 @@ img {
 
 .game .score {
     font-size: 60pt;
+    padding: 0;
 }
 
 .game .away-team {
@@ -344,6 +345,14 @@ img {
 .playoff-matchup h3 {
     font-family: "Druk Text";
     margin-top: -8px;
+}
+
+.conference-semifinals {
+    height: 125.6px;
+}
+
+.playoff-matchup .team {
+    height: 40px;
 }
 
 .playoff-matchup .teams {
@@ -569,7 +578,8 @@ img {
     width: 100%;
 }
 
-.playoff-seeds {
+.bracket .card {
+    margin: auto
     width: 40%;
 }
 
@@ -706,4 +716,22 @@ img {
 
 .sycamore-cup-final .series-score {
     font-size: 40pt;
+}
+
+.team-card {
+    margin: 2.5px 5px;
+    width: 80%;
+}
+
+#team-drop-zone {
+    font-size: 10pt;
+    text-align: center;
+    padding: 5px;
+}
+
+.drop-active {
+    color: blue;
+    background-color: #ccefff;
+    font-weight: bold;
+    border: 1px dashed blue;
 }

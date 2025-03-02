@@ -28,11 +28,19 @@ function UpdateDisplay(endpoint) {
                 ((data.type == REGULAR_SEASON && data.period < 5) || data.type == PLAYOFFS);
             EnableOrDisableButton(nextPeriodButton, condition);
 
+            let previousPeriodButton = $("#btn-previous-period");
+            EnableOrDisableButton(previousPeriodButton, data.period > 1);
+
             let awayGoalButton = $("#btn-away-goal");
             let homeGoalButton = $("#btn-home-goal");
             condition = data.period <= 3 || data.awayScore == data.homeScore;
             EnableOrDisableButton(awayGoalButton, condition);
             EnableOrDisableButton(homeGoalButton, condition);
+
+            let removeAwayGoalButton = $("#btn-remove-away-goal");
+            let removeHomeGoalButton = $("#btn-remove-home-goal");
+            EnableOrDisableButton(removeAwayGoalButton, data.awayScore > 0);
+            EnableOrDisableButton(removeHomeGoalButton, data.homeScore > 0);
         },
         error: function () {
             alert(`Could not update display. Endpoint: ${endpoint}`);
@@ -109,3 +117,39 @@ $("#btn-start-or-resume-game").click(function (event) {
         }
     });
 });
+
+function AllowDrop(event) {
+    event.preventDefault();
+    $(event.target).addClass("drop-active");
+}
+
+function LeaveDropZone(event) {
+    event.preventDefault();
+    $(event.target).removeClass("drop-active");
+}
+
+function DragTeam(event) {
+    event.dataTransfer.setData("text", event.target.id);
+}
+
+function DropTeam(event, divisionId) {
+    event.preventDefault();
+
+    console.log("Removing \"drop-active\" class..")
+    $(event.target).removeClass("drop-active");
+
+    console.log("Appending team to list...")
+    var teamData = event.dataTransfer.getData("text");
+    console.log(teamData);
+
+    let teamList = document.getElementById(divisionId + "-team-list");
+    teamList.appendChild(document.getElementById(teamData));
+
+    let index = teamList.querySelectorAll("input").length;
+    let teamInput = document.createElement("input");
+    teamInput.type = "hidden";
+    teamInput.name = `TeamAlignments["${divisionId.toUpperCase()}"][${index}]`;
+    teamInput.value = teamData.toUpperCase();
+    teamList.appendChild(teamInput);
+    console.log("Added team to hidden list.");
+}

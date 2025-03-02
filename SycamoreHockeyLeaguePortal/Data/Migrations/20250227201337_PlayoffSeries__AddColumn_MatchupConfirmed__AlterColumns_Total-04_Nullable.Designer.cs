@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SycamoreHockeyLeaguePortal.Data;
 
@@ -11,9 +12,11 @@ using SycamoreHockeyLeaguePortal.Data;
 namespace SycamoreHockeyLeaguePortal.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250227201337_PlayoffSeries__AddColumn_MatchupConfirmed__AlterColumns_Total-04_Nullable")]
+    partial class PlayoffSeries__AddColumn_MatchupConfirmed__AlterColumns_Total04_Nullable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -411,9 +414,6 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
                     b.Property<int>("Index")
                         .HasColumnType("int");
 
-                    b.Property<bool>("MatchupsConfirmed")
-                        .HasColumnType("bit");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -434,14 +434,11 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<bool>("HasEnded")
-                        .HasColumnType("bit");
-
                     b.Property<string>("Index")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<bool>("IsConfirmed")
+                    b.Property<bool>("MatchupConfirmed")
                         .HasColumnType("bit");
 
                     b.Property<Guid>("RoundId")
@@ -450,7 +447,7 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
                     b.Property<Guid>("SeasonId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<DateTime?>("StartDate")
+                    b.Property<DateTime>("StartDate")
                         .HasColumnType("datetime2");
 
                     b.Property<Guid?>("Team1Id")
@@ -821,9 +818,6 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
                     b.Property<string>("Code")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
 
                     b.Property<string>("LogoPath")
                         .HasColumnType("nvarchar(max)");

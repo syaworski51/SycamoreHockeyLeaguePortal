@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using CsvHelper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -7,9 +8,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Identity.Client;
 using Microsoft.IdentityModel.Tokens;
 using SycamoreHockeyLeaguePortal.Data;
+using SycamoreHockeyLeaguePortal.Data.Migrations;
 using SycamoreHockeyLeaguePortal.Models;
+using SycamoreHockeyLeaguePortal.Models.InputForms;
 using SycamoreHockeyLeaguePortal.Models.ViewModels;
 using System.Diagnostics;
+using System.Globalization;
+using System.IO;
 
 namespace SycamoreHockeyLeaguePortal.Controllers
 {
@@ -103,11 +108,11 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> Playoffs(int season, int round, string? team)
         {
-            if (season == 2021 && round == 4)
-            {
-                round--;
-                return RedirectToAction(nameof(Playoffs), new { season = season, round = round, team = team });
-            }
+            if (season == 2021 && round >= 4)
+                return RedirectToAction(nameof(Playoffs), new { season = season, round = 3, team = team });
+
+            if (season >= 2022 && round > 4)
+                return RedirectToAction(nameof(Playoffs), new { season = season, round = 4, team = team });
 
             ViewBag.Season = season;
             ViewBag.Team = team;
@@ -178,6 +183,12 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             ViewBag.Dates = dates;
 
             return View(await playoffs.AsNoTracking().ToListAsync());
+        }
+
+        public IActionResult UploadSchedule(int season)
+        {
+            ViewBag.Season = season;
+            return View();
         }
 
         [Route("Schedule/PlayoffSeries/{season}/{team1}/{team2}")]
@@ -263,85 +274,6 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             return View(game);
         }
 
-        // GET: Schedule/Create
-        public IActionResult Create()
-        {
-            var teams = _context.Teams
-                .OrderBy(t => t.City)
-                .ThenBy(t => t.Name);
-
-            var seasons = _context.Seasons
-                .OrderByDescending(s => s.Year);
-
-            ViewData["AwayTeamId"] = new SelectList(teams, "Id", "FullName");
-            ViewData["HomeTeamId"] = new SelectList(teams, "Id", "FullName");
-            ViewData["SeasonId"] = new SelectList(seasons, "Id", "Year");
-            return View();
-        }
-
-        // POST: Schedule/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,SeasonId,PlayoffRoundId,Date,Type,AwayTeamId,AwayScore,HomeTeamId,HomeScore,Period,IsLive,IsFinalized,Notes")] Schedule game)
-        {
-            game.Id = Guid.NewGuid();
-            game.GameIndex = (_context.Schedule.Any()) ?
-                _context.Schedule
-                    .Select(s => s.GameIndex)
-                    .Max() + 1 :
-                1;
-            game.Season = _context.Seasons.FirstOrDefault(s => s.Id == game.SeasonId)!;
-            game.PlayoffRound = _context.PlayoffRounds.FirstOrDefault(r => r.Id == game.PlayoffRoundId) ?? null;
-            game.AwayTeam = _context.Teams.FirstOrDefault(t => t.Id == game.AwayTeamId)!;
-            game.HomeTeam = _context.Teams.FirstOrDefault(t => t.Id == game.HomeTeamId)!;
-
-            _context.Add(game);
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index), new { season = game.Season.Year });
-        }
-
-        [Route("StartOrResumeGame/{date}/{awayTeam}/{homeTeam}")]
-        public async Task<IActionResult> StartOrResumeGame(DateTime date, string awayTeam, string homeTeam)
-        {
-            if (_context.Schedule == null)
-            {
-                return NotFound();
-            }
-
-            var game = await _context.Schedule
-                .Include(s => s.Season)
-                .Include(s => s.PlayoffRound)
-                .Include(s => s.AwayTeam)
-                .Include(s => s.HomeTeam)
-                .FirstOrDefaultAsync(s => s.Date.Date == date &&
-                                          s.AwayTeam.Code == awayTeam &&
-                                          s.HomeTeam.Code == homeTeam)!;
-
-            if (game == null)
-            {
-                return NotFound();
-            }
-
-            if (!game.IsLive && !game.IsFinalized)
-            {
-                game.IsLive = true;
-
-                if (game.Period < 1)
-                    game.Period = 1;
-
-                await UpdateGameAsync(game);
-            }
-
-            return RedirectToAction(nameof(GameControls), new
-            {
-                date = game.Date.ToShortDateString(),
-                awayTeam = game.AwayTeam.Code,
-                homeTeam = game.HomeTeam.Code
-            });
-        }
-
         // GET: Schedule/Edit/5
         [Route("GameControls/{date}/{awayTeam}/{homeTeam}")]
         public async Task<IActionResult> GameControls(DateTime date, string awayTeam, string homeTeam)
@@ -365,9 +297,9 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 return NotFound();
             }
 
-            ViewBag.APIDomain = _secrets.GetValue<string>("API:LocalURL");
-            ViewBag.MVCDomain = _secrets.GetValue<string>("MVC:LocalURL");
-            ViewBag.Endpoints = _secrets.GetSection("API:Endpoints:Schedule");
+            TempData["APIDomain"] = _secrets.GetValue<string>("API:LocalURL");
+            TempData["MVCDomain"] = _secrets.GetValue<string>("MVC:LocalURL");
+            TempData["Endpoints"] = _secrets.GetSection("API:Endpoints:Schedule");
 
             return View(game);
         }
@@ -473,55 +405,6 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         private bool IsGameLive(Schedule game)
         {
             return game.IsLive && !game.IsFinalized;
-        }
-
-        // GET: Schedule/Delete/5
-        public async Task<IActionResult> Delete(Guid? id)
-        {
-            if (id == null || _context.Schedule == null)
-            {
-                return NotFound();
-            }
-
-            var schedule = await _context.Schedule
-                .Include(s => s.Season)
-                .Include(s => s.PlayoffRound)
-                .Include(s => s.AwayTeam)
-                .Include(s => s.HomeTeam)
-                .FirstOrDefaultAsync(m => m.Id == id);
-
-            if (schedule == null)
-            {
-                return NotFound();
-            }
-
-            return View(schedule);
-        }
-
-        // POST: Schedule/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(Guid id)
-        {
-            if (_context.Schedule == null)
-            {
-                return Problem("Entity set 'ApplicationDbContext.Schedule'  is null.");
-            }
-
-            var schedule = _context.Schedule
-                .Include(s => s.Season)
-                .Include(s => s.PlayoffRound)
-                .Include(s => s.AwayTeam)
-                .Include(s => s.HomeTeam)
-                .FirstOrDefault();
-
-            if (schedule != null)
-            {
-                _context.Schedule.Remove(schedule);
-            }
-
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index), new { season = schedule.Season.Year });
         }
 
         private bool ScheduleExists(Guid id)

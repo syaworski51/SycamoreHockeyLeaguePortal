@@ -1,0 +1,18 @@
+﻿@using SycamoreHockeyLeaguePortal.Models.InputForms
+@model Schedule_UploadForm
+
+@{
+    ViewBag.Title = "Upload Schedule";
+}
+
+<h1>@ViewBag.Title</h1>
+
+<form action="UploadSchedule" method="post" enctype="multipart/form-data">
+    <div class="form-group">
+        <label asp-for="File"></label>
+        <input type="file" asp-for="File" />
+    </div>
+    <div class="form-group">
+        <button type="submit">Upload</button>
+    </div>
+</form>

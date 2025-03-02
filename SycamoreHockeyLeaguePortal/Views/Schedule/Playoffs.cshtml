@@ -42,14 +42,10 @@
                 </div>
             }
             <div class="col text-center">
-                <a asp-controller="Standings" asp-action="PlayoffBracket" asp-route-season="2023">Playoff Bracket</a>
+                <a asp-controller="Standings" asp-action="PlayoffBracket" asp-route-season="@season">Playoff Bracket</a>
             </div>
         </div>
     </div>
-    
-    <p>
-        <a class="btn btn-primary" asp-controller="PlayoffSeries" asp-action="Create" asp-route-season="@season">New Playoff Series</a>
-    </p>
 </form>
 
 <div class="container">

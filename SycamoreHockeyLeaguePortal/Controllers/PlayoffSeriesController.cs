@@ -10,6 +10,7 @@ using NuGet.ProjectModel;
 using SycamoreHockeyLeaguePortal.Data;
 using SycamoreHockeyLeaguePortal.Data.Migrations;
 using SycamoreHockeyLeaguePortal.Models;
+using SycamoreHockeyLeaguePortal.Models.InputForms;
 
 namespace SycamoreHockeyLeaguePortal.Controllers
 {
@@ -59,87 +60,6 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             return View(playoffSeries);
         }
 
-        // GET: PlayoffSeries/Create
-        public IActionResult Create(int season)
-        {
-            var seasons = _context.Seasons
-                .OrderByDescending(s => s.Year);
-            ViewBag.Seasons = new SelectList(seasons, "Id", "Year");
-
-            var rounds = _context.PlayoffRounds
-                .Include(r => r.Season)
-                .Where(r => r.Season.Year == season)
-                .OrderBy(r => r.Index);
-            ViewBag.Rounds = new SelectList(rounds, "Id", "Name");
-
-            var teams = _context.Alignments
-                .Include(a => a.Season)
-                .Include(a => a.Conference)
-                .Include(a => a.Division)
-                .Include(a => a.Team)
-                .Where(a => a.Season.Year == season)
-                .Select(a => a.Team)
-                .OrderBy(a => a.City)
-                .ThenBy(a => a.Name);
-            ViewBag.Teams = new SelectList(teams, "Id", "FullName");
-
-            return View();
-        }
-
-        // POST: PlayoffSeries/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,SeasonId,RoundId,StartDate,Index,Team1Id,Team2Id")] PlayoffSeries playoffSeries, bool complete)
-        {
-            playoffSeries.Id = Guid.NewGuid();
-            playoffSeries.Season = _context.Seasons.FirstOrDefault(s => s.Id == playoffSeries.SeasonId);
-            playoffSeries.Round = _context.PlayoffRounds.FirstOrDefault(r => r.Id == playoffSeries.RoundId);
-            playoffSeries.Team1 = _context.Teams.FirstOrDefault(t => t.Id == playoffSeries.Team1Id);
-            playoffSeries.Team2 = _context.Teams.FirstOrDefault(t => t.Id == playoffSeries.Team2Id);
-            
-            if (complete)
-            {
-                _context.Add(playoffSeries);
-                await _context.SaveChangesAsync();
-
-                await GenerateSchedule(playoffSeries);
-
-                return RedirectToAction("Playoffs", "Schedule", new { season = playoffSeries.Season.Year, round = playoffSeries.Round.Index });
-            }
-
-            var seasons = _context.Seasons
-                .OrderByDescending(s => s.Year);
-            var season = _context.Seasons
-                .Where(s => s.Id == playoffSeries.SeasonId)
-                .FirstOrDefault();
-            ViewBag.Seasons = new SelectList(seasons, "Id", "Year", season.Year);
-
-            var rounds = _context.PlayoffRounds
-                .Include(r => r.Season)
-                .Where(r => r.Season.Year == season.Year)
-                .OrderBy(r => r.Index);
-            var round = _context.PlayoffRounds
-                .Include(r => r.Season)
-                .Where(r => r.Id == playoffSeries.RoundId)
-                .FirstOrDefault();
-            ViewBag.Rounds = new SelectList(rounds, "Id", "Name", round.Name);
-
-            var teams = _context.Alignments
-                .Include(a => a.Season)
-                .Include(a => a.Conference)
-                .Include(a => a.Division)
-                .Include(a => a.Team)
-                .Where(a => a.Season.Year == season.Year)
-                .Select(a => a.Team)
-                .OrderBy(a => a.City)
-                .ThenBy(a => a.Name);
-            ViewBag.Teams = new SelectList(teams, "Id", "FullName");
-
-            return View(playoffSeries);
-        }
-
         // GET: PlayoffSeries/Edit/5
         public async Task<IActionResult> Edit(Guid? id)
         {
@@ -148,16 +68,40 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 return NotFound();
             }
 
-            var playoffSeries = await _context.PlayoffSeries.FindAsync(id);
+            var playoffSeries = await _context.PlayoffSeries
+                .Include(s => s.Season)
+                .Include(s => s.Round)
+                .Include(s => s.Team1)
+                .Include(s => s.Team2)
+                .FirstOrDefaultAsync(s => s.Id == id);
+            
             if (playoffSeries == null)
-            {
                 return NotFound();
-            }
-            ViewData["RoundId"] = new SelectList(_context.PlayoffRounds, "Id", "Id", playoffSeries.RoundId);
-            ViewData["SeasonId"] = new SelectList(_context.Seasons, "Id", "Id", playoffSeries.SeasonId);
-            ViewData["Team1Id"] = new SelectList(_context.Teams, "Id", "Id", playoffSeries.Team1Id);
-            ViewData["Team2Id"] = new SelectList(_context.Teams, "Id", "Id", playoffSeries.Team2Id);
-            return View(playoffSeries);
+
+            if (playoffSeries.IsConfirmed)
+                return BadRequest();
+
+            var form = new PlayoffSeries_EditForm
+            {
+                Id = playoffSeries.Id,
+                StartDate = playoffSeries.StartDate,
+                Team1Id = playoffSeries.Team1Id,
+                Team1 = playoffSeries.Team1,
+                Team2Id = playoffSeries.Team2Id,
+                Team2 = playoffSeries.Team2
+            };
+
+            var teams = _context.Standings
+                .Include(s => s.Team)
+                .Where(s => s.Season.Year == playoffSeries.Season.Year)
+                .Select(s => s.Team)
+                .Distinct()
+                .OrderBy(s => s.City)
+                .ThenBy(s => s.Name);
+            ViewBag.Team1Options = new SelectList(teams, "Id", "FullName");
+            ViewBag.Team2Options = new SelectList(teams, "Id", "FullName");
+
+            return View(form);
         }
 
         // POST: PlayoffSeries/Edit/5
@@ -165,79 +109,49 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(Guid id, [Bind("Id,SeasonId,RoundId,StartDate,Team1Id,Team1Wins,Team2Id,Team2Wins")] PlayoffSeries playoffSeries)
+        public async Task<IActionResult> Edit(Guid id, PlayoffSeries_EditForm form)
         {
-            if (id != playoffSeries.Id)
-            {
-                return NotFound();
-            }
-
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    _context.Update(playoffSeries);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!PlayoffSeriesExists(playoffSeries.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
-            }
-            ViewData["RoundId"] = new SelectList(_context.PlayoffRounds, "Id", "Id", playoffSeries.RoundId);
-            ViewData["SeasonId"] = new SelectList(_context.Seasons, "Id", "Id", playoffSeries.SeasonId);
-            ViewData["Team1Id"] = new SelectList(_context.Teams, "Id", "Id", playoffSeries.Team1Id);
-            ViewData["Team2Id"] = new SelectList(_context.Teams, "Id", "Id", playoffSeries.Team2Id);
-            return View(playoffSeries);
-        }
-
-        // GET: PlayoffSeries/Delete/5
-        public async Task<IActionResult> Delete(Guid? id)
-        {
-            if (id == null || _context.PlayoffSeries == null)
-            {
-                return NotFound();
-            }
-
-            var playoffSeries = await _context.PlayoffSeries
-                .Include(p => p.Round)
-                .Include(p => p.Season)
-                .Include(p => p.Team1)
-                .Include(p => p.Team2)
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (playoffSeries == null)
-            {
-                return NotFound();
-            }
-
-            return View(playoffSeries);
-        }
-
-        // POST: PlayoffSeries/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(Guid id)
-        {
-            if (_context.PlayoffSeries == null)
-            {
-                return Problem("Entity set 'ApplicationDbContext.PlayoffSeries'  is null.");
-            }
-            var playoffSeries = await _context.PlayoffSeries.FindAsync(id);
-            if (playoffSeries != null)
-            {
-                _context.PlayoffSeries.Remove(playoffSeries);
-            }
+            form.Team1 = await _context.Teams.FindAsync(form.Team1Id);
+            form.Team2 = await _context.Teams.FindAsync(form.Team2Id);
             
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            var series = _context.PlayoffSeries
+                .Include(s => s.Round)
+                .Include(s => s.Season)
+                .Include(s => s.Team1)
+                .Include(s => s.Team2)
+                .FirstOrDefault(s => s.Id == id)!;
+
+            if (series == null)
+                return NotFound();
+
+            if (series.IsConfirmed)
+                return BadRequest();
+            
+            series.StartDate = form.StartDate;
+            series.Team1Id = form.Team1Id;
+            series.Team1 = form.Team1;
+            series.Team2Id = form.Team2Id;
+            series.Team2 = form.Team2;
+
+            if (series.Team1 != series.Team2 || (series.Team1 == null && series.Team2 == null))
+            {
+                _context.PlayoffSeries.Update(series);
+                await _context.SaveChangesAsync();
+
+                return RedirectToAction("PlayoffBracket", "Standings", new { season = series.Season.Year });
+            }
+
+            var teams = _context.Standings
+                .Include(s => s.Team)
+                .Where(s => s.Season.Year == series.Season.Year)
+                .Select(s => s.Team)
+                .Distinct()
+                .OrderBy(s => s.City)
+                .ThenBy(s => s.Name);
+            ViewBag.Team1Options = new SelectList(teams, "Id", "FullName", series.Team1);
+            ViewBag.Team2Options = new SelectList(teams, "Id", "FullName", series.Team2);
+
+            return View(form);
         }
 
         private bool PlayoffSeriesExists(Guid id)
@@ -255,7 +169,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 bool team1IsHome = gameIndex == 1 || gameIndex == 2 || gameIndex == 5 || gameIndex == 7;
                 bool isBackToBack = gameIndex == 2 || gameIndex == 4;
 
-                DateTime gameDate = series.StartDate;
+                DateTime gameDate = (DateTime)series.StartDate!;
                 DateTime previousGameDate;
                 int daysBetweenGames = 1;
                 if (gameIndex > 1)
@@ -276,10 +190,10 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                     Type = "Playoffs",
                     PlayoffRoundId = series.RoundId,
                     PlayoffRound = series.Round,
-                    AwayTeamId = team1IsHome ? series.Team2Id : series.Team1Id,
-                    AwayTeam = team1IsHome ? series.Team2 : series.Team1,
-                    HomeTeamId = team1IsHome ? series.Team1Id : series.Team2Id,
-                    HomeTeam = team1IsHome ? series.Team1 : series.Team2,
+                    AwayTeamId = (Guid)(team1IsHome ? series.Team2Id : series.Team1Id)!,
+                    AwayTeam = (team1IsHome ? series.Team2 : series.Team1)!,
+                    HomeTeamId = (Guid)(team1IsHome ? series.Team1Id : series.Team2Id)!,
+                    HomeTeam = (team1IsHome ? series.Team1 : series.Team2)!,
                     Notes = gameString,
                     PlayoffSeriesScore = gameString
                 };

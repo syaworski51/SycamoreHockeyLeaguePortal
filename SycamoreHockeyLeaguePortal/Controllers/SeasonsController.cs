@@ -1,10 +1,16 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.VisualStudio.Web.CodeGeneration.EntityFrameworkCore;
 using SycamoreHockeyLeaguePortal.Data;
 using SycamoreHockeyLeaguePortal.Models;
+using SycamoreHockeyLeaguePortal.Models.InputForms;
+using System.Net;
+using ZstdSharp.Unsafe;
 
 namespace SycamoreHockeyLeaguePortal.Controllers
 {
+    [Authorize(Roles = "Admin")]
     public class SeasonsController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -15,15 +21,29 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         }
 
         // GET: Seasons
+        [AllowAnonymous]
         public async Task<IActionResult> Index()
         {
-            var seasons = _context.Seasons
-                .OrderByDescending(s => s.Year);
+            var seasons = _context.Seasons.OrderByDescending(s => s.Year);
+
+            Dictionary<int, DateTime?> firstDaysOfSeasons = new();
+            foreach (var season in seasons)
+            {
+                DateTime? firstDay = _context.Schedule
+                    .Where(s => s.Season.Year == season.Year)
+                    .OrderBy(s => s.Date.Date)
+                    .Select(s => s.Date)
+                    .FirstOrDefault();
+
+                firstDaysOfSeasons.Add(season.Year, firstDay);
+            }
+            ViewBag.FirstDaysOfSeasons = firstDaysOfSeasons;
 
             return View(await seasons.AsNoTracking().ToListAsync());
         }
 
         // GET: Seasons/Details/5
+        [AllowAnonymous]
         public async Task<IActionResult> Details(Guid? id)
         {
             if (id == null || _context.Seasons == null)
@@ -48,12 +68,44 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 .OrderBy(s => s.Year)
                 .ToList();
 
-            ViewBag.Year = seasons.Max(s => s.Year) + 1;
-            ViewBag.GamesPerTeam = seasons
+            int year = seasons.Max(s => s.Year) + 1;
+            int gamesPerTeam = seasons
+                .Where(s => s.Year == year - 1)
                 .Select(s => s.GamesPerTeam)
-                .Last();
+                .FirstOrDefault();
 
-            return View();
+            var teams = _context.Teams
+                .Where(t => t.IsActive)
+                .OrderBy(t => t.City)
+                .ThenBy(t => t.Name)
+                .ToList();
+            ViewBag.Teams = teams;
+
+            var conferences = _context.Conferences
+                .OrderBy(c => c.Name)
+                .ToList();
+
+            var divisions = _context.Divisions
+                .Where(d => !(d.Code == "ED" || d.Code == "WD" || d.Code == "MT"))
+                .OrderBy(d => d.Name);
+
+            var easternDivisions = divisions.Where(d => d.Code == "AT" || d.Code == "NE" || d.Code == "SE").ToList();
+            var westernDivisions = divisions.Where(d => d.Code == "CE" || d.Code == "NW" || d.Code == "PA").ToList();
+            ViewBag.DivisionLists = new List<List<Division>> { easternDivisions, westernDivisions };
+
+            var teamAlignments = new Dictionary<string, List<string>>();
+            foreach (var division in divisions)
+                teamAlignments.Add(division.Code, new List<string>());
+
+            Season_CreateForm form = new Season_CreateForm
+            {
+                Year = year,
+                GamesPerTeam = gamesPerTeam,
+                Conferences = conferences,
+                TeamAlignments = teamAlignments
+            };
+
+            return View(form);
         }
 
         // POST: Seasons/Create
@@ -61,16 +113,136 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Year,GamesPerTeam")] Season season)
+        public async Task<IActionResult> Create(Season_CreateForm form)
         {
-            if (ModelState.IsValid)
+            var previousYear = _context.Seasons.Max(s => s.Year);
+            var conferences = _context.Conferences.OrderBy(c => c.Name);
+
+            if (form.Year <= previousYear || form.GamesPerTeam <= 0)
+                return BadRequest();
+
+            var season = new Season
             {
-                season.Id = Guid.NewGuid();
-                _context.Add(season);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                Id = GenerateGuid(_context.Seasons),
+                Year = form.Year,
+                GamesPerTeam = form.GamesPerTeam
+            };
+            _context.Seasons.Add(season);
+
+            string[] easternDivisionCodes = { "AT", "NE", "SE" };
+            string[] westernDivisionCodes = { "CE", "NW", "PA" };
+            foreach (var _division in form.TeamAlignments)
+            {
+                string divisionCode = _division.Key.Replace("\"", "");
+                string conferenceCode = easternDivisionCodes.Contains(divisionCode) ? "EAST" : "WEST";
+                Conference conference = conferences.First(c => c.Code == conferenceCode);
+                Division division = _context.Divisions.FirstOrDefault(d => d.Code == divisionCode)!;
+
+                foreach (var teamCode in _division.Value)
+                {
+                    var team = _context.Teams.First(t => t.Code == teamCode);
+
+                    var alignment = new Alignment
+                    {
+                        Id = GenerateGuid(_context.Alignments),
+                        SeasonId = season.Id,
+                        Season = season,
+                        ConferenceId = conference.Id,
+                        Conference = conference,
+                        DivisionId = division.Id,
+                        Division = division,
+                        TeamId = team.Id,
+                        Team = team
+                    };
+                    _context.Alignments.Add(alignment);
+
+                    var teamStats = new Standings
+                    {
+                        Id = GenerateGuid(_context.Standings),
+                        SeasonId = season.Id,
+                        Season = season,
+                        ConferenceId = conference.Id,
+                        Conference = conference,
+                        DivisionId = division.Id,
+                        Division = division,
+                        TeamId = team.Id,
+                        Team = team
+                    };
+                    _context.Standings.Add(teamStats);
+                }
             }
-            return View(season);
+
+            var playoffRounds = _context.PlayoffRounds
+                .Include(r => r.Season)
+                .Where(r => r.Season.Year == previousYear)
+                .OrderBy(r => r.Index);
+
+            int ascii = 65;
+            foreach (var round in playoffRounds)
+            {
+                var newRound = new PlayoffRound
+                {
+                    Id = GenerateGuid(_context.PlayoffRounds),
+                    SeasonId = season.Id,
+                    Season = season,
+                    Index = round.Index,
+                    Name = round.Name,
+                    MatchupsConfirmed = false
+                };
+                _context.PlayoffRounds.Add(newRound);
+
+                int numberOfMatchups = (int)Math.Pow(2, 4 - round.Index);
+                for (int matchupIndex = 0; matchupIndex < numberOfMatchups; matchupIndex++)
+                {
+                    var matchup = new PlayoffSeries
+                    {
+                        Id = GenerateGuid(_context.PlayoffSeries),
+                        SeasonId = season.Id,
+                        Season = season,
+                        RoundId = newRound.Id,
+                        Round = newRound,
+                        Index = ((char)ascii).ToString(),
+                        IsConfirmed = false,
+                        HasEnded = false
+                    };
+                    _context.PlayoffSeries.Add(matchup);
+
+                    ascii++;
+                }
+            }
+
+            await _context.SaveChangesAsync();
+
+
+            var teams = _context.Alignments
+                .Where(a => a.Season.Year == season.Year)
+                .Select(a => a.Team)
+                .OrderBy(t => t.City)
+                .ThenBy(t => t.Name)
+                .ToList();
+            for (int index = 0; index < teams.Count - 1; index++)
+            {
+                Team currentTeam = teams[index];
+                for (int nextIndex = index + 1; nextIndex < teams.Count; nextIndex++)
+                {
+                    Team nextTeam = teams[nextIndex];
+
+                    var headToHead = new HeadToHeadSeries
+                    {
+                        Id = GenerateGuid(_context.HeadToHeadSeries),
+                        SeasonId = season.Id,
+                        Season = season,
+                        Team1Id = currentTeam.Id,
+                        Team1 = currentTeam,
+                        Team2Id = nextTeam.Id,
+                        Team2 = nextTeam
+                    };
+                    _context.HeadToHeadSeries.Add(headToHead);
+                }
+            }
+
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(Index));
         }
 
         // GET: Seasons/Edit/5
@@ -273,6 +445,17 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 _context.Champions.Remove(champion);
 
             await _context.SaveChangesAsync();
+        }
+
+        private Guid GenerateGuid(IEnumerable<object> table)
+        {
+            Guid id;
+            do
+            {
+                id = Guid.NewGuid();
+            } while (table.Any(e => (Guid)e.GetType().GetProperty("Id")!.GetValue(e)! == id));
+            
+            return id;
         }
     }
 }

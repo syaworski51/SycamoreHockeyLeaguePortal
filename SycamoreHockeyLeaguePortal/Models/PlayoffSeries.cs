@@ -22,28 +22,34 @@ namespace SycamoreHockeyLeaguePortal.Models
         public PlayoffRound Round { get; set; }
 
         [Display(Name = "Start Date")]
-        public DateTime StartDate { get; set; }
+        public DateTime? StartDate { get; set; }
 
         [Display(Name = "Index")]
         public string Index { get; set; }
 
         [ForeignKey(nameof(Team1))]
-        public Guid Team1Id { get; set; }
+        public Guid? Team1Id { get; set; }
 
         [Display(Name = "Team 1")]
-        public Team Team1 { get; set; }
+        public Team? Team1 { get; set; }
 
         [Display(Name = "Team 1 Wins")]
         public int Team1Wins { get; set; }
 
         [ForeignKey(nameof(Team2))]
-        public Guid Team2Id { get; set; }
+        public Guid? Team2Id { get; set; }
 
         [Display(Name = "Team 2")]
-        public Team Team2 { get; set; }
+        public Team? Team2 { get; set; }
 
         [Display(Name = "Team 2 Wins")]
         public int Team2Wins { get; set; }
+
+        [Display(Name = "Confirmed?")]
+        public bool IsConfirmed { get; set; }
+
+        [Display(Name = "Ended?")]
+        public bool HasEnded { get; set; }
 
         [Display(Name = "Series Score")]
         public string SeriesScoreString
@@ -52,8 +58,8 @@ namespace SycamoreHockeyLeaguePortal.Models
             {
                 if (Team1Wins != Team2Wins)
                 {
-                    string team1Name = Team1.AlternateName == null ? Team1.City : Team1.AlternateName;
-                    string team2Name = Team2.AlternateName == null ? Team2.City : Team2.AlternateName;
+                    string team1Name = Team1!.AlternateName == null ? Team1.City : Team1.AlternateName;
+                    string team2Name = Team2!.AlternateName == null ? Team2.City : Team2.AlternateName;
                     string leader = (Team1Wins > Team2Wins) ? team1Name : team2Name;
                     string verb = (Status == "In progress") ? "leads" : "wins";
                     int leadingWins = Math.Max(Team1Wins, Team2Wins);
@@ -73,8 +79,8 @@ namespace SycamoreHockeyLeaguePortal.Models
             {
                 if (Team1Wins != Team2Wins)
                 {
-                    string team1Code = Team1.Code;
-                    string team2Code = Team2.Code;
+                    string team1Code = Team1!.Code;
+                    string team2Code = Team2!.Code;
                     string leader = (Team1Wins > Team2Wins) ? team1Code : team2Code;
                     string verb = (Status == "In progress") ? "leads" : "wins";
                     int leadingWins = Math.Max(Team1Wins, Team2Wins);
