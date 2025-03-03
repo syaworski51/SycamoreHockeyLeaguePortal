@@ -32,7 +32,7 @@
                                 <a class="text-primary" asp-controller="Schedule" asp-action="Index" asp-route-weekOf="@firstDaysOfSeasons[season.Year]!.Value.ToShortDateString()">Schedule</a>
                             }
                             else {
-                                <a class="text-primary" asp-controller="Schedule" asp-action="UploadSchedule" asp-route-season="@season.Year">Upload Schedule</a>
+                                <a class="text-primary" asp-controller="Schedule" asp-action="UploadSchedule" asp-route-year="@season.Year">Upload Schedule</a>
                             }
                         </div>
                     </div>

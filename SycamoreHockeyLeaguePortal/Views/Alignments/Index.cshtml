@@ -19,9 +19,6 @@
     <p>
         Season:
         @Html.DropDownList("season", (IEnumerable<SelectListItem>)ViewBag.Seasons, new { onchange = "submit()" })
-
-        <br /><br />
-        <a class="btn btn-primary" asp-action="Create">New Alignment</a>
     </p>
 </form>
 

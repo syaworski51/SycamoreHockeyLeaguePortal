@@ -20,25 +20,30 @@ namespace SycamoreHockeyLeaguePortal.Controllers
 
         public async Task<IActionResult> Index()
         {
-            var currentDate = DateTime.Now.Date;
+            var currentDate = DateTime.Now;
             ViewBag.CurrentDate = currentDate;
 
             var season = currentDate.Year;
             ViewBag.Season = season;
-            var firstDayOfSeason = new DateTime(2025, 4, 10);
-            /*var firstDayOfSeason = _context.Schedule
+
+            var dates = _context.Schedule
+                .Include(s => s.Season)
+                .Where(s => s.Season.Year == season)
+                .OrderBy(s => s.Date.Date)
+                .Select(s => s.Date);
+            
+            var firstDayOfSeason = _context.Schedule
                 .Include(s => s.Season)
                 .Include(s => s.PlayoffRound)
                 .Include(s => s.AwayTeam)
                 .Include(s => s.HomeTeam)
                 .Where(s => s.Season.Year == season)
+                .OrderBy(s => s.Date)
                 .Select(s => s.Date.Date)
-                .Min();*/
+                .Min();
 
             bool seasonHasStarted = currentDate.CompareTo(firstDayOfSeason) >= 0;
-            var rangeStart = seasonHasStarted ? 
-                    currentDate : 
-                    firstDayOfSeason;
+            var rangeStart = seasonHasStarted ? currentDate : firstDayOfSeason;
             var rangeEnd = rangeStart.AddDays(13);
 
             var upcomingGames = _context.Schedule
@@ -104,42 +109,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             ViewBag.PacificStandings = standings
                 .Where(s => s.Division!.Code == "PA");
 
-            //await Create2025PlayoffSeries();
-
             return View();
-        }
-
-        private async Task Create2025PlayoffSeries()
-        {
-            var season = await _context.Seasons.FirstOrDefaultAsync(s => s.Year == 2025);
-            var rounds = _context.PlayoffRounds
-                .Where(r => r.Season == season)
-                .OrderBy(r => r.Index);
-
-            int ascii = 65;
-            foreach (var round in rounds)
-            {
-                int numberOfMatchups = (int)Math.Pow(2, 4 - round.Index);
-                
-                for (int index = 0; index < numberOfMatchups; index++)
-                {
-                    var series = new PlayoffSeries
-                    {
-                        Id = Guid.NewGuid(),
-                        SeasonId = season.Id,
-                        Season = season,
-                        RoundId = round.Id,
-                        Round = round,
-                        Index = ((char)ascii).ToString(),
-                        IsConfirmed = false
-                    };
-                    _context.PlayoffSeries.Add(series);
-
-                    ascii++;
-                }
-            }
-
-            await _context.SaveChangesAsync();
         }
 
         public IActionResult Privacy()

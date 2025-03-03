@@ -24,23 +24,23 @@ function UpdateDisplay(endpoint) {
             EnableOrDisableButton(finalizeButton, condition);
 
             let nextPeriodButton = $("#btn-next-period");
-            condition = (data.period < 3 || data.awayScore == data.homeScore) &&
+            condition = data.isLive && (data.period < 3 || data.awayScore == data.homeScore) &&
                 ((data.type == REGULAR_SEASON && data.period < 5) || data.type == PLAYOFFS);
             EnableOrDisableButton(nextPeriodButton, condition);
 
             let previousPeriodButton = $("#btn-previous-period");
-            EnableOrDisableButton(previousPeriodButton, data.period > 1);
+            EnableOrDisableButton(previousPeriodButton, data.isLive && data.period > 1);
 
             let awayGoalButton = $("#btn-away-goal");
             let homeGoalButton = $("#btn-home-goal");
-            condition = data.period <= 3 || data.awayScore == data.homeScore;
+            condition = (data.isLive && data.period <= 3) || data.awayScore == data.homeScore;
             EnableOrDisableButton(awayGoalButton, condition);
             EnableOrDisableButton(homeGoalButton, condition);
 
             let removeAwayGoalButton = $("#btn-remove-away-goal");
             let removeHomeGoalButton = $("#btn-remove-home-goal");
-            EnableOrDisableButton(removeAwayGoalButton, data.awayScore > 0);
-            EnableOrDisableButton(removeHomeGoalButton, data.homeScore > 0);
+            EnableOrDisableButton(removeAwayGoalButton, data.isLive && data.awayScore > 0);
+            EnableOrDisableButton(removeHomeGoalButton, data.isLive && data.homeScore > 0);
         },
         error: function () {
             alert(`Could not update display. Endpoint: ${endpoint}`);

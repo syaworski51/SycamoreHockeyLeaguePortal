@@ -7,12 +7,12 @@
 
 <h1>@ViewBag.Title</h1>
 
-<form action="UploadSchedule" method="post" enctype="multipart/form-data">
+<form asp-action="UploadSchedule" method="post" enctype="multipart/form-data">
     <input type="hidden" asp-for="Season" />
-    <div class="form-group">
+    <fieldset class="form-group">
         <label asp-for="File"></label>
-        <input type="file" asp-for="File" />
-    </div>
+        <input type="file" asp-for="File" class="form-control" />
+    </fieldset>
     <div class="form-group">
         <button type="submit" class="btn btn-primary">Upload</button>
     </div>

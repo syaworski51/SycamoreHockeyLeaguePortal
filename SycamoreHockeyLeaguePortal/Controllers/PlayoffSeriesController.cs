@@ -26,15 +26,17 @@ namespace SycamoreHockeyLeaguePortal.Controllers
 
         // GET: PlayoffSeries
         [AllowAnonymous]
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(int season)
         {
-            var applicationDbContext = _context.PlayoffSeries
+            var series = _context.PlayoffSeries
                 .Include(p => p.Round)
                 .Include(p => p.Season)
                 .Include(p => p.Team1)
-                .Include(p => p.Team2);
+                .Include(p => p.Team2)
+                .Where(p => p.Season.Year == season)
+                .OrderBy(p => p.Index);
 
-            return View(await applicationDbContext.ToListAsync());
+            return View(await series.ToListAsync());
         }
 
         // GET: PlayoffSeries/Details/5
@@ -74,7 +76,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 .Include(s => s.Team1)
                 .Include(s => s.Team2)
                 .FirstOrDefaultAsync(s => s.Id == id);
-            
+
             if (playoffSeries == null)
                 return NotFound();
 
@@ -113,7 +115,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         {
             form.Team1 = await _context.Teams.FindAsync(form.Team1Id);
             form.Team2 = await _context.Teams.FindAsync(form.Team2Id);
-            
+
             var series = _context.PlayoffSeries
                 .Include(s => s.Round)
                 .Include(s => s.Season)
@@ -126,7 +128,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
 
             if (series.IsConfirmed)
                 return BadRequest();
-            
+
             series.StartDate = form.StartDate;
             series.Team1Id = form.Team1Id;
             series.Team1 = form.Team1;
@@ -156,13 +158,13 @@ namespace SycamoreHockeyLeaguePortal.Controllers
 
         private bool PlayoffSeriesExists(Guid id)
         {
-          return (_context.PlayoffSeries?.Any(e => e.Id == id)).GetValueOrDefault();
+            return (_context.PlayoffSeries?.Any(e => e.Id == id)).GetValueOrDefault();
         }
 
         private async Task GenerateSchedule(PlayoffSeries series)
         {
             Schedule[] games = new Schedule[7];
-            
+
             for (int index = 0; index < games.Length; index++)
             {
                 int gameIndex = index + 1;

@@ -3,7 +3,7 @@
 @inject UserManager<ApplicationUser> UserManager
 
 @{
-    DateTime currentDate = DateTime.Now.Date;
+    DateTime currentDate = DateTime.Now;
     int currentYear = currentDate.Year;
     ViewData["BackgroundImage"] = "calgary-vs-nyrangers.png";
 
@@ -98,21 +98,12 @@
                         <li class="nav-item">
                             <a class="nav-link text-light" asp-controller="Champions" asp-action="Index">Champions</a>
                         </li>
-                        @* <li class="nav-item">
-                            <a class="nav-link text-light" asp-controller="PlayoffRounds" asp-action="Index" asp-route-season="@currentYear">Playoff Rounds</a>
-                        </li> *@
                         <li class="nav-item">
                             <a class="nav-link text-light" asp-controller="Seasons" asp-action="Index">Seasons</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link text-light" asp-controller="Alignments" asp-action="Index" asp-route-season="@currentYear">Alignments</a>
                         </li>
-                        @* <li class="nav-item">
-                            <a class="nav-link text-light" asp-controller="Conferences" asp-action="Index">Conferences</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-light" asp-controller="Divisions" asp-action="Index">Divisions</a>
-                        </li> *@
                         <li class="nav-item">
                             <a class="nav-link text-light" asp-controller="Teams" asp-action="Index">Teams</a>
                         </li>

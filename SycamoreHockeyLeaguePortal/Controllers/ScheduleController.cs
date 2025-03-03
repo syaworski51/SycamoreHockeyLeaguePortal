@@ -7,6 +7,7 @@ using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Identity.Client;
 using Microsoft.IdentityModel.Tokens;
+using MongoDB.Bson.Serialization.Serializers;
 using SycamoreHockeyLeaguePortal.Data;
 using SycamoreHockeyLeaguePortal.Data.Migrations;
 using SycamoreHockeyLeaguePortal.Models;
@@ -108,6 +109,12 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> Playoffs(int season, int round, string? team)
         {
+            if (season < 2021)
+                return ErrorMessage($"Invalid request. There is no {season} season in the database.");
+
+            if (round < 1)
+                return ErrorMessage("Invalid request. Round indexes cannot be less than 1.");
+            
             if (season == 2021 && round >= 4)
                 return RedirectToAction(nameof(Playoffs), new { season = season, round = 3, team = team });
 
@@ -185,32 +192,41 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             return View(await playoffs.AsNoTracking().ToListAsync());
         }
 
-        [Route("Schedule/UploadSchedule/{season}")]
-        public IActionResult UploadSchedule(int season)
+        public IActionResult UploadSchedule(int year)
         {
+            bool seasonExists = DoesSeasonExist(year);
+            if (!seasonExists)
+                return ErrorMessage($"There is no {year} season in the database.");
+
+            bool seasonHasSchedule = DoesSeasonHaveSchedule(year);
+            if (seasonHasSchedule)
+                return ErrorMessage($"The {year} season already has a schedule. You cannot upload another schedule for this season.");
+
             var form = new Schedule_UploadForm
             {
-                Season = season
+                Season = year
             };
             return View(form);
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> UploadSchedule(Schedule_UploadForm form)
         {
+            bool seasonExists = DoesSeasonExist(form.Season);
+            if (!seasonExists)
+                return ErrorMessage($"There is no {form.Season} season in the database.");
+            
             var season = _context.Seasons.FirstOrDefault(s => s.Year == form.Season)!;
+            bool seasonHasSchedule = DoesSeasonHaveSchedule(season.Year);
+            if (seasonHasSchedule)
+                return ErrorMessage($"There is already a schedule for the {form.Season} season.");
 
-            if (season == null)
-                return NotFound($"There is no {form.Season} season in the database.");
-
-            var schedule = _context.Schedule.Where(s => s.Season == season);
-            if (schedule.Any())
-                return BadRequest($"There is already a schedule for the {season.Year} season.");
-
-            DateTime firstDay = DateTime.Now;
             if (form.File != null && form.File.Length > 0)
             {
+                DateTime firstDay = DateTime.Now;
                 var extension = Path.GetExtension(form.File.FileName).ToLower();
+                
                 if (extension == ".csv") 
                 {
                     using (var streamReader = new StreamReader(form.File.OpenReadStream()))
@@ -250,7 +266,19 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 }
             }
 
-            return View(season.Year);
+            return RedirectToAction(nameof(UploadSchedule), new { year = form.Season });
+        }
+
+        private bool DoesSeasonExist(int year)
+        {
+            return _context.Seasons.Any(s => s.Year == year);
+        }
+
+        private bool DoesSeasonHaveSchedule(int year)
+        {
+            return _context.Schedule
+                .Include(s => s.Season)
+                .Any(s => s.Season.Year == year);
         }
 
         [Route("Schedule/PlayoffSeries/{season}/{team1}/{team2}")]
@@ -1632,6 +1660,12 @@ namespace SycamoreHockeyLeaguePortal.Controllers
 
             _context.ProgramFlags.Update(flag);
             await _context.SaveChangesAsync();
+        }
+
+        private IActionResult ErrorMessage(string message)
+        {
+            var errorMessage = new ErrorViewModel { Description = message };
+            return View("Error", errorMessage);
         }
     }
 }
