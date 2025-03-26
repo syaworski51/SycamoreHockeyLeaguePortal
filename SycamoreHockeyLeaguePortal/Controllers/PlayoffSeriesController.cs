@@ -41,25 +41,35 @@ namespace SycamoreHockeyLeaguePortal.Controllers
 
         // GET: PlayoffSeries/Details/5
         [AllowAnonymous]
-        public async Task<IActionResult> Details(Guid? id)
+        public async Task<IActionResult> Details(int season, string team1, string team2)
         {
-            if (id == null || _context.PlayoffSeries == null)
-            {
+            if (_context.PlayoffSeries == null)
                 return NotFound();
-            }
 
-            var playoffSeries = await _context.PlayoffSeries
-                .Include(p => p.Round)
-                .Include(p => p.Season)
-                .Include(p => p.Team1)
-                .Include(p => p.Team2)
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (playoffSeries == null)
-            {
+            var series = _context.RankedPlayoffSeries
+                .Include(s => s.Season)
+                .Include(s => s.Round)
+                .Include(s => s.Matchup)
+                .FirstOrDefault(s => s.Season.Year == season &&
+                                     ((s.Matchup.Team1!.Code == team1 && s.Matchup.Team2!.Code == team2) ||
+                                      (s.Matchup.Team1!.Code == team2 && s.Matchup.Team2!.Code == team1)));
+
+            var games = _context.Schedule
+                .Include(s => s.Season)
+                .Include(s => s.PlayoffRound)
+                .Include(s => s.AwayTeam)
+                .Include(s => s.HomeTeam)
+                .Where(s => s.Type == "Playoffs" && s.Season.Year == season &&
+                            ((s.AwayTeam.Code == team1 && s.HomeTeam.Code == team2) ||
+                             (s.AwayTeam.Code == team2 && s.HomeTeam.Code == team1)))
+                .OrderBy(s => s.Date)
+                .ToList();
+            ViewBag.Games = games;
+
+            if (series == null)
                 return NotFound();
-            }
 
-            return View(playoffSeries);
+            return View(series);
         }
 
         // GET: PlayoffSeries/Edit/5
@@ -156,9 +166,78 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             return View(form);
         }
 
-        private bool PlayoffSeriesExists(Guid id)
+        public async Task<IActionResult> SetMatchups(int year, int index)
         {
-            return (_context.PlayoffSeries?.Any(e => e.Id == id)).GetValueOrDefault();
+            var season = await _context.Seasons.FirstOrDefaultAsync(s => s.Year == year);
+            if (season == null)
+                return ErrorMessage($"There is no {year} season in the database.");
+
+            var matchups = _context.PlayoffSeries
+                .Include(s => s.Season)
+                .Include(s => s.Round)
+                .Include(s => s.Team1)
+                .Include(s => s.Team2)
+                .Where(s => s.Season.Year == year && s.Round.Index == index)
+                .OrderBy(s => s.Index)
+                .ToList()!;
+            if (matchups == null)
+                return ErrorMessage($"There are no matchups for Round {index} of the {year} Sycamore Cup Playoffs.");
+
+            var form = new PlayoffSeries_MatchupsForm { Matchups = matchups };
+            return View(form);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SetMatchups(PlayoffSeries_MatchupsForm form)
+        {
+            await _context.SaveChangesAsync();
+            return View(form);
+        }
+
+        public IActionResult IncorrectHomeIceAdvantageDisclaimer()
+        {
+            return View();
+        }
+
+        public async Task<IActionResult> Rankings(int? season, int? round, string? team)
+        {
+            var series = _context.RankedPlayoffSeries
+                .Include(s => s.Season)
+                .Include(s => s.Round)
+                .Include(s => s.Matchup)
+                .OrderBy(s => s.OverallScore);
+
+            if (season != null)
+            {
+                var currentSeason = _context.Seasons.Max(s => s.Year);
+                if (season < 2021 || season > currentSeason)
+                    return ErrorMessage($"There is no {season} season in the database.");
+
+                series = (IOrderedQueryable<RankedPlayoffSeries>)
+                    series.Where(s => s.Season.Year == season);
+            }
+
+            if (round != null)
+            {
+                if (round < 1 || ((season == 2021 && round > 3) || (season >= 2022 && round > 4)))
+                    return ErrorMessage($"There is no Round #{round} in the {season} playoffs.");
+
+                series = (IOrderedQueryable<RankedPlayoffSeries>)
+                    series.Where(s => s.Round.Index == round);
+            }
+
+            if (team != null)
+            {
+                var selectedTeam = _context.Teams.FirstOrDefault(t => t.Code == team);
+                if (selectedTeam == null)
+                    return ErrorMessage($"There is no team with the code '{team}'.");
+
+                series = (IOrderedQueryable<RankedPlayoffSeries>)
+                    series.Where(s => s.Matchup.Team1!.Code == team || s.Matchup.Team2!.Code == team);
+            }
+
+            return View(await series.ToListAsync());
         }
 
         private async Task GenerateSchedule(PlayoffSeries series)
@@ -177,7 +256,8 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 if (gameIndex > 1)
                 {
                     previousGameDate = games[index - 1].Date;
-                    daysBetweenGames = isBackToBack ? 0 : 1;
+                    daysBetweenGames = (series.Round.Index == 4 && gameIndex == 7) ? 2 : 
+                        (isBackToBack ? 0 : 1);
                     gameDate = previousGameDate.AddDays(1 + daysBetweenGames);
                 }
 
@@ -205,6 +285,12 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             }
 
             await _context.SaveChangesAsync();
+        }
+
+        private IActionResult ErrorMessage(string message)
+        {
+            var errorMessage = new ErrorViewModel { Description = message };
+            return View("Error", errorMessage);
         }
     }
 }

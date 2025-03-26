@@ -1,54 +1,49 @@
-﻿@model SycamoreHockeyLeaguePortal.Models.PlayoffSeries
+﻿@model RankedPlayoffSeries
 
 @{
     ViewData["Title"] = "Details";
+
+    List<Schedule> games = ViewBag.Games;
 }
 
 <h1>Details</h1>
 
-<div>
-    <h4>PlayoffSeries</h4>
-    <hr />
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Season)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Season.Id)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Round)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Round.Id)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Team1)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Team1.Id)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Team1Wins)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Team1Wins)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Team2)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Team2.Id)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Team2Wins)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Team2Wins)
-        </dd>
-    </dl>
+<div class="container game">
+    <div class="row">
+        <div class="col-12" style="font-size: 14pt;">
+            
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-3 away-team">
+            <h5>@Model.Matchup.Team1!.City</h5>
+            <h1 class="team-name">@Model.Matchup.Team1.Name</h1>
+        </div>
+        <div class="col-2 team-logo">
+            <img class="logo" src="~/@Model.Matchup.Team1.LogoPath" alt="@Model.Matchup.Team1.Code" />
+        </div>
+        <div class="col score">
+            @Model.Matchup.Team1Wins
+        </div>
+        <div class="col score">
+            @Model.Matchup.Team2Wins
+        </div>
+        <div class="col-2 team-logo">
+            <img class="logo" src="~/@Model.Matchup.Team2.LogoPath" alt="@Model.Matchup.Team2.Code" />
+        </div>
+        <div class="col-3 home-team">
+            <h5>@Model.Matchup.Team2.City</h5>
+            <h1 class="team-name">@Model.Matchup.Team2.Name</h1>
+        </div>
+    </div>
 </div>
-<div>
-    <a asp-action="Edit" asp-route-id="@Model?.Id">Edit</a> |
-    <a asp-action="Index">Back to List</a>
-</div>
+
+@Html.Partial("../Schedule/Layouts/PlayoffSeries.cshtml", Model.Matchup)
+
+<table class="table">
+    <thead>
+        <tr>
+            <th></th>
+        </tr>
+    </thead>
+</table>

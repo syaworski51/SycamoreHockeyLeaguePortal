@@ -125,7 +125,10 @@ namespace SycamoreHockeyLeaguePortal.Controllers
 
             List<List<Standings>> playoffTeams = new List<List<Standings>>();
 
-            var standings = await GetStandings(season, VIEWBY_PLAYOFFS);
+            bool isDivisionalFormat = season == 2021 || season == 2022;
+            var standings = isDivisionalFormat ?
+                await GetStandings(season, VIEWBY_DIVISION) :
+                await GetStandings(season, VIEWBY_PLAYOFFS);
 
             var conferences = standings
                 .Select(s => s.Conference)
@@ -136,7 +139,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             foreach (var conference in conferences)
             {
                 playoffTeams.Add(new List<Standings>());
-                
+
                 var conferenceStandings = standings
                     .Where(s => s.ConferenceId == conference!.Id)
                     .ToList();
@@ -150,19 +153,19 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 foreach (var division in divisions)
                 {
                     var divisionStandings = conferenceStandings
-                        .Where(c => c.DivisionId == division!.Id);
+                        .Where(c => c.Division == division!);
 
                     var leader = divisionStandings.First();
                     leaders.Add(leader);
                 }
 
                 int playoffTeamsPerConference = (season > 2021) ? 8 : 4;
-                int maxFollowerCount = playoffTeamsPerConference - leaders.Count;
+                int maxWildCardCount = playoffTeamsPerConference - leaders.Count;
                 foreach (var team in conferenceStandings)
                 {
-                    if (wildCards.Count >= maxFollowerCount)
+                    if (wildCards.Count >= maxWildCardCount)
                         break;
-                    
+
                     if (leaders.Contains(team))
                         continue;
 
@@ -189,10 +192,11 @@ namespace SycamoreHockeyLeaguePortal.Controllers
 
                     matchup[0] = conference[index];
                     matchup[1] = conference[(teamCount - 1) - index];
-                    
+
                     matchups.Last().Add(matchup);
                 }
             }
+            
 
             return View(matchups);
         }

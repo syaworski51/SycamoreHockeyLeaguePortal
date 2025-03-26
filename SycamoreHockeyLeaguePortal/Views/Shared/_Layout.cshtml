@@ -5,7 +5,7 @@
 @{
     DateTime currentDate = DateTime.Now;
     int currentYear = currentDate.Year;
-    ViewData["BackgroundImage"] = "calgary-vs-nyrangers.png";
+    ViewData["BackgroundImage"] = "utah-vs-detroit.png";
 
     bool userIsAdmin = User.IsInRole("Admin");
 }
@@ -87,25 +87,39 @@
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
                         <li class="nav-item">
-                            <a class="nav-link text-light" asp-controller="Schedule" asp-action="Index" asp-route-weekOf="@currentDate.ToShortDateString()">Schedule</a>
+                            <a class="nav-link text-light" 
+                               asp-controller="Schedule" asp-action="Index" 
+                               asp-route-season="@currentYear"
+                               asp-route-weekOf="@currentDate.ToShortDateString()">Schedule</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-light" asp-controller="Standings" asp-action="Index" asp-route-season="@currentYear" asp-route-viewBy="division">Standings</a>
+                            <a class="nav-link text-light" 
+                               asp-controller="Standings" asp-action="Index" 
+                               asp-route-season="@currentYear" 
+                               asp-route-viewBy="division">Standings</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-light" asp-controller="Schedule" asp-action="Playoffs" asp-route-season="@currentYear" asp-route-round="1">Playoffs</a>
+                            <a class="nav-link text-light" 
+                               asp-controller="Schedule" asp-action="Playoffs" 
+                               asp-route-season="@currentYear" 
+                               asp-route-round="1">Playoffs</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-light" asp-controller="Champions" asp-action="Index">Champions</a>
+                            <a class="nav-link text-light" 
+                               asp-controller="Champions" asp-action="Index">Champions</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-light" asp-controller="Seasons" asp-action="Index">Seasons</a>
+                            <a class="nav-link text-light" 
+                               asp-controller="Seasons" asp-action="Index">Seasons</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-light" asp-controller="Alignments" asp-action="Index" asp-route-season="@currentYear">Alignments</a>
+                            <a class="nav-link text-light" 
+                               asp-controller="Alignments" asp-action="Index" 
+                               asp-route-season="@currentYear">Alignments</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-light" asp-controller="Teams" asp-action="Index">Teams</a>
+                            <a class="nav-link text-light" 
+                               asp-controller="Teams" asp-action="Index">Teams</a>
                         </li>
                     </ul>
                     <partial name="_LoginPartial" />

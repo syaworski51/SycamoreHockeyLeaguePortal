@@ -51,6 +51,9 @@ namespace SycamoreHockeyLeaguePortal.Models
         [Display(Name = "Ended?")]
         public bool HasEnded { get; set; }
 
+        [Display(Name = "Description")]
+        public string Description { get; set; }
+
         [Display(Name = "Series Score")]
         public string SeriesScoreString
         {

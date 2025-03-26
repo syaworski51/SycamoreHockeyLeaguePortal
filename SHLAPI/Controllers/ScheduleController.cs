@@ -54,139 +54,195 @@ namespace SHLAPI.Controllers
         [HttpPost]
         public async Task<IActionResult> StartOrResumeGame(Guid id)
         {
-            var game = await GetGame(id);
-            if (game == null)
-                return NotFound();
-
-            var previousGame = _context.Schedule.FirstOrDefault(s => s.GameIndex == game.GameIndex - 1)!;
-            if (game.GameIndex > 1 && (previousGame == null || !previousGame.IsFinalized))
-                return BadRequest();
-
-            if (!game.IsLive && !game.IsFinalized)
+            try
             {
-                game.IsLive = true;
+                var game = await GetGame(id);
+                if (game == null)
+                    return NotFound();
 
-                if (game.Period <= 0)
-                    game.Period = 1;
+                var previousGame = _context.Schedule.FirstOrDefault(s => s.GameIndex == game.GameIndex - 1)!;
+                if (game.GameIndex > 1 && (previousGame == null || !previousGame.IsFinalized))
+                    return BadRequest();
 
-                await UpdateGameAsync(game);
+                if (!game.IsLive && !game.IsFinalized)
+                {
+                    game.IsLive = true;
+
+                    if (game.Period <= 0)
+                        game.Period = 1;
+
+                    await UpdateGameAsync(game);
+                }
+
+                return Ok(game);
             }
-
-            return Ok(game);
+            catch (Exception ex)
+            {
+                return BadRequest("There was an error starting or resuming the game.\n" +
+                    $"Descrption: {ex.Message}");
+            }
         }
 
         [Route("NextPeriod/{id}")]
         [HttpPost]
         public async Task<IActionResult> NextPeriod(Guid id)
         {
-            var game = await GetGame(id);
-            if (game == null)
-                return NotFound();
-
-            if (CanPeriodAdvance(game))
+            try
             {
-                game.Period++;
-                await UpdateGameAsync(game);
-            }
-            else
-                return BadRequest();
+                var game = await GetGame(id);
+                if (game == null)
+                    return NotFound();
 
-            return Ok(game);
+                if (CanPeriodAdvance(game))
+                {
+                    game.Period++;
+                    await UpdateGameAsync(game);
+                }
+                else
+                    return BadRequest();
+
+                return Ok(game);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest("There was an error advancing to the next period.\n" +
+                    $"Description: {ex.Message}");
+            }
         }
 
         [Route("PreviousPeriod/{id}")]
         [HttpPost]
         public async Task<IActionResult> PreviousPeriod(Guid id)
         {
-            var game = await GetGame(id);
-            if (game == null)
-                return NotFound();
-
-            if (CanPeriodMoveBack(game))
+            try
             {
-                game.Period--;
-                await UpdateGameAsync(game);
-            }
-            else
-                return BadRequest();
+                var game = await GetGame(id);
+                if (game == null)
+                    return NotFound();
 
-            return Ok(game);
+                if (CanPeriodMoveBack(game))
+                {
+                    game.Period--;
+                    await UpdateGameAsync(game);
+                }
+                else
+                    return BadRequest();
+
+                return Ok(game);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest("There was an error moving back to the previous period.\n" +
+                    $"Description: {ex.Message}");
+            }
         }
 
         [Route("AwayGoal/{id}")]
         [HttpPost]
         public async Task<IActionResult> AwayGoal(Guid id)
         {
-            var game = await GetGame(id);
-            if (game == null)
-                return NotFound();
-
-            if (CanScoresBeIncremented(game))
+            try
             {
-                game.AwayScore++;
-                await UpdateGameAsync(game);
-            }
-            else
-                return BadRequest();
+                var game = await GetGame(id);
+                if (game == null)
+                    return NotFound();
 
-            return Ok(game);
+                if (CanScoresBeIncremented(game))
+                {
+                    game.AwayScore++;
+                    await UpdateGameAsync(game);
+                }
+                else
+                    return BadRequest();
+
+                return Ok(game);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest("There was an error adding 1 point to the away score.\n" +
+                    $"Description: {ex.Message}");
+            }
         }
 
         [Route("RemoveAwayGoal/{id}")]
         [HttpPost]
         public async Task<IActionResult> RemoveAwayGoal(Guid id)
         {
-            var game = await GetGame(id);
-            if (game == null)
-                return NotFound();
-
-            if (CanScoreBeDecremented(game, game.AwayScore))
+            try
             {
-                game.AwayScore--;
-                await UpdateGameAsync(game);
-            }
-            else
-                return BadRequest();
+                var game = await GetGame(id);
+                if (game == null)
+                    return NotFound();
 
-            return Ok(game);
+                if (CanScoreBeDecremented(game, game.AwayScore))
+                {
+                    game.AwayScore--;
+                    await UpdateGameAsync(game);
+                }
+                else
+                    return BadRequest();
+
+                return Ok(game);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest("There was an error removing 1 point from the away score.\n" +
+                    $"Description: {ex.Message}");
+            }
         }
 
         [Route("HomeGoal/{id}")]
         [HttpPost]
         public async Task<IActionResult> HomeGoal(Guid id)
         {
-            var game = await GetGame(id);
-            if (game == null)
-                return NotFound();
-
-            if (CanScoresBeIncremented(game))
+            try
             {
-                game.HomeScore++;
-                await UpdateGameAsync(game);
-            }
-            else
-                return BadRequest();
+                var game = await GetGame(id);
+                if (game == null)
+                    return NotFound();
 
-            return Ok(game);
+                if (CanScoresBeIncremented(game))
+                {
+                    game.HomeScore++;
+                    await UpdateGameAsync(game);
+                }
+                else
+                    return BadRequest();
+
+                return Ok(game);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest("There was an error adding 1 point to the home score.\n" +
+                    $"Description: {ex.Message}");
+            }
         }
 
         [Route("RemoveHomeGoal/{id}")]
         [HttpPost]
         public async Task<IActionResult> RemoveHomeGoal(Guid id)
         {
-            var game = await GetGame(id);
-            if (game == null)
-                return NotFound();
-
-            if (CanScoreBeDecremented(game, game.HomeScore))
+            try
             {
-                game.HomeScore--;
-                await UpdateGameAsync(game);
-            }
-            else
-                return BadRequest();
+                var game = await GetGame(id);
+                if (game == null)
+                    return NotFound();
 
-            return Ok(game);
+                if (CanScoreBeDecremented(game, game.HomeScore))
+                {
+                    game.HomeScore--;
+                    await UpdateGameAsync(game);
+                }
+                else
+                    return BadRequest();
+
+                return Ok(game);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest("There was an error removing 1 point from the home score.\n" +
+                    $"Description: {ex.Message}");
+            }
         }
 
         /// <summary>
