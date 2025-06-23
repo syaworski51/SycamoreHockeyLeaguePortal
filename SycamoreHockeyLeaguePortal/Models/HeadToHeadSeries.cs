@@ -8,8 +8,10 @@
         public Guid Team1Id { get; set; }
         public Team Team1 { get; set; }
         public int Team1Wins { get; set; }
+        public int Team1GoalsFor { get; set; }
         public Guid Team2Id { get; set; }
         public Team Team2 { get; set; }
         public int Team2Wins { get; set; }
+        public int Team2GoalsFor { get; set; }
     }
 }

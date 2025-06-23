@@ -8,13 +8,8 @@
 
     string GetName(Team team)
     {
-        var teamsInSameCity = _context.Teams
-            .Where(t => t.City == team.City);
-
-        if (teamsInSameCity.Count() > 1)
-            return team.AlternateName!;
-
-        return team.City;
+        bool multipleTeamsInSameCity = _context.Teams.Count(t => t.City == team.City) > 1;
+        return multipleTeamsInSameCity ? team.AlternateName! : team.City;
     }
 
     string GetStreak(Standings teamStats)
@@ -40,12 +35,37 @@
         return "text-dark";
     }
 
+    string IsRowCutoff(int rank)
+    {
+        string defaultClass = "standings-record";
+
+        string isCutoff = IsRowLeaderCutoff(rank);
+        if (isCutoff != defaultClass)
+            return isCutoff;
+
+        isCutoff = IsRowPlayoffCutoff(rank);
+        if (isCutoff != defaultClass)
+            return isCutoff;
+
+        return defaultClass;
+    }
+
+    string IsRowLeaderCutoff(int rank)
+    {
+        if (season == 2023 && viewBy == "playoffs")
+            return rank == 2 ?
+                "leader-cutoff" :
+                "standings-record";
+
+        return "standings-record";
+    }
+
     string IsRowPlayoffCutoff(int rank)
     {
         int cutoff = viewBy == "playoffs" ? 8 : 4;
 
         if ((season <= 2022 && viewBy == "division") ||
-            (season >= 2023 && viewBy == "playoffs"))
+            (season == 2023 && viewBy == "playoffs"))
             return (rank == cutoff) ?
                 "playoff-cutoff" :
                 "standings-record";
@@ -53,12 +73,12 @@
         return "standings-record";
     }
 
-    string GetGoalDifferentialString(int gd)
+    string GetGoalDifferentialString(int goalDiff)
     {
-        if (gd > 0)
-            return $"+{gd}";
+        if (goalDiff > 0)
+            return $"+{goalDiff}";
 
-        return gd.ToString();
+        return goalDiff.ToString();
     }
 
     List<List<Standings>> GetStandingsByDivision(string conference)
@@ -148,47 +168,30 @@
         string clinched2021PlayoffSpot = "bg-primary";
         string clinchedPlayoffSpot = "bg-secondary";
         string eliminated = "bg-danger";
+        string demoted = "bg-dark text-white";
 
         if (season == 2021)
-        {
-            switch (playoffStatus)
+            return playoffStatus switch
             {
-                case "z":
-                    return clinchedPresidentsTrophy;
+                "z" => clinchedPresidentsTrophy,
+                "y" => clinchedDivision,
+                "x" => clinched2021PlayoffSpot,
+                "e" => eliminated,
+                "d" => demoted,
+                _ => ""
+            };
 
-                case "y":
-                    return clinchedDivision;
-
-                case "e":
-                    return eliminated;
-
-                default:
-                    return clinched2021PlayoffSpot;
-            }
-        }
-        else
+        return playoffStatus switch
         {
-            switch (playoffStatus)
-            {
-                case "P":
-                    return clinchedPresidentsTrophy;
-
-                case "Z":
-                    return clinchedConference;
-
-                case "Y":
-                    return clinchedDivision;
-
-                case "X":
-                    return clinchedHomeIceAdvantage;
-
-                case "e":
-                    return eliminated;
-
-                default:
-                    return clinchedPlayoffSpot;
-            }
-        }
+            "P" => clinchedPresidentsTrophy,
+            "Z" => clinchedConference,
+            "Y" => clinchedDivision,
+            "X" => clinchedHomeIceAdvantage,
+            "x" => clinchedPlayoffSpot,
+            "e" => eliminated,
+            "d" => demoted,
+            _ => ""
+        };
     }
 
     string GetPlayoffStatusDescription(string symbol)
@@ -287,7 +290,7 @@
 
             foreach (var team in teams)
             {
-                <tr class="@IsRowPlayoffCutoff(rank)">
+                <tr class="@IsRowCutoff(rank)">
                     <th>
                         <a class="change-playoff-status" asp-action="PlayoffStatus" asp-route-season="@team.Season.Year" asp-route-team="@team.Team.Code" asp-route-currentStatus="@team.PlayoffStatus" asp-route-viewBy="@ViewBag.ViewBy">@rank</a>
                     </th>

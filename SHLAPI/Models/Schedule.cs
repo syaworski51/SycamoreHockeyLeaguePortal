@@ -109,6 +109,8 @@ public partial class Schedule
 
     public Guid? PlayoffRoundId { get; set; }
 
+    public Guid? PlayoffSeriesId { get; set; }
+
     public bool IsFinalized { get; set; }
 
     public virtual Team AwayTeam { get; set; } = null!;
@@ -116,6 +118,8 @@ public partial class Schedule
     public virtual Team HomeTeam { get; set; } = null!;
 
     public virtual PlayoffRound? PlayoffRound { get; set; }
+
+    public virtual PlayoffSeries? PlayoffSeries { get; set; }
 
     public virtual Season Season { get; set; } = null!;
 

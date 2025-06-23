@@ -26,16 +26,34 @@
                 <h4>@season.Year</h4>
                 <p class="text-secondary">@season.GamesPerTeam games</p>
                 <div class="container">
-                    <div class="row">
-                        <div class="col">
-                            @if (firstDaysOfSeasons[season.Year] != DateTime.MinValue) {
-                                <a class="text-primary" asp-controller="Schedule" asp-action="Index" asp-route-weekOf="@firstDaysOfSeasons[season.Year]!.Value.ToShortDateString()">Schedule</a>
-                            }
-                            else {
-                                <a class="text-primary" asp-controller="Schedule" asp-action="UploadSchedule" asp-route-year="@season.Year">Upload Schedule</a>
-                            }
+                    @if (firstDaysOfSeasons[season.Year] != DateTime.MinValue)
+                    {
+                        @if (season.InTestMode)
+                        {
+                            <div class="row">
+                                <div class="col">
+                                    <a class="text-danger" href="#">Go Live</a>
+                                </div>
+                            </div>
+                        }
+                        <div class="row">
+                            <div class="col">
+                                <a class="text-primary" asp-controller="Schedule" asp-action="Index"
+                                   asp-route-weekOf="@firstDaysOfSeasons[season.Year]!.Value.ToShortDateString()">
+                                    Schedule
+                                </a>
+                            </div>
                         </div>
-                    </div>
+                    }
+                    else
+                    {
+                        <div class="row">
+                            <div class="col">
+                                <a class="text-primary" asp-controller="Schedule" asp-action="UploadSchedule"
+                                   asp-route-year="@season.Year">Upload Schedule</a>
+                            </div>
+                        </div>
+                    }
                     <div class="row">
                         <div class="col">
                             <a class="text-primary" asp-controller="Standings" asp-action="Index" asp-route-season="@season.Year" asp-route-viewBy="division">Standings</a>

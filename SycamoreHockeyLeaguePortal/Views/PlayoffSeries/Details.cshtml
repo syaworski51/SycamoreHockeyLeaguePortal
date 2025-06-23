@@ -1,4 +1,4 @@
-﻿@model RankedPlayoffSeries
+﻿@model PlayoffSeries
 
 @{
     ViewData["Title"] = "Details";
@@ -16,29 +16,29 @@
     </div>
     <div class="row">
         <div class="col-3 away-team">
-            <h5>@Model.Matchup.Team1!.City</h5>
-            <h1 class="team-name">@Model.Matchup.Team1.Name</h1>
+            <h5>@Model.Team1!.City</h5>
+            <h1 class="team-name">@Model.Team1.Name</h1>
         </div>
         <div class="col-2 team-logo">
-            <img class="logo" src="~/@Model.Matchup.Team1.LogoPath" alt="@Model.Matchup.Team1.Code" />
+            <img class="logo" src="~/@Model.Team1.LogoPath" alt="@Model.Team1.Code" />
         </div>
         <div class="col score">
-            @Model.Matchup.Team1Wins
+            @Model.Team1Wins
         </div>
         <div class="col score">
-            @Model.Matchup.Team2Wins
+            @Model.Team2Wins
         </div>
         <div class="col-2 team-logo">
-            <img class="logo" src="~/@Model.Matchup.Team2.LogoPath" alt="@Model.Matchup.Team2.Code" />
+            <img class="logo" src="~/@Model.Team2.LogoPath" alt="@Model.Team2.Code" />
         </div>
         <div class="col-3 home-team">
-            <h5>@Model.Matchup.Team2.City</h5>
-            <h1 class="team-name">@Model.Matchup.Team2.Name</h1>
+            <h5>@Model.Team2.City</h5>
+            <h1 class="team-name">@Model.Team2.Name</h1>
         </div>
     </div>
 </div>
 
-@Html.Partial("../Schedule/Layouts/PlayoffSeries.cshtml", Model.Matchup)
+@* @Html.Partial("../Schedule/Layouts/PlayoffSeries.cshtml", Model.Matchup) *@
 
 <table class="table">
     <thead>

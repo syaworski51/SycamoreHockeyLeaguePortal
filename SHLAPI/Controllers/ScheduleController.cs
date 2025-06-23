@@ -15,7 +15,6 @@ namespace SHLAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles = "Admin")]
     public class ScheduleController : ControllerBase
     {
         private readonly SHLPortalDbContext _context;
@@ -59,6 +58,9 @@ namespace SHLAPI.Controllers
                 var game = await GetGame(id);
                 if (game == null)
                     return NotFound();
+
+                if (DateTime.Now.Date < game.Date.Date)
+                    return BadRequest("This game cannot be started yet.");
 
                 var previousGame = _context.Schedule.FirstOrDefault(s => s.GameIndex == game.GameIndex - 1)!;
                 if (game.GameIndex > 1 && (previousGame == null || !previousGame.IsFinalized))

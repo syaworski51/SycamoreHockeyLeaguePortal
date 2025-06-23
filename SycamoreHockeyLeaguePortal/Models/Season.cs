@@ -20,5 +20,13 @@ namespace SycamoreHockeyLeaguePortal.Models
 
         [Display(Name = "Games Per Team")]
         public int GamesPerTeam { get; set; }
+
+        public int CurrentPlayoffRound { get; set; }
+
+        public bool InTestMode { get; set; }
+        
+        public bool IsLive { get; set; }
+
+        public bool IsComplete { get; set; }
     }
 }

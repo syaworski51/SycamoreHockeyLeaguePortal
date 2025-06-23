@@ -46,13 +46,12 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             if (_context.PlayoffSeries == null)
                 return NotFound();
 
-            var series = _context.RankedPlayoffSeries
+            var series = _context.PlayoffSeries
                 .Include(s => s.Season)
                 .Include(s => s.Round)
-                .Include(s => s.Matchup)
                 .FirstOrDefault(s => s.Season.Year == season &&
-                                     ((s.Matchup.Team1!.Code == team1 && s.Matchup.Team2!.Code == team2) ||
-                                      (s.Matchup.Team1!.Code == team2 && s.Matchup.Team2!.Code == team1)));
+                                     ((s.Team1!.Code == team1 && s.Team2!.Code == team2) ||
+                                      (s.Team1!.Code == team2 && s.Team2!.Code == team1)));
 
             var games = _context.Schedule
                 .Include(s => s.Season)
@@ -166,6 +165,62 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             return View(form);
         }
 
+        public async Task<IActionResult> ConfirmPlayoffMatchup(int season, string index)
+        {
+            IQueryable<PlayoffSeries> matchups = _context.PlayoffSeries
+                .Include(s => s.Season)
+                .Include(s => s.Round)
+                .Include(s => s.Team1)
+                .Include(s => s.Team2)
+                .Where(s => s.Season.Year == season)
+                .OrderBy(s => s.Index);
+
+            var matchup = matchups.FirstOrDefault(s => s.Index == index)!;
+            matchups = matchups.Where(m => m.Round == matchup.Round);
+
+            if (matchup.IsConfirmed)
+                return BadRequest("This matchup has already been confirmed.");
+
+            matchup.IsConfirmed = true;
+            _context.PlayoffSeries.Update(matchup);
+            await _context.SaveChangesAsync();
+
+            await GenerateSchedule(matchup);
+
+            matchup.Round.MatchupsConfirmed = matchups.Count(m => m.IsConfirmed) == matchups.Count();
+            if (matchup.Round.MatchupsConfirmed && matchup.Round.Index < 4)
+                await ReindexPlayoffGames(matchup.Round);
+
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction("PlayoffBracket", "Standings", new { season = season });
+        }
+
+        private async Task ReindexPlayoffGames(PlayoffRound round)
+        {
+            var schedule = _context.Schedule
+                .Include(s => s.Season)
+                .Include(s => s.PlayoffRound)
+                .Include(s => s.PlayoffSeries)
+                .Include(s => s.AwayTeam)
+                .Include(s => s.HomeTeam)
+                .Where(s => s.Season.Year == round.Season.Year &&
+                            s.Type == "Playoffs" &&
+                            s.PlayoffRound == round)
+                .OrderBy(s => s.Date)
+                .ThenByDescending(s => s.PlayoffSeries!.StartDate)
+                .ThenBy(s => s.PlayoffSeries!.Index);
+
+            int index = schedule.Min(s => s.GameIndex);
+            foreach (var game in schedule)
+            {
+                game.GameIndex = index;
+                index++;
+            }
+
+            await _context.SaveChangesAsync();
+        }
+
         public async Task<IActionResult> SetMatchups(int year, int index)
         {
             var season = await _context.Seasons.FirstOrDefaultAsync(s => s.Year == year);
@@ -200,46 +255,6 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             return View();
         }
 
-        public async Task<IActionResult> Rankings(int? season, int? round, string? team)
-        {
-            var series = _context.RankedPlayoffSeries
-                .Include(s => s.Season)
-                .Include(s => s.Round)
-                .Include(s => s.Matchup)
-                .OrderBy(s => s.OverallScore);
-
-            if (season != null)
-            {
-                var currentSeason = _context.Seasons.Max(s => s.Year);
-                if (season < 2021 || season > currentSeason)
-                    return ErrorMessage($"There is no {season} season in the database.");
-
-                series = (IOrderedQueryable<RankedPlayoffSeries>)
-                    series.Where(s => s.Season.Year == season);
-            }
-
-            if (round != null)
-            {
-                if (round < 1 || ((season == 2021 && round > 3) || (season >= 2022 && round > 4)))
-                    return ErrorMessage($"There is no Round #{round} in the {season} playoffs.");
-
-                series = (IOrderedQueryable<RankedPlayoffSeries>)
-                    series.Where(s => s.Round.Index == round);
-            }
-
-            if (team != null)
-            {
-                var selectedTeam = _context.Teams.FirstOrDefault(t => t.Code == team);
-                if (selectedTeam == null)
-                    return ErrorMessage($"There is no team with the code '{team}'.");
-
-                series = (IOrderedQueryable<RankedPlayoffSeries>)
-                    series.Where(s => s.Matchup.Team1!.Code == team || s.Matchup.Team2!.Code == team);
-            }
-
-            return View(await series.ToListAsync());
-        }
-
         private async Task GenerateSchedule(PlayoffSeries series)
         {
             Schedule[] games = new Schedule[7];
@@ -248,16 +263,12 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             {
                 int gameIndex = index + 1;
                 bool team1IsHome = gameIndex == 1 || gameIndex == 2 || gameIndex == 5 || gameIndex == 7;
-                bool isBackToBack = gameIndex == 2 || gameIndex == 4;
 
                 DateTime gameDate = (DateTime)series.StartDate!;
-                DateTime previousGameDate;
-                int daysBetweenGames = 1;
                 if (gameIndex > 1)
                 {
-                    previousGameDate = games[index - 1].Date;
-                    daysBetweenGames = (series.Round.Index == 4 && gameIndex == 7) ? 2 : 
-                        (isBackToBack ? 0 : 1);
+                    DateTime previousGameDate = games[index - 1].Date;
+                    int daysBetweenGames = DetermineDaysBetweenGames(series.Round.Index, gameIndex);
                     gameDate = previousGameDate.AddDays(1 + daysBetweenGames);
                 }
 
@@ -270,12 +281,16 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                     Date = gameDate,
                     GameIndex = _context.Schedule.Max(s => s.GameIndex) + 1,
                     Type = "Playoffs",
+                    PlayoffGameIndex = gameIndex,
                     PlayoffRoundId = series.RoundId,
                     PlayoffRound = series.Round,
+                    PlayoffSeriesId = series.Id,
+                    PlayoffSeries = series,
                     AwayTeamId = (Guid)(team1IsHome ? series.Team2Id : series.Team1Id)!,
                     AwayTeam = (team1IsHome ? series.Team2 : series.Team1)!,
                     HomeTeamId = (Guid)(team1IsHome ? series.Team1Id : series.Team2Id)!,
                     HomeTeam = (team1IsHome ? series.Team1 : series.Team2)!,
+                    IsConfirmed = gameIndex <= 4,
                     Notes = gameString,
                     PlayoffSeriesScore = gameString
                 };
@@ -285,6 +300,16 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             }
 
             await _context.SaveChangesAsync();
+        }
+
+        private int DetermineDaysBetweenGames(int round, int game)
+        {
+            bool isBackToBack = game == 2 || game == 4;
+            
+            if (round == 4 && game == 5)
+                return 2;
+
+            return isBackToBack ? 0 : 1;
         }
 
         private IActionResult ErrorMessage(string message)

@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.VisualStudio.Web.CodeGeneration.EntityFrameworkCore;
 using SycamoreHockeyLeaguePortal.Data;
@@ -42,6 +43,36 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             return View(await seasons.AsNoTracking().ToListAsync());
         }
 
+        public async Task<IActionResult> GoLive(int year)
+        {
+            var season = _context.Seasons.FirstOrDefault(s => s.Year == year)!;
+            var schedule = _context.Schedule
+                .Include(s => s.Season)
+                .Include(s => s.AwayTeam)
+                .Include(s => s.HomeTeam)
+                .Where(s => s.Season.Year == year)
+                .OrderBy(s => s.Date.Date)
+                .ThenBy(s => s.GameIndex);
+
+            var seasonHasSchedule = schedule.Any();
+
+            if (season.IsLive)
+                throw new Exception($"The {year} season is already live.");
+
+            if (season.IsComplete)
+                throw new Exception($"The {year} season is already complete. It cannot go live again.");
+
+            if (!seasonHasSchedule)
+                throw new Exception($"The {year} season doesn't have a schedule uploaded. It cannot go live yet.");
+
+            season.InTestMode = false;
+            season.IsLive = true;
+            _context.Seasons.Update(season);
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction("Index", "Schedule", new { weekOf = schedule.Min(s => s.Date).ToShortDateString() });
+        }
+
         // GET: Seasons/Details/5
         [AllowAnonymous]
         public async Task<IActionResult> Details(Guid? id)
@@ -68,41 +99,37 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 .OrderBy(s => s.Year)
                 .ToList();
 
-            int year = seasons.Max(s => s.Year) + 1;
+            int previousYear = seasons.Max(s => s.Year);
+            int year = previousYear + 1;
             int gamesPerTeam = seasons
-                .Where(s => s.Year == year - 1)
+                .Where(s => s.Year == previousYear)
                 .Select(s => s.GamesPerTeam)
                 .FirstOrDefault();
 
-            var teams = _context.Teams
-                .Where(t => t.IsActive)
-                .OrderBy(t => t.City)
-                .ThenBy(t => t.Name)
-                .ToList();
-            ViewBag.Teams = teams;
-
             var conferences = _context.Conferences
                 .OrderBy(c => c.Name)
-                .ToList();
+                .ToDictionary(c => c.Code);
 
-            var divisions = _context.Divisions
-                .Where(d => !(d.Code == "ED" || d.Code == "WD" || d.Code == "MT"))
-                .OrderBy(d => d.Name);
+            var previousTeams = _context.Standings
+                .Include(s => s.Season)
+                .Include(s => s.Conference)
+                .Include(s => s.Division)
+                .Include(s => s.Team)
+                .Where(s => s.Season.Year == previousYear)
+                .Select(s => s.Team);
 
-            var easternDivisions = divisions.Where(d => d.Code == "AT" || d.Code == "NE" || d.Code == "SE").ToList();
-            var westernDivisions = divisions.Where(d => d.Code == "CE" || d.Code == "NW" || d.Code == "PA").ToList();
-            ViewBag.DivisionLists = new List<List<Division>> { easternDivisions, westernDivisions };
+            var easternReplacements = _context.Teams
+                .Where(t => t.Conference == conferences["EAST"] && !previousTeams.Contains(t));
+            ViewBag.EasternReplacements = new SelectList(easternReplacements, "Id", "FullName");
 
-            var teamAlignments = new Dictionary<string, List<string>>();
-            foreach (var division in divisions)
-                teamAlignments.Add(division.Code, new List<string>());
+            var westernReplacements = _context.Teams
+                .Where(t => t.Conference == conferences["WEST"] && !previousTeams.Contains(t));
+            ViewBag.WesternReplacements = new SelectList(westernReplacements, "Id", "FullName");
 
-            Season_CreateForm form = new Season_CreateForm
+            Season_CreateForm form = new()
             {
                 Year = year,
-                GamesPerTeam = gamesPerTeam,
-                Conferences = conferences,
-                TeamAlignments = teamAlignments
+                GamesPerTeam = gamesPerTeam
             };
 
             return View(form);
@@ -115,61 +142,67 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(Season_CreateForm form)
         {
+            if (form.EasternReplacementId == null || form.WesternReplacementId == null)
+                return RedirectToAction(nameof(Create));
+            
             var previousYear = _context.Seasons.Max(s => s.Year);
-            var conferences = _context.Conferences.OrderBy(c => c.Name);
+            var conferences = _context.Conferences
+                .OrderBy(c => c.Name)
+                .ToDictionary(c => c.Code);
 
             if (form.Year <= previousYear || form.GamesPerTeam <= 0)
                 return BadRequest();
 
             var season = new Season
             {
-                Id = GenerateGuid(_context.Seasons),
+                Id = Guid.NewGuid(),
                 Year = form.Year,
-                GamesPerTeam = form.GamesPerTeam
+                GamesPerTeam = form.GamesPerTeam,
+                InTestMode = true
             };
             _context.Seasons.Add(season);
 
-            string[] easternDivisionCodes = { "AT", "NE", "SE" };
-            string[] westernDivisionCodes = { "CE", "NW", "PA" };
-            foreach (var _division in form.TeamAlignments)
+            var teams = _context.Standings
+                .Include(s => s.Season)
+                .Include(s => s.Conference)
+                .Include(s => s.Division)
+                .Include(s => s.Team)
+                .Where(s => s.Season.Year == previousYear && s.ConferenceRanking < 12)
+                .Select(s => s.Team)
+                .ToList();
+            teams.Add(form.EasternReplacement!);
+            teams.Add(form.WesternReplacement!);
+
+            teams = teams
+                .OrderBy(t => t.City)
+                .ThenBy(t => t.Name)
+                .ToList();
+
+            foreach (var team in teams)
             {
-                string divisionCode = _division.Key.Replace("\"", "");
-                string conferenceCode = easternDivisionCodes.Contains(divisionCode) ? "EAST" : "WEST";
-                Conference conference = conferences.First(c => c.Code == conferenceCode);
-                Division division = _context.Divisions.FirstOrDefault(d => d.Code == divisionCode)!;
-
-                foreach (var teamCode in _division.Value)
+                var alignment = new Alignment
                 {
-                    var team = _context.Teams.First(t => t.Code == teamCode);
+                    Id = Guid.NewGuid(),
+                    SeasonId = season.Id,
+                    Season = season,
+                    ConferenceId = team.ConferenceId,
+                    Conference = team.Conference,
+                    TeamId = team.Id,
+                    Team = team
+                };
+                _context.Alignments.Add(alignment);
 
-                    var alignment = new Alignment
-                    {
-                        Id = GenerateGuid(_context.Alignments),
-                        SeasonId = season.Id,
-                        Season = season,
-                        ConferenceId = conference.Id,
-                        Conference = conference,
-                        DivisionId = division.Id,
-                        Division = division,
-                        TeamId = team.Id,
-                        Team = team
-                    };
-                    _context.Alignments.Add(alignment);
-
-                    var teamStats = new Standings
-                    {
-                        Id = GenerateGuid(_context.Standings),
-                        SeasonId = season.Id,
-                        Season = season,
-                        ConferenceId = conference.Id,
-                        Conference = conference,
-                        DivisionId = division.Id,
-                        Division = division,
-                        TeamId = team.Id,
-                        Team = team
-                    };
-                    _context.Standings.Add(teamStats);
-                }
+                var teamStats = new Standings
+                {
+                    Id = Guid.NewGuid(),
+                    SeasonId = season.Id,
+                    Season = season,
+                    ConferenceId = team.ConferenceId,
+                    Conference = team.Conference,
+                    TeamId = team.Id,
+                    Team = team
+                };
+                _context.Standings.Add(teamStats);
             }
 
             var playoffRounds = _context.PlayoffRounds
@@ -177,12 +210,12 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 .Where(r => r.Season.Year == previousYear)
                 .OrderBy(r => r.Index);
 
-            int ascii = 65;
+            int ascii = 65;  // ASCII code for 'A'
             foreach (var round in playoffRounds)
             {
                 var newRound = new PlayoffRound
                 {
-                    Id = GenerateGuid(_context.PlayoffRounds),
+                    Id = Guid.NewGuid(),
                     SeasonId = season.Id,
                     Season = season,
                     Index = round.Index,
@@ -196,7 +229,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 {
                     var matchup = new PlayoffSeries
                     {
-                        Id = GenerateGuid(_context.PlayoffSeries),
+                        Id = Guid.NewGuid(),
                         SeasonId = season.Id,
                         Season = season,
                         RoundId = newRound.Id,
@@ -210,32 +243,24 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                     ascii++;
                 }
             }
-
             await _context.SaveChangesAsync();
 
-
-            var teams = _context.Alignments
-                .Where(a => a.Season.Year == season.Year)
-                .Select(a => a.Team)
-                .OrderBy(t => t.City)
-                .ThenBy(t => t.Name)
-                .ToList();
             for (int index = 0; index < teams.Count - 1; index++)
             {
-                Team currentTeam = teams[index];
-                for (int nextIndex = index + 1; nextIndex < teams.Count; nextIndex++)
+                Team team1 = teams[index];
+                for (int cursor = index + 1; cursor < teams.Count; cursor++)
                 {
-                    Team nextTeam = teams[nextIndex];
+                    Team team2 = teams[cursor];
 
                     var headToHead = new HeadToHeadSeries
                     {
-                        Id = GenerateGuid(_context.HeadToHeadSeries),
+                        Id = Guid.NewGuid(),
                         SeasonId = season.Id,
                         Season = season,
-                        Team1Id = currentTeam.Id,
-                        Team1 = currentTeam,
-                        Team2Id = nextTeam.Id,
-                        Team2 = nextTeam
+                        Team1Id = team1.Id,
+                        Team1 = team1,
+                        Team2Id = team2.Id,
+                        Team2 = team2
                     };
                     _context.HeadToHeadSeries.Add(headToHead);
                 }

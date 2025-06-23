@@ -4,7 +4,9 @@
     {
         public int Year { get; set; }
         public int GamesPerTeam { get; set; }
-        public List<Conference> Conferences { get; set; }
-        public Dictionary<string, List<string>> TeamAlignments { get; set; }
+        public Guid? EasternReplacementId { get; set; }
+        public Team? EasternReplacement { get; set; }
+        public Guid? WesternReplacementId { get; set; }
+        public Team? WesternReplacement { get; set; }
     }
 }

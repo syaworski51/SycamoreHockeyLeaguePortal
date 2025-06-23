@@ -1,11 +1,12 @@
 ﻿@using Microsoft.AspNetCore.Identity
-@inject SycamoreHockeyLeaguePortal.Data.ApplicationDbContext _context
+@using SycamoreHockeyLeaguePortal.Data
+@inject ApplicationDbContext _context
 @inject UserManager<ApplicationUser> UserManager
 
 @{
     DateTime currentDate = DateTime.Now;
     int currentYear = currentDate.Year;
-    ViewData["BackgroundImage"] = "utah-vs-detroit.png";
+    ViewData["BackgroundImage"] = "detroit-vs-utah.png";
 
     bool userIsAdmin = User.IsInRole("Admin");
 }
@@ -111,11 +112,6 @@
                         <li class="nav-item">
                             <a class="nav-link text-light" 
                                asp-controller="Seasons" asp-action="Index">Seasons</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-light" 
-                               asp-controller="Alignments" asp-action="Index" 
-                               asp-route-season="@currentYear">Alignments</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link text-light" 

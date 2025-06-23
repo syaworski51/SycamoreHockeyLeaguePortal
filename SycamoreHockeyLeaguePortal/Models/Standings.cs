@@ -201,5 +201,12 @@ namespace SycamoreHockeyLeaguePortal.Models
 
         [Display(Name = "Next Game")]
         public Schedule? NextGame { get; set; }
+
+
+
+        public override string ToString()
+        {
+            return $"{Season.Year} - {Team}";
+        }
     }
 }

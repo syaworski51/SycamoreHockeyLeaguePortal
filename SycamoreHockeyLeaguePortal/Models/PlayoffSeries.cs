@@ -36,6 +36,9 @@ namespace SycamoreHockeyLeaguePortal.Models
         [Display(Name = "Team 1 Wins")]
         public int Team1Wins { get; set; }
 
+        [Display(Name = "Team 1 Placeholder")]
+        public string Team1Placeholder { get; set; }
+
         [ForeignKey(nameof(Team2))]
         public Guid? Team2Id { get; set; }
 
@@ -44,6 +47,9 @@ namespace SycamoreHockeyLeaguePortal.Models
 
         [Display(Name = "Team 2 Wins")]
         public int Team2Wins { get; set; }
+
+        [Display(Name = "Team 2 Placeholder")]
+        public string Team2Placeholder { get; set; }
 
         [Display(Name = "Confirmed?")]
         public bool IsConfirmed { get; set; }

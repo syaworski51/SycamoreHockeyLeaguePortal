@@ -14,18 +14,18 @@
             <input type="hidden" asp-for="Id" />
             <div class="form-group">
                 <label asp-for="StartDate" class="control-label"></label>
-                <input type="date" asp-for="StartDate" class="form-control" />
+                <input type="date" asp-for="StartDate" class="form-control" id="start-date" />
                 <span asp-validation-for="StartDate" class="text-danger"></span>
             </div>
             <div class="form-group">
                 <label asp-for="Team1Id" class="control-label"></label>
-                @Html.DropDownList("Team1Id", (IEnumerable<SelectListItem>)ViewBag.Team1Options, "Team #1", new { @class = "form-control" })
+                @Html.DropDownList("Team1Id", (IEnumerable<SelectListItem>)ViewBag.Team1Options, "Higher seed", new { @class = "form-control playoff-team-list", id = "higher-seed-list" })
                 
                 <span asp-validation-for="Team1Id" class="text-danger"></span>
             </div>
             <div class="form-group">
                 <label asp-for="Team2Id" class="control-label"></label>
-                @Html.DropDownList("Team2Id", (IEnumerable<SelectListItem>)ViewBag.Team2Options, "Team #2", new { @class = "form-control" })
+                @Html.DropDownList("Team2Id", (IEnumerable<SelectListItem>)ViewBag.Team2Options, "Lower seed", new { @class = "form-control", id = "lower-seed-list" })
                 <span asp-validation-for="Team2Id" class="text-danger"></span>
             </div>
             <div class="form-group">

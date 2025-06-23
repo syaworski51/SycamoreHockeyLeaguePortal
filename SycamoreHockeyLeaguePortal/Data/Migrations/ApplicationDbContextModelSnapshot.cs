@@ -379,10 +379,16 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
                     b.Property<Guid>("SeasonId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<int>("Team1GoalsFor")
+                        .HasColumnType("int");
+
                     b.Property<Guid>("Team1Id")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("Team1Wins")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Team2GoalsFor")
                         .HasColumnType("int");
 
                     b.Property<Guid>("Team2Id")
@@ -460,11 +466,19 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
                     b.Property<Guid?>("Team1Id")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("Team1Placeholder")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int>("Team1Wins")
                         .HasColumnType("int");
 
                     b.Property<Guid?>("Team2Id")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Team2Placeholder")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("Team2Wins")
                         .HasColumnType("int");
@@ -552,6 +566,9 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
                     b.Property<Guid>("HomeTeamId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<bool>("IsConfirmed")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("IsFinalized")
                         .HasColumnType("bit");
 
@@ -568,6 +585,9 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
                         .HasColumnType("int");
 
                     b.Property<Guid?>("PlayoffRoundId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("PlayoffSeriesId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("PlayoffSeriesScore")
@@ -588,6 +608,8 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
 
                     b.HasIndex("PlayoffRoundId");
 
+                    b.HasIndex("PlayoffSeriesId");
+
                     b.HasIndex("SeasonId");
 
                     b.ToTable("Schedule");
@@ -599,8 +621,20 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<int>("CurrentPlayoffRound")
+                        .HasColumnType("int");
+
                     b.Property<int>("GamesPerTeam")
                         .HasColumnType("int");
+
+                    b.Property<bool>("InTestMode")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsComplete")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsLive")
+                        .HasColumnType("bit");
 
                     b.Property<int>("Year")
                         .HasColumnType("int");
@@ -826,6 +860,12 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<Guid?>("ConferenceId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("DivisionId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
@@ -837,6 +877,10 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ConferenceId");
+
+                    b.HasIndex("DivisionId");
 
                     b.ToTable("Teams");
                 });
@@ -1085,6 +1129,10 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
                         .WithMany()
                         .HasForeignKey("PlayoffRoundId");
 
+                    b.HasOne("SycamoreHockeyLeaguePortal.Models.PlayoffSeries", "PlayoffSeries")
+                        .WithMany()
+                        .HasForeignKey("PlayoffSeriesId");
+
                     b.HasOne("SycamoreHockeyLeaguePortal.Models.Season", "Season")
                         .WithMany()
                         .HasForeignKey("SeasonId")
@@ -1096,6 +1144,8 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
                     b.Navigation("HomeTeam");
 
                     b.Navigation("PlayoffRound");
+
+                    b.Navigation("PlayoffSeries");
 
                     b.Navigation("Season");
                 });
@@ -1135,6 +1185,21 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
                     b.Navigation("Season");
 
                     b.Navigation("Team");
+                });
+
+            modelBuilder.Entity("SycamoreHockeyLeaguePortal.Models.Team", b =>
+                {
+                    b.HasOne("SycamoreHockeyLeaguePortal.Models.Conference", "Conference")
+                        .WithMany()
+                        .HasForeignKey("ConferenceId");
+
+                    b.HasOne("SycamoreHockeyLeaguePortal.Models.Division", "Division")
+                        .WithMany()
+                        .HasForeignKey("DivisionId");
+
+                    b.Navigation("Conference");
+
+                    b.Navigation("Division");
                 });
 
             modelBuilder.Entity("SycamoreHockeyLeaguePortal.Models.TeamBrandingHistory", b =>

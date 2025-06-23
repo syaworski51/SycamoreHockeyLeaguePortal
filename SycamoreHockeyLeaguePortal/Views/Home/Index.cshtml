@@ -6,6 +6,8 @@
     DateTime currentDate = ViewBag.CurrentDate;
     List<Schedule> todaysGames = ViewBag.TodaysGames;
 
+    bool userIsAdmin = User.IsInRole("Admin");
+
     IQueryable<Standings> atlanticStandings = ViewBag.AtlanticStandings;
     IQueryable<Standings> northeastStandings = ViewBag.NortheastStandings;
     IQueryable<Standings> southeastStandings = ViewBag.SoutheastStandings;
@@ -16,10 +18,8 @@
 
     string GetName(Team team)
     {
-        var teamsInSameCity = _context.Teams
-            .Where(t => t.City == team.City);
-
-        if (teamsInSameCity.Count() > 1)
+        bool multipleTeamsInSameCity = _context.Teams.Count(t => t.City == team.City) > 1;
+        if (multipleTeamsInSameCity)
             return team.AlternateName!;
 
         return team.City;
@@ -48,7 +48,7 @@
                         foreach (var game in todaysGames)
                         {
                             <tr>
-                                <td style="text-align: right;">
+                                <td style="text-align: right; width: 220px;">
                                     <a asp-controller="Teams" asp-action="Details" asp-route-id="@game.AwayTeam.Code" asp-route-season="@season" asp-route-gameType="regular-season">@GetName(game.AwayTeam)</a>
                                 </td>
                                 <td class="logo">
@@ -72,12 +72,28 @@
                                 <td class="logo">
                                     <img src="~/@game.HomeTeam.LogoPath" />
                                 </td>
-                                <td style="text-align: left;">
+                                <td style="text-align: left; width: 220px;">
                                     <a asp-controller="Teams" asp-action="Details" asp-route-id="@game.HomeTeam.Code" asp-route-season="@season" asp-route-gameType="regular-season">@GetName(game.HomeTeam)</a>
                                 </td>
-                                <td>
-                                    <a asp-controller="Schedule" asp-action="GameCenter" asp-route-date="@game.Date.ToShortDateString()" asp-route-awayTeam="@game.AwayTeam.Code" asp-route-homeTeam="@game.HomeTeam.Code">@game.Status</a>
-                                </td>
+                                @if (userIsAdmin && !game.IsFinalized)
+                                {
+                                    <td>
+                                        <a asp-controller="Schedule" asp-action="GameControls" 
+                                           asp-route-date="@game.Date.ToShortDateString()" 
+                                           asp-route-awayTeam="@game.AwayTeam.Code" 
+                                           asp-route-homeTeam="@game.HomeTeam.Code">@game.Status</a>
+                                    </td>
+                                }
+                                else
+                                {
+                                    <td>
+                                        <a asp-controller="Schedule" asp-action="GameCenter"
+                                           asp-route-date="@game.Date.ToShortDateString()"
+                                           asp-route-awayTeam="@game.AwayTeam.Code"
+                                           asp-route-homeTeam="@game.HomeTeam.Code">@game.Status</a>
+                                    </td>
+                                }
+                                
                             </tr>
                         }
                     }

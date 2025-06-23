@@ -1,11 +1,13 @@
-﻿@model SycamoreHockeyLeaguePortal.Models.Team
-@inject SycamoreHockeyLeaguePortal.Data.ApplicationDbContext _context
+﻿@using SycamoreHockeyLeaguePortal.Data
+@model Team
+@inject ApplicationDbContext _context
 
 @{
     var teamId = Model.Id;
     int season = ViewBag.Season;
     var schedule = ViewBag.Schedule;
     Standings teamStats = ViewBag.TeamStats;
+    List<HeadToHeadSeries> h2hResults = ViewBag.H2HResults;
 
     ViewData["Title"] = $"{season} {Model}";
 
@@ -96,6 +98,9 @@
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="team-stats-tab" data-bs-toggle="tab" data-bs-target="#team-stats" type="button" role="tab" aria-controls="team-stats" aria-selected="false">Team Stats</button>
                         </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="h2h-results-tab" data-bs-toggle="tab" data-bs-target="#h2h-results" type="button" role="tab" aria-controls="h2h-results" aria-selected="false">Head-to-Head Results</button>
+                        </li>
                     </ul>
                     <div class="tab-content" id="team-schedule-tab-content">
                         <div class="tab-pane fade show active" id="schedule" role="tabpanel" aria-labelledby="schedule-tab">
@@ -123,6 +128,9 @@
                         </div>
                         <div class="tab-pane fade" id="team-stats" role="tabpanel" aria-labelledby="team-stats-tab">
                             <partial name="Views/Stats.cshtml" />
+                        </div>
+                        <div class="tab-pane fade" id="h2h-results" role="tabpanel" aria-labelledby="h2h-results-tab">
+                            @Html.Partial("Views/HeadToHeadResults.cshtml", h2hResults)
                         </div>
                     </div>
                 </div>

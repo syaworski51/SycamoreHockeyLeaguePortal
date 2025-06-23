@@ -27,23 +27,18 @@
                 <span asp-validation-for="GamesPerTeam" class="text-danger"></span>
             </div>
         </div>
-    </div>
-
-    @* Alignments section *@
-    <div class="row container form-group">
-        <div class="row">
-            <div class="col-2 card container">
-                @foreach (var team in teams) {
-                    @Html.Partial("Partials/TeamCard.cshtml", team);
-                }
+        <div class="col">
+            <div class="form-group">
+                <label asp-for="EasternReplacementId" class="control-label"></label>
+                @Html.DropDownList("EasternReplacementId", (IEnumerable<SelectListItem>)ViewBag.EasternReplacements, "Select Eastern replacement", new { @class = "form-control" })
+                <span asp-validation-for="EasternReplacementId" class="text-danger"></span>
             </div>
-            <div class="col-9">
-                @for (int index = 0; index < Model.Conferences.Count; index++) {
-                    ViewBag.Index = index;
-                    ViewBag.Divisions = divisionLists[index];
-                    var conference = Model.Conferences[index];
-                    @Html.Partial("Partials/Conference.cshtml", Model)
-                }
+        </div>
+        <div class="col">
+            <div class="form-group">
+                <label asp-for="WesternReplacementId" class="control-label"></label>
+                @Html.DropDownList("WesternReplacementId", (IEnumerable<SelectListItem>)ViewBag.WesternReplacements, "Select Western replacement", new { @class = "form-control" })
+                <span asp-validation-for="WesternReplacementId" class="text-danger"></span>
             </div>
         </div>
     </div>

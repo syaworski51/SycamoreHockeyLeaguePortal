@@ -1,0 +1,64 @@
+﻿@model List<HeadToHeadSeries>
+
+@{
+    Team team = ViewBag.Team;
+    int season = ViewBag.Season;
+
+    Team GetOpponent(HeadToHeadSeries matchup)
+    {
+        return team == matchup.Team1 ? matchup.Team2 : matchup.Team1;
+    }
+
+    string GetRecord(HeadToHeadSeries matchup)
+    {
+        return team == matchup.Team1 ?
+            $"{matchup.Team1Wins}-{matchup.Team2Wins}" :
+            $"{matchup.Team2Wins}-{matchup.Team1Wins}";
+    }
+
+    string GetAggregate(HeadToHeadSeries matchup)
+    {
+        return team == matchup.Team1 ?
+            $"{matchup.Team1GoalsFor}-{matchup.Team2GoalsFor}" :
+            $"{matchup.Team2GoalsFor}-{matchup.Team1GoalsFor}";
+    }
+}
+
+<table class="table">
+    <thead>
+        <tr>
+            <th colspan="2">Opponent</th>
+            <th>Record</th>
+            <th>Aggregate</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var matchup in Model)
+        {
+            Team opponent = GetOpponent(matchup);
+
+            <tr>
+                <td class="opponent-name">
+                    <a class="muted-link"
+                       asp-controller="Teams" asp-action="Details"
+                       asp-route-id="@team.Code"
+                       asp-route-season="@season"
+                       asp-route-gameType="regular-season"
+                       asp-route-opponent="@opponent.Code">@opponent</a>
+                </td>
+                <td class="opponent-logo">
+                    <img class="schedule-team-logo"
+                        src="~/@opponent.LogoPath"
+                        title="@opponent"
+                        alt="@opponent.Code logo" />
+                </td>
+                <td class="h2h-record">
+                    @GetRecord(matchup)
+                </td>
+                <td class="h2h-aggregate">
+                    @GetAggregate(matchup)
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

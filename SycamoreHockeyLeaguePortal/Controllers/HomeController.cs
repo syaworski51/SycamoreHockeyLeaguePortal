@@ -30,17 +30,10 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 .Include(s => s.Season)
                 .Where(s => s.Season.Year == season)
                 .OrderBy(s => s.Date.Date)
-                .Select(s => s.Date);
-            
-            var firstDayOfSeason = _context.Schedule
-                .Include(s => s.Season)
-                .Include(s => s.PlayoffRound)
-                .Include(s => s.AwayTeam)
-                .Include(s => s.HomeTeam)
-                .Where(s => s.Season.Year == season)
-                .OrderBy(s => s.Date)
-                .Select(s => s.Date.Date)
-                .Min();
+                .Select(s => s.Date)
+                .Distinct();
+
+            var firstDayOfSeason = dates.Min();
 
             bool seasonHasStarted = currentDate.CompareTo(firstDayOfSeason) >= 0;
             var rangeStart = seasonHasStarted ? currentDate : firstDayOfSeason;
@@ -51,19 +44,13 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 .Include(s => s.PlayoffRound)
                 .Include(s => s.AwayTeam)
                 .Include(s => s.HomeTeam)
-                .Where(g => g.Date.Date >= rangeStart &&
-                            g.Date.Date <= rangeEnd)
+                .Where(g => g.Date.Date >= rangeStart.Date &&
+                            g.Date.Date <= rangeEnd.Date)
                 .OrderBy(g => g.Date.Date)
                 .ThenBy(g => g.GameIndex);
             ViewBag.UpcomingGames = await upcomingGames.AsNoTracking().ToListAsync();
 
-            var todaysGames = _context.Schedule
-                .Include(s => s.Season)
-                .Include(s => s.PlayoffRound)
-                .Include(s => s.AwayTeam)
-                .Include(s => s.HomeTeam)
-                .Where(s => s.Date.Date == currentDate)
-                .OrderBy(s => s.GameIndex);
+            var todaysGames = upcomingGames.Where(s => s.Date.Date == currentDate.Date);
             ViewBag.TodaysGames = await todaysGames.AsNoTracking().ToListAsync();
 
             var standings = _context.Standings
@@ -72,28 +59,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 .Include(s => s.Division)
                 .Include(s => s.Team)
                 .Where(s => s.Season.Year == season)
-                .OrderByDescending(s => s.WinPct)
-                .ThenByDescending(s => s.Wins)
-                .ThenBy(s => s.Losses)
-                .ThenByDescending(s => s.RegulationWins)
-                .ThenByDescending(s => s.RegPlusOTWins)
-                .ThenByDescending(s => s.WinPctVsDivision)
-                .ThenByDescending(s => s.WinsVsDivision)
-                .ThenBy(s => s.LossesVsDivision)
-                .ThenByDescending(s => s.WinPctVsConference)
-                .ThenByDescending(s => s.WinsVsConference)
-                .ThenBy(s => s.LossesVsConference)
-                .ThenByDescending(s => s.InterConfWinPct)
-                .ThenByDescending(s => s.InterConfWins)
-                .ThenBy(s => s.InterConfLosses)
-                .ThenByDescending(s => s.GoalDifferential)
-                .ThenByDescending(s => s.GoalsFor)
-                .ThenByDescending(s => s.WinPctInLast10Games)
-                .ThenByDescending(s => s.WinsInLast10Games)
-                .ThenBy(s => s.LossesInLast10Games)
-                .ThenByDescending(s => s.Streak)
-                .ThenBy(s => s.Team.City)
-                .ThenBy(s => s.Team.Name);
+                .OrderBy(s => s.DivisionRanking);
 
             ViewBag.AtlanticStandings = standings
                 .Where(s => s.Division!.Code == "AT");

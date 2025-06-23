@@ -59,7 +59,7 @@
         {
             <tr>
                 <td style="font-size: 8pt;"> 
-                    <strong style="margin-bottom: 8px;">Game @gameNumber</strong><br /><br />
+                    <strong style="margin-bottom: 8px;">Game @gameNumber @(!game.IsConfirmed ? "*" : "")</strong><br /><br />
                     <a class="muted-link" asp-action="GameCenter" asp-route-date="@game.Date.ToShortDateString()" asp-route-awayTeam="@game.AwayTeam.Code" asp-route-homeTeam="@game.HomeTeam.Code">@GetDateString(game.Date)</a>
                 </td>
                 <td class="schedule-team-name" style="text-align: right;">

@@ -25,7 +25,7 @@
     }
     else {
         <div class="col-9">
-            <p>Team #1</p>
+            <p>@matchup.Team1Placeholder</p>
         </div>
     }
 </div>
@@ -45,17 +45,25 @@
     else
     {
         <div class="col-9">
-            <p>Team #2</p>
+            <p>@matchup.Team2Placeholder</p>
         </div>
     }
 </div>
 <div class="row">
     <div class="col">
-        @if (hasStartDate && hasTeam1 && hasTeam2) {
+        @if (matchup.IsConfirmed)
+        {
             <a asp-controller="Schedule" asp-action="PlayoffSeries" asp-route-season="@season" asp-route-team1="@matchup.Team1!.Code" asp-route-team2="@matchup.Team2!.Code">Matchup</a>
         }
-        @if (userIsAdmin && !matchup.IsConfirmed) {
+        else if (userIsAdmin)
+        {
             <a asp-controller="PlayoffSeries" asp-action="Edit" asp-route-id="@matchup.Id">Edit</a>
+
+            @if (hasStartDate && hasTeam1 && hasTeam2)
+            {
+                <a asp-controller="PlayoffSeries" asp-action="ConfirmPlayoffMatchup"
+                   asp-route-season="@matchup.Season.Year" asp-route-index="@matchup.Index">Confirm</a>
+            }
         }
     </div>
 </div>

@@ -17,29 +17,13 @@
 {
     <h3>@conference.Name</h3>
 
-    var conferenceLeaders = leaders
-        .Where(l => l.Conference == conference);
+    var teams = Model
+        .Where(s => s.Season.Year == season &&
+                    s.Conference == conference)
+        .OrderBy(s => s.PlayoffRanking);
+    ViewBag.Teams = teams;
 
-    <h5>Leaders</h5>
-    ViewBag.Teams = conferenceLeaders;
-    ViewBag.Rank = 1;
-    @if (season < 2024)
-    {
-        <partial name="Formats/2021-2023.cshtml" />
-    }
-    else
-    {
-        <partial name="Formats/2024-Present.cshtml" />
-    }
-
-
-    var conferenceNonLeaders = wildCards
-            .Where(nl => nl.Conference == conference);
-
-    <h5>Wild Cards</h5>
-    ViewBag.Teams = conferenceNonLeaders;
-    ViewBag.Rank = conferenceLeaders.Count() + 1;
-    @if (season < 2024)
+    if (season >= 2021 && season <= 2023)
     {
         <partial name="Formats/2021-2023.cshtml" />
     }

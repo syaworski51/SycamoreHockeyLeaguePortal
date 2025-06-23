@@ -4,6 +4,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
 using SycamoreHockeyLeaguePortal.Data;
 using SycamoreHockeyLeaguePortal.Models;
+using SycamoreHockeyLeaguePortal.Models.InputForms;
 
 namespace SycamoreHockeyLeaguePortal.Controllers
 {
@@ -39,7 +40,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             ViewBag.Seasons = new SelectList(seasons, "Year", "Year");
 
             var sortOptions = _context.StandingsSortOptions
-                .Where(s => s.LastYear >= season || s.LastYear == null)
+                .Where(s => season >= s.FirstYear && (season <= s.LastYear || s.LastYear == null))
                 .OrderBy(s => s.Index);
             ViewBag.SortOptions = new SelectList(sortOptions, "Parameter", "Name");
 
@@ -61,10 +62,15 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             var leaders = GetLeaders(standings);
             ViewBag.Leaders = leaders;
 
-            var wildCards = GetWildCards(standings, leaders);
+            var wildCards = GetWildCards(standings);
             ViewBag.WildCards = wildCards;
 
             return View(standings);
+        }
+
+        public async Task<IActionResult> PlayoffScenarios(int season, string? team)
+        {
+            return View();
         }
 
         [Route("Standings/PlayoffBracket/{season}")]
@@ -86,36 +92,18 @@ namespace SycamoreHockeyLeaguePortal.Controllers
 
         public List<Standings> GetLeaders(List<Standings> standings)
         {
-            var divisions = standings
-                .Select(s => s.Division)
-                .Distinct();
-
-            List<Standings> leaders = new List<Standings>();
-
-            foreach (var division in divisions)
-            {
-                var leader = standings
-                    .Where(s => s.Division == division)
-                    .First();
-
-                leaders.Add(leader);
-            }
-
-            return leaders;
+            return standings
+                .Where(s => s.DivisionRanking == 1)
+                .OrderBy(s => s.PlayoffRanking)
+                .ToList();
         }
 
-        public List<Standings> GetWildCards(List<Standings> standings, List<Standings>? leaders = null)
+        public List<Standings> GetWildCards(List<Standings> standings)
         {
-            leaders ??= GetLeaders(standings);
-            List<Standings> wildCards = new List<Standings>();
-
-            foreach (var team in standings)
-            {
-                if (!leaders.Contains(team))
-                    wildCards.Add(team);
-            }
-
-            return wildCards;
+            return standings
+                .Where(s => s.DivisionRanking != 1)
+                .OrderBy(s => s.PlayoffRanking)
+                .ToList();
         }
 
         [Route("Standings/PlayoffMatchups/{season}")]
@@ -123,123 +111,178 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         {
             ViewBag.Season = season;
 
-            List<List<Standings>> playoffTeams = new List<List<Standings>>();
+            List<List<int[]>> seeds = new();
+            List<List<Standings[]>> matchups = new();
 
             bool isDivisionalFormat = season == 2021 || season == 2022;
-            var standings = isDivisionalFormat ?
-                await GetStandings(season, VIEWBY_DIVISION) :
-                await GetStandings(season, VIEWBY_PLAYOFFS);
+            bool isWildCardFormat = season >= 2023 && season <= 2025;
+            int cutoff = (season > 2022) ? 8 : 4;
+            
+            List<Standings> standings;
+            if (isDivisionalFormat)
+                standings = await GetStandings(season, VIEWBY_DIVISION);
+            else if (isWildCardFormat)
+                standings = await GetStandings(season, VIEWBY_PLAYOFFS);
+            else
+                standings = await GetStandings(season, VIEWBY_CONFERENCE);
 
             var conferences = standings
                 .Select(s => s.Conference)
                 .Distinct()
-                .OrderBy(c => c.Name);
-            ViewBag.Conferences = conferences.ToList();
+                .OrderByDescending(c => c!.Name)
+                .ToList();
+            ViewBag.Conferences = conferences;
 
-            foreach (var conference in conferences)
+            if (isDivisionalFormat)
             {
-                playoffTeams.Add(new List<Standings>());
-
-                var conferenceStandings = standings
-                    .Where(s => s.ConferenceId == conference!.Id)
-                    .ToList();
-
-                var divisions = conferenceStandings
-                    .Select(c => c.Division)
-                    .Distinct();
-
-                List<Standings> leaders = new List<Standings>();
-                List<Standings> wildCards = new List<Standings>();
-                foreach (var division in divisions)
+                foreach (var conference in conferences)
                 {
-                    var divisionStandings = conferenceStandings
-                        .Where(c => c.Division == division!);
+                    seeds.Add(new List<int[]>());
+                    matchups.Add(new List<Standings[]>());
+                    
+                    var divisions = standings
+                        .Where(s => s.Conference == conference)
+                        .Select(s => s.Division)
+                        .Distinct()
+                        .OrderBy(d => d!.Name);
 
-                    var leader = divisionStandings.First();
-                    leaders.Add(leader);
-                }
+                    foreach (var division in divisions)
+                    {
+                        var teams = standings
+                            .Where(s => s.Division == division &&
+                                        s.DivisionRanking <= cutoff)
+                            .OrderBy(s => s.DivisionRanking)
+                            .ToList();
 
-                int playoffTeamsPerConference = (season > 2021) ? 8 : 4;
-                int maxWildCardCount = playoffTeamsPerConference - leaders.Count;
-                foreach (var team in conferenceStandings)
-                {
-                    if (wildCards.Count >= maxWildCardCount)
-                        break;
+                        for (int higherSeed = 1; higherSeed <= (cutoff / 2); higherSeed++)
+                        {
+                            int lowerSeed = cutoff - (higherSeed - 1);
 
-                    if (leaders.Contains(team))
-                        continue;
+                            var matchup = teams
+                                .Where(m => m.DivisionRanking == higherSeed ||
+                                            m.DivisionRanking == lowerSeed)
+                                .ToArray();
 
-                    wildCards.Add(team);
-                }
-
-                foreach (var team in leaders)
-                    playoffTeams.Last().Add(team);
-
-                foreach (var team in wildCards)
-                    playoffTeams.Last().Add(team);
-            }
-
-            List<List<Standings[]>> matchups = new List<List<Standings[]>>();
-            foreach (var conference in playoffTeams)
-            {
-                int teamCount = conference.Count;
-                matchups.Add(new List<Standings[]>());
-
-                for (int index = 0; index < teamCount / 2; index++)
-                {
-                    Standings[] matchup = new Standings[2];
-                    string[] codes = new string[2];
-
-                    matchup[0] = conference[index];
-                    matchup[1] = conference[(teamCount - 1) - index];
-
-                    matchups.Last().Add(matchup);
+                            seeds.Last().Add(new int[] { higherSeed, lowerSeed });
+                            matchups.Last().Add(matchup);
+                        }
+                    }
                 }
             }
-            
+            else if (isWildCardFormat)
+            {
+                foreach (var conference in conferences)
+                {
+                    seeds.Add(new List<int[]>());
+                    matchups.Add(new List<Standings[]>());
+                    
+                    var teams = standings
+                        .Where(s => s.Conference == conference &&
+                                    s.PlayoffRanking <= cutoff)
+                        .OrderBy(s => s.PlayoffRanking)
+                        .ToList();
+                    
+                    for (int higherSeed = 1; higherSeed <= (cutoff / 4); higherSeed++)
+                    {
+                        int[] groupSeeds =
+                        {
+                            higherSeed,
+                            (cutoff / 2) - (higherSeed - 1),
+                            (cutoff / 2) + higherSeed,
+                            cutoff - (higherSeed - 1)
+                        };
+
+                        var group = teams
+                            .Where(s => s.PlayoffRanking == groupSeeds[0] ||
+                                        s.PlayoffRanking == groupSeeds[1] ||
+                                        s.PlayoffRanking == groupSeeds[2] ||
+                                        s.PlayoffRanking == groupSeeds[3])
+                            .ToArray();
+
+                        seeds.Last().Add(new int[] { groupSeeds[0], groupSeeds[3] });
+                        seeds.Last().Add(new int[] { groupSeeds[1], groupSeeds[2] });
+                        matchups.Last().Add(new Standings[] { group[0], group[3] });
+                        matchups.Last().Add(new Standings[] { group[1], group[2] });
+                    }
+                }
+            }
+            else
+            {
+                foreach (var conference in conferences)
+                {
+                    seeds.Add(new List<int[]>());
+                    matchups.Add(new List<Standings[]>());
+
+                    var teams = standings
+                        .Where(s => s.Conference == conference &&
+                                    s.ConferenceRanking <= cutoff)
+                        .OrderBy(s => s.ConferenceRanking)
+                        .ToList();
+
+                    for (int higherSeed = 1; higherSeed <= (cutoff / 4); higherSeed++)
+                    {
+                        int[] groupSeeds =
+                        {
+                            higherSeed,
+                            (cutoff / 2) - (higherSeed - 1),
+                            (cutoff / 2) + higherSeed,
+                            cutoff - (higherSeed - 1)
+                        };
+
+                        var group = teams
+                            .Where(s => s.ConferenceRanking == groupSeeds[0] ||
+                                        s.ConferenceRanking == groupSeeds[1] ||
+                                        s.ConferenceRanking == groupSeeds[2] ||
+                                        s.ConferenceRanking == groupSeeds[3])
+                            .ToArray();
+
+                        seeds.Last().Add(new int[] { groupSeeds[0], groupSeeds[3] });
+                        seeds.Last().Add(new int[] { groupSeeds[1], groupSeeds[2] });
+                        matchups.Last().Add(new Standings[] { group[0], group[3] });
+                        matchups.Last().Add(new Standings[] { group[1], group[2] });
+                    }
+                }
+            }
+
+            ViewBag.Seeds = seeds;
 
             return View(matchups);
         }
 
-        [Route("Standings/PlayoffStatus/{season}/{team}")]
-        public async Task<IActionResult> PlayoffStatus(int season, string team, string currentStatus, string viewBy)
+        [HttpGet]
+        [Route("Standings/PlayoffStatus/{season}/{teamCode}")]
+        public async Task<IActionResult> PlayoffStatus(int season, string teamCode, string currentStatus, string viewBy)
         {
-            var statLine = _context.Standings
-                .Include(s => s.Season)
-                .Include(s => s.Conference)
-                .Include(s => s.Division)
-                .Include(s => s.Team)
-                .FirstOrDefault(s => s.Season.Year == season &&
-                                     s.Team.Code == team);
+            var _team = await _context.Teams.FirstOrDefaultAsync(t => t.Code == teamCode);
 
-            var playoffStatuses = _context.PlayoffStatuses
-                .Where(s => s.ActiveTo == null)
-                .OrderByDescending(s => s.Index);
+            var form = new PlayoffStatus_UpdateForm
+            {
+                Season = season,
+                Team = _team!,
+                Status = currentStatus,
+                ViewBy = viewBy
+            };
 
-            ViewData["PlayoffStatuses"] = new SelectList(playoffStatuses, "Symbol", "Description", currentStatus);
-
-            ViewBag.ViewBy = viewBy;
-
-            return View(statLine);
+            return View(form);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> PlayoffStatus(Guid id, [Bind("Id,PlayoffStatus")] Standings s, string viewBy)
+        public async Task<IActionResult> PlayoffStatus(PlayoffStatus_UpdateForm form)
         {
             var statLine = _context.Standings
                 .Include(s => s.Season)
                 .Include(s => s.Conference)
                 .Include(s => s.Division)
                 .Include(s => s.Team)
-                .FirstOrDefault(s => s.Id == id);
-
-            statLine!.PlayoffStatus = s.PlayoffStatus;
+                .FirstOrDefault(s => s.Season.Year == form.Season && s.Team == form.Team)!;
             
-            _context.Update(statLine);
+            statLine.PlayoffStatus = form.Status;
+
+            _context.Standings.Update(statLine);
             await _context.SaveChangesAsync();
 
-            return RedirectToAction(nameof(Index), new { season = statLine.Season.Year, viewBy = viewBy });
+            return RedirectToAction(nameof(Index), new { season = form.Season, viewBy = form.ViewBy });
         }
 
         public IActionResult Tiebreakers()
@@ -430,7 +473,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             if (leaders.Contains(team))
                 return leaders.IndexOf(team) + 1;
 
-            var wildCards = GetWildCards(standings, leaders);
+            var wildCards = GetWildCards(standings);
             return wildCards.IndexOf(team) + (leaders.Count + 1);
         }
 

@@ -4,93 +4,81 @@
 @{
     ViewData["Title"] = "Playoff Matchups";
 
-    var conferences = ViewBag.Conferences;
+    List<Conference> conferences = ViewBag.Conferences;
     int conferenceIndex = 0;
+    int season = ViewBag.Season;
 
-    string IsExtraSpaceNeeded(int groupIndex, int numberOfGroups)
+    List<List<int[]>> seeds = ViewBag.Seeds;
+
+    string IsThickerLineNeeded(int index, int numberOfMatchups)
     {
-        if (groupIndex == numberOfGroups - 1)
-            return "0";
+        if (numberOfMatchups == 4 && index == (numberOfMatchups / 2) - 1)
+            return "border-bottom: 2px solid black;";
 
-        return "75px";
+        return "";
     }
 }
 
 <h1>If the playoffs started today...</h1>
 
 <div class="container text-center align-content-center">
-    @foreach (var conference in Model)
-    {
-        <div class="row d-flex justify-content-center">
-            <h3 class="conference">@conferences[conferenceIndex].Name</h3>
-            @for (int groupIndex = 0; groupIndex < conference.Count - 2; groupIndex++)
-            {
-                int matchup1Index = groupIndex;
-                var matchup1 = conference[matchup1Index];
+    <div class="row d-flex justify-content-center">
+        @foreach (var conference in Model)
+        {
+            <div class="col-6" style="text-align: center;">
+                <h3 class="conference" style="text-align: center; margin-bottom: 20px;">
+                    @conferences[conferenceIndex].Name
+                </h3>
+                <table class="table" style="margin: auto;">
+                    <tbody>
+                        @{
+                            int matchupIndex = 0;
+                        }
 
-                int matchup2Index = conference.Count - (matchup1Index + 1);
-                var matchup2 = conference[matchup2Index];
+                        @foreach (var matchup in conference)
+                        {
+                            Standings team1 = matchup[0];
+                            Standings team2 = matchup[1];
 
-                int higherSeed = matchup1Index + 1;
-                int lowerSeed = (conference.Count * 2) - matchup1Index;
-                <div class="col-2 card container playoff-matchup">
-                    <div class="row">
-                        <div class="col">
-                            <div class="seed-number">@higherSeed</div>
-                            <img class="team-logo" src="~/@matchup1[0].Team.LogoPath" title="@matchup1[0].Team - @matchup1[0].Division!.Code" />
-                        </div>
-                        <div class="col">
-                            <div class="seed-number">@lowerSeed</div>
-                            <img class="team-logo" src="~/@matchup1[1].Team.LogoPath" title="@matchup1[1].Team - @matchup1[1].Division!.Code" />
-                        </div>
-                    </div>
-                    <div class="row teams">
-                        <div class="col">
-                            <h6>@matchup1[0].Team.City</h6>
-                            <h3>@matchup1[0].Team.Name</h3>
-                            <span class="vs">&mdash; VS &mdash;</span>
-                            <h6>@matchup1[1].Team.City</h6>
-                            <h3>@matchup1[1].Team.Name</h3>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col">
-                            <a asp-action="HeadToHeadComparison" asp-route-season="@matchup1[0].Season.Year" asp-route-team1Code="@matchup1[0].Team.Code" asp-route-team2Code="@matchup1[1].Team.Code">Head-to-Head</a>
-                        </div>
-                    </div>
-                </div>
+                            <tr class="playoff-matchup" style="@IsThickerLineNeeded(matchupIndex, conference.Count)">
+                                <td style="text-align: right; width: 35%;">
+                                    <div style="margin-right: 15px;">
+                                        <h6>@team1.Team.City</h6>
+                                        <h3>@team1.Team.Name</h3>
+                                    </div>
+                                </td>
+                                <td>
+                                    <strong style="font-size: 18pt;">@seeds[conferenceIndex][matchupIndex][0]</strong>
+                                </td>
+                                <td class="col-1">
+                                    <img class="team-logo" src="~/@team1.Team.LogoPath"
+                                         title="@team1.Team - @team1.Division!.Code" />
+                                </td>
+                                <td class="vs">
+                                    VS
+                                </td>
+                                <td class="col-1">
+                                    <img class="team-logo" src="~/@team2.Team.LogoPath"
+                                         title="@team2.Team - @team2.Division!.Code" />
+                                </td>
+                                <td>
+                                    <strong style="font-size: 18pt;">@seeds[conferenceIndex][matchupIndex][1]</strong>
+                                </td>
+                                <td style="text-align: left; width: 35%;">
+                                    <div style="margin-left: 15px;">
+                                        <h6>@team2.Team.City</h6>
+                                        <h3>@team2.Team.Name</h3>
+                                    </div>
+                                </td>
+                            </tr>
 
-                higherSeed = matchup2Index + 1;
-                lowerSeed = (conference.Count * 2) - matchup2Index;
-                <div class="col-2 card container playoff-matchup" style="margin-right: @IsExtraSpaceNeeded(groupIndex, conference.Count / 2)">
-                    <div class="row">
-                        <div class="col">
-                            <div class="seed-number">@higherSeed</div>
-                            <img class="team-logo" src="~/@matchup2[0].Team.LogoPath" title="@matchup2[0].Team - @matchup2[0].Division!.Code" />
-                        </div>
-                        <div class="col">
-                            <div class="seed-number">@lowerSeed</div>
-                            <img class="team-logo" src="~/@matchup2[1].Team.LogoPath" title="@matchup2[1].Team - @matchup2[1].Division!.Code" />
-                        </div>
-                    </div>
-                    <div class="row teams">
-                        <div class="col">
-                            <h6>@matchup2[0].Team.City</h6>
-                            <h3>@matchup2[0].Team.Name</h3>
-                            <span class="vs">&mdash; VS &mdash;</span>
-                            <h6>@matchup2[1].Team.City</h6>
-                            <h3>@matchup2[1].Team.Name</h3>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col">
-                            <a asp-action="HeadToHeadComparison" asp-route-season="@matchup2[0].Season.Year" asp-route-team1Code="@matchup2[0].Team.Code" asp-route-team2Code="@matchup2[1].Team.Code">Head-to-Head</a>
-                        </div>
-                    </div>
-                </div>
-            }
-        </div>
+                            matchupIndex++;
+                        }
+                    </tbody>
+                </table>
+            </div>
 
-        conferenceIndex++;
-    }
+            conferenceIndex++;
+        }
+    </div>
 </div>

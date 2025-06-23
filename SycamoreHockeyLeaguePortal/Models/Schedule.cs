@@ -33,6 +33,12 @@ namespace SycamoreHockeyLeaguePortal.Models
         [Display(Name = "Round")]
         public PlayoffRound? PlayoffRound { get; set; }
 
+        [ForeignKey(nameof(PlayoffSeries))]
+        public Guid? PlayoffSeriesId { get; set; }
+
+        [Display(Name = "Series")]
+        public PlayoffSeries? PlayoffSeries { get; set; }
+
         [Display(Name = "Game #")]
         public int? PlayoffGameIndex { get; set; }
 
@@ -59,6 +65,8 @@ namespace SycamoreHockeyLeaguePortal.Models
 
         [Display(Name = "Period")]
         public int Period { get; set; }
+
+        public bool IsConfirmed { get; set; } = true;
 
         [Display(Name = "Live?")]
         public bool IsLive { get; set; }

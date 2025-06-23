@@ -25,7 +25,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="wwwroot\images\action-photos\" />
+    <Folder Include="wwwroot\images\stanley-cup-captains\" />
   </ItemGroup>
 
 </Project>

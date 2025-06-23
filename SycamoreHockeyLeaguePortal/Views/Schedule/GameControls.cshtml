@@ -1,9 +1,14 @@
 ﻿@using Microsoft.AspNetCore.Identity
 @model SycamoreHockeyLeaguePortal.Models.Schedule
 @inject UserManager<ApplicationUser> UserManager
+@inject SycamoreHockeyLeaguePortal.Data.ApplicationDbContext _context
 
 @{
-    ViewData["Title"] = $"{Model.Date.ToShortDateString()} - {Model.AwayTeam.Code} {Model.AwayScore} - {Model.HomeScore} {Model.HomeTeam.Code} ({Model.ShortStatus})";
+    HeadToHeadSeries matchup = ViewBag.Matchup;
+    List<Schedule> results = ViewBag.Results;
+    List<Standings> teamStats = ViewBag.TeamStats;
+
+    ViewData["Title"] = $"{Model.Date.ToShortDateString()} - {Model.AwayTeam.Code} @ {Model.HomeTeam.Code}";
 
     string apiDomain = (string)TempData["APIDomain"]!;
     string mvcDomain = (string)TempData["MVCDomain"]!;
@@ -41,6 +46,137 @@
 
     string GetFullEndpointURL(string endpoint) {
         return apiDomain + $"{endpoint}/{Model.Id}";
+    }
+
+    string GetTeamString(Team team)
+    {
+        int teamsInSameCity = _context.Teams.Count(t => t.City == team.City);
+        if (teamsInSameCity > 1)
+            return team.AlternateName!;
+
+        return team.City;
+    }
+
+    string GetSeasonSeriesScoreString()
+    {
+        int gamesPlayed;
+
+        if (teamStats[0].Conference != teamStats[1].Conference)
+        {
+            gamesPlayed = results.Count;
+
+            return gamesPlayed switch
+            {
+                0 => "First-Ever Meeting!",
+                1 => "Last Meeting",
+                _ => $"Last {gamesPlayed} Meetings"
+            };
+        }   
+        else
+        {
+            gamesPlayed = results.Count(r => r.IsFinalized);
+            bool seriesComplete = gamesPlayed == results.Count;
+
+            string verb;
+            Team? leader;
+            int leadingScore;
+            int trailingScore;
+            if (matchup.Team1Wins == matchup.Team2Wins)
+            {
+                verb = seriesComplete ? "split" : "is tied";
+                leader = (matchup.Team1GoalsFor != matchup.Team2GoalsFor) ?
+                    ((matchup.Team1GoalsFor > matchup.Team2GoalsFor) ? matchup.Team1 : matchup.Team2) : null;
+
+                leadingScore = Math.Max(matchup.Team1GoalsFor, matchup.Team2GoalsFor);
+                trailingScore = Math.Min(matchup.Team1GoalsFor, matchup.Team2GoalsFor);
+                string scoreString = $"Season series {verb} {matchup.Team1Wins}-{matchup.Team2Wins}";
+
+                if (gamesPlayed > 0)
+                {
+                    scoreString += $" (Agg. {leadingScore}-{trailingScore}";
+
+                    if (leader != null)
+                        scoreString += $" {leader.Code})";
+                    else
+                        scoreString += ")";
+                }
+
+                return scoreString;
+            }
+            else
+            {
+                leader = (matchup.Team1Wins > matchup.Team2Wins) ? matchup.Team1 : matchup.Team2;
+                if (leader.City == "New York")
+                    verb = seriesComplete ? "win" : "lead";
+                else
+                    verb = seriesComplete ? "wins" : "leads";
+
+                leadingScore = Math.Max(matchup.Team1Wins, matchup.Team2Wins);
+                trailingScore = Math.Min(matchup.Team1Wins, matchup.Team2Wins);
+
+                return $"{GetTeamString(leader)} {verb} season series {leadingScore}-{trailingScore}";
+            }
+        }
+    }
+
+    string GetRankingString(int ranking)
+    {
+        return $"{ranking}{DetermineOrdinalSuffix(ranking)}";
+    }
+
+    string GetDivisionRankingString(Standings team, int ranking)
+    {
+        if (teamStats[0].Division == teamStats[1].Division)
+            return GetRankingString(ranking);
+
+        Dictionary<string, string> divisions = new();
+        divisions.Add("Atlantic", "A");
+        divisions.Add("East", "E");
+        divisions.Add("Metropolitan", "M");
+        divisions.Add("Northeast", "NE");
+        divisions.Add("Southeast", "SE");
+        divisions.Add("Central", "C");
+        divisions.Add("Northwest", "NW");
+        divisions.Add("Pacific", "P");
+        divisions.Add("West", "W");
+
+        string division = divisions[team.Division!.Name.Replace(" Division", "")];
+        return $"{division}{ranking}";
+    }
+
+    string GetPlayoffRankingString(Standings team, int ranking)
+    {
+        if (teamStats[0].Conference == teamStats[1].Conference)
+            return GetRankingString(ranking);
+
+        Dictionary<string, string> conferences = new();
+        conferences.Add("Eastern", "E");
+        conferences.Add("Western", "W");
+
+        string conference = conferences[team.Conference!.Name.Replace(" Conference", "")];
+        return $"{conference}{ranking}";
+    }
+
+    string DetermineOrdinalSuffix(int value)
+    {
+        int last2Digits = value % 100;
+        if (last2Digits >= 11 && last2Digits <= 13)
+            return "th";
+
+        return (value % 10) switch
+        {
+            1 => "st",
+            2 => "nd",
+            3 => "rd",
+            _ => "th"
+        };
+    }
+
+    string GetGameDateString(DateTime date)
+    {
+        return date.Year == DateTime.Now.Year ?
+            date.ToString("ddd, MMM d") :
+            date.ToString("MMM d, yyyy");
     }
 }
 
@@ -104,15 +240,103 @@
             }
             else
             {
-                <div class="row" style="margin-top: 30px;">
-                    <div class="col text-center">
-                        <a class="btn btn-primary"
-                            id="btn-start-or-resume-game"
-                            data-url="@GetFullEndpointURL(GetEndpoint("StartOrResumeGame"))">
+                if (DateTime.Now.Date >= Model.Date.Date)
+                {
+                    <div class="row" style="margin-top: 30px; margin-bottom: 30px;">
+                        <div class="col text-center">
+                            <a class="btn btn-primary"
+                               id="btn-start-or-resume-game"
+                               data-url="@GetFullEndpointURL(GetEndpoint("StartOrResumeGame"))">
                                 @(Model.Period == 0 ? "Start Game" : "Resume Game")
-                        </a>
+                            </a>
+                        </div>
                     </div>
-                </div>
+
+                    <div class="container head-to-head">
+                        <div class="row">
+                            <div class="col-8 comparison">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th colspan="2"></th>
+                                            <th>W-L</th>
+                                            <th>Win %</th>
+                                            <th>RW</th>
+                                            <th>ROW</th>
+                                            <th>L10</th>
+                                            <th>Division</th>
+                                            <th>Playoffs</th>
+                                            <th>League</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var team in teamStats)
+                                        {
+                                            <tr>
+                                                <td class="col-1">
+                                                    <img src="~/@team.Team.LogoPath" width="25" height="25" />
+                                                </td>
+                                                <td class="col-3">@team.Team.FullName</td>
+                                                <td class="col-1">@team.Record_2024Format</td>
+                                                <th class="col-1">@team.WinPct</th>
+                                                <td class="col-1">@team.RegulationWins</td>
+                                                <td class="col-1">@team.RegPlusOTWins</td>
+                                                <td class="col-1">@team.RecordInLast10Games</td>
+                                                <td class="col-1">@GetDivisionRankingString(team, team.DivisionRanking)</td>
+                                                <td class="col-1">@GetPlayoffRankingString(team, team.PlayoffRanking)</td>
+                                                <td class="col-1">@GetRankingString(team.LeagueRanking)</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="col-4 results">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th colspan="5">@GetSeasonSeriesScoreString()</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var game in results)
+                                        {
+                                            <tr>
+                                                <td class="col-2">
+                                                    <img class="team-logo" src="~/@game.AwayTeam.LogoPath" />
+                                                </td>
+                                                <td class="col-2" style="font-size: 22pt;">
+                                                    @(game.Period > 0 ? game.AwayScore : " ")
+                                                </td>
+                                                <td class="col-4">
+                                                    @GetGameDateString(game.Date)
+                                                    @if (game.Period > 0)
+                                                    {
+                                                        <br />
+
+                                                        @game.Status
+                                                    }
+                                                </td>
+                                                <td class="col-2" style="font-size: 22pt;">
+                                                    @(game.Period > 0 ? game.HomeScore : " ")
+                                                </td>
+                                                <td class="col-2">
+                                                    <img class="team-logo" src="~/@game.HomeTeam.LogoPath" />
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center" style="margin-top: 50px; margin-bottom: 50px;">
+                        <h4 class="text-danger">This game cannot be started yet.</h4>
+                        <a asp-controller="Schedule" asp-action="Index" asp-route-weekOf="@Model.Date.ToShortDateString()">Back to Schedule</a>
+                    </div>
+                }
             }
         }
         else

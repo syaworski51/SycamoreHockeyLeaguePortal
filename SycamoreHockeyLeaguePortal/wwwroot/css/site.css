@@ -78,7 +78,7 @@ h1, h2, h3, h4, h5, h6 {
 
 body {
     margin-bottom: 60px;
-    background-image: url('../images/action-photos/utah-vs-detroit.png');
+    background-image: url('../images/action-photos/detroit-vs-utah.png');
     background-attachment: fixed;
     background-position: center;
     background-repeat: no-repeat;
@@ -103,7 +103,7 @@ th, td {
 }
 
 thead tr {
-    border-bottom: 2px solid black;
+    border-bottom: 3px solid black;
 }
 
 tbody tr {
@@ -167,12 +167,12 @@ img {
 }
 
 .score-card img {
-    width: 20px;
-    height: 20px;
+    width: 25px;
+    height: 25px;
 }
 
 .score-card .score {
-    font-size: 16pt;
+    font-size: 18pt;
 }
 
 .score-card .status {
@@ -372,12 +372,12 @@ img {
 
 .playoff-matchup .vs {
     font-family: "Druk Wide";
-    font-size: 8pt;
+    font-size: 10pt;
 }
 
 .playoff-matchup .team-logo {
-    width: 70px;
-    height: 70px;
+    width: 50px;
+    height: 50px;
 }
 
 .conference {
@@ -435,17 +435,26 @@ img {
     margin: auto;
 }
 
-.team-schedule .result, .team-schedule .score {
+.team-schedule .result, .team-schedule .score, .head-to-head .results .score {
     font-weight: bold;
     font-size: 18pt;
 }
 
-.team-schedule .opponent-name {
+.head-to-head .results tr {
+    line-height: 20px;
+}
+
+.head-to-head .team-logo {
+    width: 35px;
+    height: 35px;
+}
+
+.team-schedule .opponent-name, #h2h-results .opponent-name {
     width: 215px;
     text-align: right;
 }
 
-.team-schedule .opponent-logo {
+.team-schedule .opponent-logo, #h2h-results .opponent-logo {
     width: 30px;
 }
 
@@ -649,7 +658,11 @@ img {
 }
 
 .playoff-cutoff {
-    border-bottom: 1px solid black;
+    border-bottom: 2px solid black;
+}
+
+.leader-cutoff {
+    border-bottom: 2px dashed black;
 }
 
 .game-controls .col {
@@ -739,4 +752,16 @@ img {
     background-color: #ccefff;
     font-weight: bold;
     border: 1px dashed blue;
+}
+
+.h2h-record, .h2h-aggregate {
+    font-size: 16pt;
+}
+
+.h2h-record {
+    font-family: "Druk Wide Trial";
+}
+
+.h2h-aggregate {
+    font-weight: bold;
 }

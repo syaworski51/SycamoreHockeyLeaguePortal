@@ -8,28 +8,23 @@
 
     string GetName(Team team)
     {
-        var teamsInSameCity = _context.Teams
-            .Where(t => t.City == team.City);
-
-        if (teamsInSameCity.Count() > 1)
-            return team.AlternateName!;
-
-        return team.City;
+        bool multipleTeamsInSameCity = _context.Teams.Count(t => t.City == team.City) > 1;
+        return multipleTeamsInSameCity ? team.AlternateName! : team.City;
     }
 
-    string GetStreak(Standings teamStats)
+    string GetStreak(Standings team)
     {
-        if (teamStats.Streak != 0)
+        if (team.Streak != 0)
         {
-            string type = (teamStats.Streak > 0) ? "W" : "L";
-            int duration = Math.Abs(teamStats.Streak);
+            string type = (team.Streak > 0) ? "W" : "L";
+            int duration = Math.Abs(team.Streak);
             return $"{type} {duration}";
         }
 
-        return "--";
+        return "-";
     }
 
-    string GetColor(int value)
+    string GetTextColor(int value)
     {
         if (value > 0)
             return "text-success";
@@ -40,25 +35,48 @@
         return "text-dark";
     }
 
+    string IsRowCutoff(int rank)
+    {
+        string defaultClass = "standings-record";
+
+        string isCutoff = IsRowLeaderCutoff(rank);
+        if (isCutoff != defaultClass)
+            return isCutoff;
+
+        isCutoff = IsRowPlayoffCutoff(rank);
+        if (isCutoff != defaultClass)
+            return isCutoff;
+
+        return defaultClass;
+    }
+
+    string IsRowLeaderCutoff(int rank)
+    {
+        if ((season == 2024 || season == 2025) && viewBy == "playoffs")
+            return rank == 3 ?
+                "leader-cutoff" :
+                "standings-record";
+
+        return "standings-record";
+    }
+
     string IsRowPlayoffCutoff(int rank)
     {
-        int cutoff = viewBy == "playoffs" ? 8 : 4;
-
-        if ((season <= 2022 && viewBy == "division") ||
-            (season >= 2023 && viewBy == "playoffs"))
-            return (rank == cutoff) ?
+        if ((season <= 2025 && viewBy == "playoffs") ||
+            (season >= 2026 && viewBy == "conference"))
+            return rank == 8 ?
                 "playoff-cutoff" :
                 "standings-record";
 
         return "standings-record";
     }
 
-    string GetGoalDifferentialString(int gd)
+    string GetGoalDifferentialString(int goalDiff)
     {
-        if (gd > 0)
-            return $"+{gd}";
+        if (goalDiff > 0)
+            return $"+{goalDiff}";
 
-        return gd.ToString();
+        return goalDiff.ToString();
     }
 
     List<List<Standings>> GetStandingsByDivision(string conference)
@@ -67,7 +85,7 @@
 
         var divisions = _context.Alignments
             .Where(s => s.Season.Year == season &&
-                        s.Conference.Code == conference)
+                        s.Conference!.Code == conference)
             .Select(d => d.Division)
             .Distinct();
 
@@ -76,7 +94,7 @@
             standings.Add(new List<Standings>());
 
             var teams = Model
-                .Where(s => s.DivisionId == division.Id);
+                .Where(s => s.DivisionId == division!.Id);
 
             foreach (var team in teams)
                 standings.Last().Add(team);
@@ -147,50 +165,33 @@
         string clinchedConference = "bg-success";
         string clinchedDivision = "bg-success";
         string clinchedHomeIceAdvantage = "bg-primary";
-        string clinched2021PlayoffSpot = "bg-primary";
         string clinchedPlayoffSpot = "bg-secondary";
         string eliminated = "bg-danger";
+        string demoted = "bg-dark text-white";
 
-        if (season == 2021)
-        {
-            switch (playoffStatus)
+        if (season == 2024 || season == 2025)
+            return playoffStatus switch
             {
-                case "z":
-                    return clinchedPresidentsTrophy;
+                "P" => clinchedPresidentsTrophy,
+                "Z" => clinchedConference,
+                "Y" => clinchedDivision,
+                "X" => clinchedHomeIceAdvantage,
+                "x" => clinchedPlayoffSpot,
+                "e" => eliminated,
+                "d" => demoted,
+                _ => ""
+            };
 
-                case "y":
-                    return clinchedDivision;
-
-                case "e":
-                    return eliminated;
-
-                default:
-                    return clinched2021PlayoffSpot;
-            }
-        }
-        else
+        return playoffStatus switch
         {
-            switch (playoffStatus)
-            {
-                case "P":
-                    return clinchedPresidentsTrophy;
-
-                case "Z":
-                    return clinchedConference;
-
-                case "Y":
-                    return clinchedDivision;
-
-                case "X":
-                    return clinchedHomeIceAdvantage;
-
-                case "e":
-                    return eliminated;
-
-                default:
-                    return clinchedPlayoffSpot;
-            }
-        }
+            "Z" => clinchedPresidentsTrophy,
+            "Y" => clinchedConference,
+            "X" => clinchedHomeIceAdvantage,
+            "x" => clinchedPlayoffSpot,
+            "e" => eliminated,
+            "d" => demoted,
+            _ => ""
+        };
     }
 
     string GetPlayoffStatusDescription(string symbol)
@@ -205,6 +206,14 @@
         return description;
     }
 
+    string GetPlayoffsGamesBehindString(Standings team) 
+    {
+        var standings = Model.Where(s => s.Conference == team.Conference);
+        var lastWildCard = standings.FirstOrDefault(s => s.PlayoffRanking == 8)!;
+
+        return GetGamesBehindString(team.ConferenceGamesBehind - lastWildCard.ConferenceGamesBehind);
+    }
+
     string GetGamesBehindString(decimal gamesBehind)
     {
         if (gamesBehind < 0)
@@ -214,7 +223,7 @@
         }
 
         if (gamesBehind == 0)
-            return "--";
+            return "-";
 
 
         return gamesBehind.ToString();
@@ -300,9 +309,14 @@
 
             foreach (var team in teams)
             {
-                <tr class="@IsRowPlayoffCutoff(rank)">
+                <tr class="@IsRowCutoff(rank)">
                     <th>
-                        <a class="change-playoff-status" asp-action="PlayoffStatus" asp-route-season="@team.Season.Year" asp-route-team="@team.Team.Code" asp-route-currentStatus="@team.PlayoffStatus" asp-route-viewBy="@ViewBag.ViewBy">@rank</a>
+                        <a class="change-playoff-status" 
+                           asp-action="PlayoffStatus" 
+                           asp-route-season="@team.Season.Year" 
+                           asp-route-teamCode="@team.Team.Code" 
+                           asp-route-currentStatus="@team.PlayoffStatus" 
+                           asp-route-viewBy="@ViewBag.ViewBy">@rank</a>
                     </th>
                     <td class="team-logo">
                         <img src="~/@team.Team.LogoPath" width="25" height="25" />
@@ -310,20 +324,32 @@
                     @if (team.NextGame != null)
                     {
                         <td class="team-name" title="@GetNextGameString(team)">
-                            <a class="team-link" asp-controller="Teams" asp-action="Details" asp-route-id="@team.Team.Code" asp-route-season="@season" asp-route-gameType="regular-season">@team.Team</a>
+                            <a class="team-link" 
+                               asp-controller="Teams" 
+                               asp-action="Details" 
+                               asp-route-id="@team.Team.Code" 
+                               asp-route-season="@season" 
+                               asp-route-gameType="regular-season">@team.Team</a>
                             @if (team.PlayoffStatus != "")
                             {
-                                <span class="badge @GetBadgeClass(season, team.PlayoffStatus!)" title="@GetPlayoffStatusDescription(team.PlayoffStatus!)">@team.PlayoffStatus</span>
+                                <span class="badge @GetBadgeClass(season, team.PlayoffStatus!)" 
+                                      title="@GetPlayoffStatusDescription(team.PlayoffStatus!)">@team.PlayoffStatus</span>
                             }
                         </td>
                     }
                     else
                     {
                         <td class="team-name">
-                            <a class="team-link" asp-controller="Teams" asp-action="Details" asp-route-id="@team.Team.Code" asp-route-season="@season" asp-route-gameType="regular-season">@team.Team</a>
+                            <a class="team-link" 
+                               asp-controller="Teams" 
+                               asp-action="Details" 
+                               asp-route-id="@team.Team.Code" 
+                               asp-route-season="@season" 
+                               asp-route-gameType="regular-season">@team.Team</a>
                             @if (team.PlayoffStatus != "")
                             {
-                                <span class="badge @GetBadgeClass(season, team.PlayoffStatus!)" title="@GetPlayoffStatusDescription(team.PlayoffStatus!)">@team.PlayoffStatus</span>
+                                <span class="badge @GetBadgeClass(season, team.PlayoffStatus!)" 
+                                      title="@GetPlayoffStatusDescription(team.PlayoffStatus!)">@team.PlayoffStatus</span>
                             }
                         </td>
                     }
@@ -344,9 +370,13 @@
                         {
                             @GetGamesBehindString(team.DivisionGamesBehind)
                         }
-                        else if (viewBy == "conference" || viewBy == "playoffs")
+                        else if (viewBy == "conference")
                         {
                             @GetGamesBehindString(team.ConferenceGamesBehind)
+                        }
+                        else if ((season == 2024 || season == 2025) && viewBy == "playoffs")
+                        {
+                            @GetPlayoffsGamesBehindString(team)
                         }
                         else
                         {
@@ -359,10 +389,10 @@
                     <td>
                         @Html.DisplayFor(modelItem => team.GoalsAgainst)
                     </td>
-                    <td class="@GetColor(team.GoalDifferential)">
+                    <td class="@GetTextColor(team.GoalDifferential)">
                         @GetGoalDifferentialString(team.GoalDifferential)
                     </td>
-                    <td class="@GetColor(team.Streak)">
+                    <td class="@GetTextColor(team.Streak)">
                         @GetStreak(team)
                     </td>
                     <td>

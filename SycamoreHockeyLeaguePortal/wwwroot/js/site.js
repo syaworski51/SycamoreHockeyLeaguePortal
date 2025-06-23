@@ -3,8 +3,8 @@
 
 // Write your JavaScript code.
 
-let REGULAR_SEASON = "Regular Season";
-let PLAYOFFS = "Playoffs";
+const REGULAR_SEASON = "Regular Season";
+const PLAYOFFS = "Playoffs";
 
 function EnableGoToDateButton() {
     $("#btn-go-to-date").removeClass("disabled");
@@ -19,26 +19,26 @@ function UpdateDisplay(endpoint) {
             $("#home-score").html(data.homeScore);
             $("#current-status").html(data.status);
 
-            let finalizeButton = $("#btn-finalize-game");
+            const finalizeButton = $("#btn-finalize-game");
             var condition = data.isLive && !data.isFinalized && data.period >= 3 && data.awayScore != data.homeScore;
             EnableOrDisableButton(finalizeButton, condition);
 
-            let nextPeriodButton = $("#btn-next-period");
+            const nextPeriodButton = $("#btn-next-period");
             condition = data.isLive && (data.period < 3 || data.awayScore == data.homeScore) &&
                 ((data.type == REGULAR_SEASON && data.period < 5) || data.type == PLAYOFFS);
             EnableOrDisableButton(nextPeriodButton, condition);
 
-            let previousPeriodButton = $("#btn-previous-period");
+            const previousPeriodButton = $("#btn-previous-period");
             EnableOrDisableButton(previousPeriodButton, data.isLive && data.period > 1);
 
-            let awayGoalButton = $("#btn-away-goal");
-            let homeGoalButton = $("#btn-home-goal");
+            const awayGoalButton = $("#btn-away-goal");
+            const homeGoalButton = $("#btn-home-goal");
             condition = (data.isLive && data.period <= 3) || data.awayScore == data.homeScore;
             EnableOrDisableButton(awayGoalButton, condition);
             EnableOrDisableButton(homeGoalButton, condition);
 
-            let removeAwayGoalButton = $("#btn-remove-away-goal");
-            let removeHomeGoalButton = $("#btn-remove-home-goal");
+            const removeAwayGoalButton = $("#btn-remove-away-goal");
+            const removeHomeGoalButton = $("#btn-remove-home-goal");
             EnableOrDisableButton(removeAwayGoalButton, data.isLive && data.awayScore > 0);
             EnableOrDisableButton(removeHomeGoalButton, data.isLive && data.homeScore > 0);
         },
@@ -49,7 +49,7 @@ function UpdateDisplay(endpoint) {
 }
 
 function EnableOrDisableButton(button, shouldEnable) {
-    let disabled = "disabled";
+    const disabled = "disabled";
 
     if (shouldEnable) {
         if (button.hasClass(disabled))

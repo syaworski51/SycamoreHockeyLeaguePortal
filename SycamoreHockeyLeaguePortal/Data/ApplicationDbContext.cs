@@ -27,6 +27,5 @@ namespace SycamoreHockeyLeaguePortal.Data
         public DbSet<GameType> GameTypes { get; set; } = default!;
         public DbSet<TeamBrandingHistory> TeamBrandingHistory { get; set; } = default!;
         public DbSet<HeadToHeadSeries> HeadToHeadSeries { get; set; } = default!;
-        public DbSet<SycamoreHockeyLeaguePortal.Models.RankedPlayoffSeries> RankedPlayoffSeries { get; set; } = default!;
     }
 }

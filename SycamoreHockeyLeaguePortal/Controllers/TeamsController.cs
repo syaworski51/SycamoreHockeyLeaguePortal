@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using MongoDB.Bson;
 using SycamoreHockeyLeaguePortal.Data;
 using SycamoreHockeyLeaguePortal.Models;
 
@@ -67,8 +68,8 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 return NotFound();
             }
 
-            var team = await _context.Teams
-                .FirstOrDefaultAsync(m => m.Code == id);
+            var team = await _context.Teams.FirstOrDefaultAsync(m => m.Code == id);
+            ViewBag.Team = team;
 
             if (team == null)
             {
@@ -86,10 +87,6 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             ViewData["Seasons"] = new SelectList(seasons, "Year", "Year");
             ViewBag.Season = season;
 
-            var gameTypes = _context.GameTypes
-                .OrderBy(t => t.Index);
-            ViewData["GameTypes"] = new SelectList(gameTypes, "ParameterValue", "Name");
-
             var teamStats = _context.Standings
                 .Include(s => s.Season)
                 .Include(s => s.Conference)
@@ -106,11 +103,16 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                     gameType = "Regular Season";
                     break;
 
+                case "tiebreaker":
+                    gameType = "Tiebreaker";
+                    break;
+
                 case "playoffs":
                     gameType = "Playoffs";
                     break;
             }
             ViewBag.GameType = gameType;
+
 
             var opponents = _context.Alignments
                 .Include(a => a.Season)
@@ -126,11 +128,20 @@ namespace SycamoreHockeyLeaguePortal.Controllers
 
             schedule = schedule
                 .Where(s => s.Season.Year == season &&
-                            s.Type == gameType &&
                             (s.AwayTeam.Code == id ||
                              s.HomeTeam.Code == id))
-                .OrderBy(s => s.Date)
-                .ThenBy(s => s.GameIndex);
+                .OrderBy(s => s.Date);
+
+            var teamGameTypes = schedule
+                .Select(s => s.Type)
+                .Distinct();
+
+            var gameTypes = _context.GameTypes
+                .Where(t => teamGameTypes.Contains(t.Name))
+                .OrderBy(t => t.Index);
+            ViewData["GameTypes"] = new SelectList(gameTypes, "ParameterValue", "Name");
+
+            schedule = schedule.Where(s => s.Type == gameType);
 
             if (opponent != null)
             {
@@ -141,6 +152,20 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             ViewBag.Opponent = opponent;
 
             ViewData["Schedule"] = schedule;
+
+            List<HeadToHeadSeries> h2hResults = _context.HeadToHeadSeries
+                .Include(r => r.Season)
+                .Include(r => r.Team1)
+                .Include(r => r.Team2)
+                .Where(r => r.Season.Year == season &&
+                            (r.Team1 == team || r.Team2 == team) &&
+                            (r.Team1Wins + r.Team2Wins) > 0)
+                .OrderBy(r => r.Team1.City)
+                .ThenBy(r => r.Team1.Name)
+                .ThenBy(r => r.Team2.City)
+                .ThenBy(r => r.Team2.Name)
+                .ToList();            
+            ViewBag.H2HResults = h2hResults;
 
             return View(team);
         }

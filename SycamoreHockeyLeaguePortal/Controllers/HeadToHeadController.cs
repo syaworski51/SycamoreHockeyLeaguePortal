@@ -14,6 +14,8 @@ namespace SycamoreHockeyLeaguePortal.Controllers
     {
         private readonly ApplicationDbContext _context;
 
+        private const string REGULAR_SEASON = "Regular Season";
+
         public HeadToHeadController(ApplicationDbContext context)
         {
             _context = context;

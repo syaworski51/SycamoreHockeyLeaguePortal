@@ -1,11 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SHLAPI.Models;
 
 public partial class Team
 {
     public Guid Id { get; set; }
+
+    [ForeignKey(nameof(Conference))]
+    public Guid? ConferenceId { get; set; }
+
+    public Conference? Conference { get; set; }
+
+    [ForeignKey(nameof(Division))]
+    public Guid? DivisionId { get; set; }
+
+    public Division? Division { get; set; }
 
     public string Code { get; set; } = null!;
 
