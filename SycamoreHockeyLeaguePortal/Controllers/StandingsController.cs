@@ -35,6 +35,9 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             ViewBag.Season = season;
             ViewBag.ViewBy = viewBy;
 
+            if (season >= 2026 && viewBy == VIEWBY_DIVISION)
+                return RedirectToAction(nameof(Index), new { season = season, viewBy = VIEWBY_CONFERENCE });
+
             var seasons = _context.Seasons
                 .OrderByDescending(s => s.Year);
             ViewBag.Seasons = new SelectList(seasons, "Year", "Year");

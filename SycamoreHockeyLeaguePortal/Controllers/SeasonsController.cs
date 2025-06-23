@@ -119,11 +119,15 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 .Select(s => s.Team);
 
             var easternReplacements = _context.Teams
-                .Where(t => t.Conference == conferences["EAST"] && !previousTeams.Contains(t));
+                .Where(t => t.Conference == conferences["EAST"] && !previousTeams.Contains(t))
+                .OrderBy(t => t.City)
+                .ThenBy(t => t.Name);
             ViewBag.EasternReplacements = new SelectList(easternReplacements, "Id", "FullName");
 
             var westernReplacements = _context.Teams
-                .Where(t => t.Conference == conferences["WEST"] && !previousTeams.Contains(t));
+                .Where(t => t.Conference == conferences["WEST"] && !previousTeams.Contains(t))
+                .OrderBy(t => t.City)
+                .ThenBy(t => t.Name);
             ViewBag.WesternReplacements = new SelectList(westernReplacements, "Id", "FullName");
 
             Season_CreateForm form = new()
@@ -144,6 +148,9 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         {
             if (form.EasternReplacementId == null || form.WesternReplacementId == null)
                 return RedirectToAction(nameof(Create));
+
+            form.EasternReplacement = _context.Teams.FirstOrDefault(t => t.Id == form.EasternReplacementId);
+            form.WesternReplacement = _context.Teams.FirstOrDefault(t => t.Id == form.WesternReplacementId);
             
             var previousYear = _context.Seasons.Max(s => s.Year);
             var conferences = _context.Conferences
@@ -210,6 +217,15 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 .Where(r => r.Season.Year == previousYear)
                 .OrderBy(r => r.Index);
 
+            var lastYearsMatchups = _context.PlayoffSeries
+                .Include(s => s.Season)
+                .Include(s => s.Round)
+                .Include(s => s.Team1)
+                .Include(s => s.Team2)
+                .Where(s => s.Season.Year == previousYear)
+                .OrderBy(s => s.Index)
+                .ToDictionary(s => s.Index);
+
             int ascii = 65;  // ASCII code for 'A'
             foreach (var round in playoffRounds)
             {
@@ -227,6 +243,10 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 int numberOfMatchups = (int)Math.Pow(2, 4 - round.Index);
                 for (int matchupIndex = 0; matchupIndex < numberOfMatchups; matchupIndex++)
                 {
+                    string index = ((char)ascii).ToString();
+
+                    var previousMatchup = lastYearsMatchups[index];
+                    
                     var matchup = new PlayoffSeries
                     {
                         Id = Guid.NewGuid(),
@@ -234,7 +254,10 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                         Season = season,
                         RoundId = newRound.Id,
                         Round = newRound,
-                        Index = ((char)ascii).ToString(),
+                        Index = index,
+                        Description = previousMatchup.Description,
+                        Team1Placeholder = previousMatchup.Team1Placeholder,
+                        Team2Placeholder = previousMatchup.Team2Placeholder,
                         IsConfirmed = false,
                         HasEnded = false
                     };

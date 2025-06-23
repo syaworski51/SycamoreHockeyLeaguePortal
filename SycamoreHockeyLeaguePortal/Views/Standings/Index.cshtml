@@ -232,16 +232,13 @@
                 View by:
                 @Html.DropDownList("viewBy", (IEnumerable<SelectListItem>)ViewBag.SortOptions, new { onchange = "submit()" })
             </div>
-            <div class="col-7 container" id="standings-links">
+            <div class="col-6 container" id="standings-links">
                 <div class="row">
                     <div class="col">
                         <a asp-action="Tiebreakers">Tiebreakers</a>
                     </div>
                     <div class="col">
                         <a asp-action="PlayoffFormat">Playoff Format</a>
-                    </div>
-                    <div class="col">
-                        <a asp-action="PlayoffScenarios" asp-route-season="@season">Playoff Scenarios</a>
                     </div>
                     <div class="col">
                         <a asp-action="PlayoffMatchups" asp-route-season="@ViewBag.Season">Current Matchups</a>
