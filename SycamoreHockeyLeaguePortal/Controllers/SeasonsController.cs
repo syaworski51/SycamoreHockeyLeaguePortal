@@ -172,7 +172,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 InTestMode = true
             };
             _context.Seasons.Add(season);
-            var syncPackage = new NewSeasonPackage { Season = season };
+            var package = new NewSeasonPackage { Season = season };
 
             var teams = _context.Standings
                 .Include(s => s.Season)
@@ -203,7 +203,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                     Team = team
                 };
                 _context.Alignments.Add(alignment);
-                syncPackage.Alignments.Add(alignment);
+                package.Alignments.Add(alignment);
 
                 var teamStats = new Standings
                 {
@@ -216,7 +216,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                     Team = team
                 };
                 _context.Standings.Add(teamStats);
-                syncPackage.Standings.Add(teamStats);
+                package.Standings.Add(teamStats);
             }
 
             var playoffRounds = _context.PlayoffRounds
@@ -246,7 +246,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                     MatchupsConfirmed = false
                 };
                 _context.PlayoffRounds.Add(newRound);
-                syncPackage.PlayoffRounds.Add(newRound);
+                package.PlayoffRounds.Add(newRound);
 
                 int numberOfMatchups = (int)Math.Pow(2, 4 - round.Index);
                 for (int matchupIndex = 0; matchupIndex < numberOfMatchups; matchupIndex++)
@@ -270,7 +270,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                         HasEnded = false
                     };
                     _context.PlayoffSeries.Add(matchup);
-                    syncPackage.PlayoffSeries.Add(matchup);
+                    package.PlayoffSeries.Add(matchup);
 
                     ascii++;
                 }
@@ -295,11 +295,11 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                         Team2 = team2
                     };
                     _context.HeadToHeadSeries.Add(headToHead);
-                    syncPackage.HeadToHeadSeries.Add(headToHead);
+                    package.HeadToHeadSeries.Add(headToHead);
                 }
             }
 
-            await _syncService.NewSeasonAsync(syncPackage);
+            await _syncService.NewSeasonAsync(package);
 
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
