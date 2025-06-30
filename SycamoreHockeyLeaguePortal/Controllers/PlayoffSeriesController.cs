@@ -11,6 +11,7 @@ using SycamoreHockeyLeaguePortal.Data;
 using SycamoreHockeyLeaguePortal.Data.Migrations;
 using SycamoreHockeyLeaguePortal.Models;
 using SycamoreHockeyLeaguePortal.Models.InputForms;
+using SycamoreHockeyLeaguePortal.Services;
 
 namespace SycamoreHockeyLeaguePortal.Controllers
 {
@@ -18,12 +19,14 @@ namespace SycamoreHockeyLeaguePortal.Controllers
     public class PlayoffSeriesController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly LiveDbSyncService _syncService;
 
         private const string PLAYOFFS = "Playoffs";
 
-        public PlayoffSeriesController(ApplicationDbContext context)
+        public PlayoffSeriesController(ApplicationDbContext context, LiveDbSyncService syncService)
         {
             _context = context;
+            _syncService = syncService;
         }
 
         // GET: PlayoffSeries
@@ -327,6 +330,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 _context.Schedule.Add(game);
             }
 
+            await _syncService.AddManyGamesAsync(games.ToList());
             await _context.SaveChangesAsync();
         }
 

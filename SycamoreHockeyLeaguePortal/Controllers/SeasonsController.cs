@@ -55,7 +55,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 .Include(s => s.AwayTeam)
                 .Include(s => s.HomeTeam)
                 .Where(s => s.Season.Year == year)
-                .OrderBy(s => s.Date.Date)
+                .OrderBy(s => s.Date)
                 .ThenBy(s => s.GameIndex);
 
             var seasonHasSchedule = schedule.Any();

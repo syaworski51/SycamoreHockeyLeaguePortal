@@ -100,6 +100,15 @@ namespace SycamoreHockeyLeaguePortal.Services
             await AddPlayoffMatchupsAsync(package.PlayoffSeries);
         }
 
+        public async Task NewChampionAsync(NewChampionPackage package)
+        {
+            var exception = new InvalidOperationException($"The {package.Champion.Season.Year} {package.Champion.Team.FullName} are already in the Champions table.");
+            await AddRecordToTableAsync(_liveContext.Champions, package.Champion, exception);
+
+            exception = new InvalidOperationException($"This opponent is already in the database.");
+            await AddRecordsToTableAsync(_liveContext.ChampionsRounds, package.Rounds, exception);
+        }
+
         /// <summary>
         ///     Write one game result to the Schedule table.
         /// </summary>

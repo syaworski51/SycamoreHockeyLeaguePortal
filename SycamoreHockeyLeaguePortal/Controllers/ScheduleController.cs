@@ -222,6 +222,8 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 
                 if (extension == ".csv") 
                 {
+                    List<Game> schedule = new();
+                    
                     using (var streamReader = new StreamReader(form.File.OpenReadStream()))
                     using (var csvReader = new CsvReader(streamReader, CultureInfo.InvariantCulture))
                     {
@@ -249,11 +251,13 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                                 HomeTeam = homeTeam
                             };
                             _localContext.Schedule.Add(game);
+                            schedule.Add(game);
 
                             index++;
                         }
                     }
 
+                    await _syncService.AddManyGamesAsync(schedule);
                     await _localContext.SaveChangesAsync();
                     return RedirectToAction(nameof(Index), new { weekOf = firstDay.ToString("yyyy-MM-dd") });
                 }
@@ -556,8 +560,8 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                     }
                 }
 
-                await _syncService.WriteOneResultAsync(game);
                 await _localContext.SaveChangesAsync();
+                await _syncService.WriteOneResultAsync(game);
 
                 return RedirectToAction(nameof(GameCenter), new
                 {
@@ -749,6 +753,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                         Team = _champion
                     };
                     _localContext.Champions.Add(champion);
+                    var package = new NewChampionPackage { Champion = champion };
 
                     var roundsWon = _localContext.PlayoffSeries
                         .Include(s => s.Season)
@@ -776,11 +781,14 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                             BestOf = 7
                         };
                         _localContext.ChampionsRounds.Add(roundWon);
+                        package.Rounds.Add(roundWon);
                     }
 
                     series.Season.IsLive = false;
                     series.Season.IsComplete = true;
+                    
                     _localContext.Seasons.Update(series.Season);
+                    await _syncService.NewChampionAsync(package);
                 }
             }
 
