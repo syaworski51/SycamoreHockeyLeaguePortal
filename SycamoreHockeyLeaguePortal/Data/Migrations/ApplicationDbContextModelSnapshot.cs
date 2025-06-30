@@ -183,7 +183,7 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
 
                     b.HasIndex("TeamId");
 
-                    b.ToTable("Alignments");
+                    b.ToTable("Alignments", (string)null);
                 });
 
             modelBuilder.Entity("SycamoreHockeyLeaguePortal.Models.ApplicationUser", b =>
@@ -277,7 +277,7 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
 
                     b.HasIndex("TeamId");
 
-                    b.ToTable("Champions");
+                    b.ToTable("Champions", (string)null);
                 });
 
             modelBuilder.Entity("SycamoreHockeyLeaguePortal.Models.ChampionsRound", b =>
@@ -307,7 +307,7 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
 
                     b.HasIndex("OpponentId");
 
-                    b.ToTable("ChampionsRounds");
+                    b.ToTable("ChampionsRounds", (string)null);
                 });
 
             modelBuilder.Entity("SycamoreHockeyLeaguePortal.Models.Conference", b =>
@@ -326,7 +326,7 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Conferences");
+                    b.ToTable("Conferences", (string)null);
                 });
 
             modelBuilder.Entity("SycamoreHockeyLeaguePortal.Models.Division", b =>
@@ -345,7 +345,7 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Divisions");
+                    b.ToTable("Divisions", (string)null);
                 });
 
             modelBuilder.Entity("SycamoreHockeyLeaguePortal.Models.GameType", b =>
@@ -367,7 +367,7 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("GameTypes");
+                    b.ToTable("GameTypes", (string)null);
                 });
 
             modelBuilder.Entity("SycamoreHockeyLeaguePortal.Models.HeadToHeadSeries", b =>
@@ -405,7 +405,7 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
 
                     b.HasIndex("Team2Id");
 
-                    b.ToTable("HeadToHeadSeries");
+                    b.ToTable("HeadToHeadSeries", (string)null);
                 });
 
             modelBuilder.Entity("SycamoreHockeyLeaguePortal.Models.PlayoffRound", b =>
@@ -431,7 +431,7 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
 
                     b.HasIndex("SeasonId");
 
-                    b.ToTable("PlayoffRounds");
+                    b.ToTable("PlayoffRounds", (string)null);
                 });
 
             modelBuilder.Entity("SycamoreHockeyLeaguePortal.Models.PlayoffSeries", b =>
@@ -493,7 +493,7 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
 
                     b.HasIndex("Team2Id");
 
-                    b.ToTable("PlayoffSeries");
+                    b.ToTable("PlayoffSeries", (string)null);
                 });
 
             modelBuilder.Entity("SycamoreHockeyLeaguePortal.Models.PlayoffStatus", b =>
@@ -521,7 +521,7 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("PlayoffStatuses");
+                    b.ToTable("PlayoffStatuses", (string)null);
                 });
 
             modelBuilder.Entity("SycamoreHockeyLeaguePortal.Models.ProgramFlag", b =>
@@ -539,7 +539,7 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ProgramFlags");
+                    b.ToTable("ProgramFlags", (string)null);
                 });
 
             modelBuilder.Entity("SycamoreHockeyLeaguePortal.Models.Schedule", b =>
@@ -612,7 +612,7 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
 
                     b.HasIndex("SeasonId");
 
-                    b.ToTable("Schedule");
+                    b.ToTable("Schedule", (string)null);
                 });
 
             modelBuilder.Entity("SycamoreHockeyLeaguePortal.Models.Season", b =>
@@ -641,7 +641,7 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Seasons");
+                    b.ToTable("Seasons", (string)null);
                 });
 
             modelBuilder.Entity("SycamoreHockeyLeaguePortal.Models.Standings", b =>
@@ -812,7 +812,7 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
 
                     b.HasIndex("TeamId");
 
-                    b.ToTable("Standings");
+                    b.ToTable("Standings", (string)null);
                 });
 
             modelBuilder.Entity("SycamoreHockeyLeaguePortal.Models.StandingsSortOption", b =>
@@ -840,7 +840,7 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("StandingsSortOptions");
+                    b.ToTable("StandingsSortOptions", (string)null);
                 });
 
             modelBuilder.Entity("SycamoreHockeyLeaguePortal.Models.Team", b =>
@@ -882,7 +882,7 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
 
                     b.HasIndex("DivisionId");
 
-                    b.ToTable("Teams");
+                    b.ToTable("Teams", (string)null);
                 });
 
             modelBuilder.Entity("SycamoreHockeyLeaguePortal.Models.TeamBrandingHistory", b =>
@@ -919,7 +919,7 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
 
                     b.HasIndex("TeamId");
 
-                    b.ToTable("TeamBrandingHistory");
+                    b.ToTable("TeamBrandingHistory", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>

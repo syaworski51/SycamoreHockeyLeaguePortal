@@ -1,8 +1,12 @@
-﻿@inject SycamoreHockeyLeaguePortal.Data.ApplicationDbContext _context
+﻿@using Microsoft.AspNetCore.Identity;
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+@inject SycamoreHockeyLeaguePortal.Data.ApplicationDbContext _context
 
 @{
-    List<Schedule> schedule = ViewBag.SeriesSchedule;
+    List<Game> schedule = ViewBag.SeriesSchedule;
     int gameNumber = 1;
+    bool userIsAdmin = User.IsInRole("Admin");
 
     string GetDateString(DateTime date)
     {
@@ -28,6 +32,10 @@
             return team.AlternateName!;
 
         return team.City;
+    }
+
+    string IsGameConfirmed(Game game) {
+        return game.IsConfirmed ? "" : "unconfirmed-game";
     }
 }
 
@@ -57,10 +65,58 @@
     <tbody>
         @foreach (var game in schedule)
         {
-            <tr>
+            var awayTeam = game.AwayTeam;
+            var homeTeam = game.HomeTeam;
+
+            <tr class="@IsGameConfirmed(game)">
+                <td style="font-size: 8pt;">
+                    <strong style="margin-bottom: 8px;">Game @gameNumber</strong><br /><br />
+                    <a class="muted-link" asp-action="GameCenter" asp-route-date="@game.Date.ToString("yyyy-MM-dd")" asp-route-awayTeam="@game.AwayTeam.Code" asp-route-homeTeam="@game.HomeTeam.Code">@GetDateString(game.Date)</a>
+                </td>
+                <td class="schedule-team-name" style="text-align: right;">
+                    <a asp-controller="Teams" asp-action="Details" asp-route-id="@awayTeam.Code" asp-route-season="@game.Season.Year" asp-route-gameType="regular-season">@awayTeam</a>
+                </td>
+                <td style="width: 30px;">
+                    <img class="schedule-team-logo" src="~/@awayTeam.LogoPath" title="@awayTeam" alt="@awayTeam.Code" />
+                </td>
+                @if (game.Period > 0)
+                {
+                    <td class="schedule-score">
+                        @game.AwayScore
+                    </td>
+                    <td class="schedule-score">
+                        @game.HomeScore
+                    </td>
+                }
+                else
+                {
+                    <td class="pregame" colspan="2">
+                        @@
+                    </td>
+                }
+                <td style="width: 30px;">
+                    <img class="schedule-team-logo" src="~/@homeTeam.LogoPath" title="@homeTeam" alt="@homeTeam.Code" />
+                </td>
+                <td class="schedule-team-name" style="text-align: left;">
+                    <a asp-controller="Teams" asp-action="Details" asp-route-id="@homeTeam.Code" asp-route-season="@game.Season.Year" asp-route-gameType="regular-season">@homeTeam</a>
+                </td>
+                <td style="width: 200px;">
+                    <a class="muted-link" asp-controller="Schedule" asp-action="GameCenter"
+                       asp-route-date="@game.Date.ToString("yyyy-MM-dd")"
+                       asp-route-awayTeam="@game.AwayTeam.Code"
+                       asp-route-homeTeam="@game.HomeTeam.Code">@game.Status</a>
+                </td>
+                <td>
+                    @game.PlayoffSeriesScore
+                </td>
+            </tr>
+
+            gameNumber++;
+            
+            @* <tr class="@IsGameConfirmed(game)">
                 <td style="font-size: 8pt;"> 
-                    <strong style="margin-bottom: 8px;">Game @gameNumber @(!game.IsConfirmed ? "*" : "")</strong><br /><br />
-                    <a class="muted-link" asp-action="GameCenter" asp-route-date="@game.Date.ToShortDateString()" asp-route-awayTeam="@game.AwayTeam.Code" asp-route-homeTeam="@game.HomeTeam.Code">@GetDateString(game.Date)</a>
+                    <strong style="margin-bottom: 8px;">Game @gameNumber</strong><br /><br />
+                    <a class="muted-link" asp-action="GameCenter" asp-route-date="@game.Date.ToString("yyyy-MM-dd")" asp-route-awayTeam="@game.AwayTeam.Code" asp-route-homeTeam="@game.HomeTeam.Code">@GetDateString(game.Date)</a>
                 </td>
                 <td class="schedule-team-name" style="text-align: right;">
                     <a asp-controller="Teams" asp-action="Details" asp-route-id="@game.AwayTeam.Code" asp-route-season="@game.Season.Year" asp-route-gameType="playoffs">@game.AwayTeam</a>
@@ -90,14 +146,14 @@
                     <a asp-controller="Teams" asp-action="Details" asp-route-id="@game.HomeTeam.Code" asp-route-season="@game.Season.Year" asp-route-gameType="playoffs">@game.HomeTeam</a>
                 </td>
                 <td>
-                    <a class="muted-link" asp-action="GameCenter" asp-route-date="@game.Date.ToShortDateString()" asp-route-awayTeam="@game.AwayTeam.Code" asp-route-homeTeam="@game.HomeTeam.Code">@game.Status</a>
+                    <a class="muted-link" asp-action="GameCenter" asp-route-date="@game.Date.ToString("yyyy-MM-dd")" asp-route-awayTeam="@game.AwayTeam.Code" asp-route-homeTeam="@game.HomeTeam.Code">@game.Status</a>
                 </td>
                 <td>
                     @game.PlayoffSeriesScore
                 </td>
             </tr>
 
-            gameNumber++;
+            gameNumber++; *@
         }
     </tbody>
 </table>

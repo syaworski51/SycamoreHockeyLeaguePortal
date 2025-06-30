@@ -633,7 +633,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             return teams;
         }
 
-        private IQueryable<Schedule> GetSchedule(int season)
+        private IQueryable<Game> GetSchedule(int season)
         {
             return _context.Schedule
                 .Include(s => s.Season)
@@ -681,7 +681,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 .ToList()!;
         }
 
-        private IQueryable<Schedule> GetH2HGamesPlayed(int season, Standings team1, Standings team2)
+        private IQueryable<Game> GetH2HGamesPlayed(int season, Standings team1, Standings team2)
         {
             var schedule = GetSchedule(season);
             
@@ -690,9 +690,9 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                                         (s.AwayTeam == team2.Team && s.HomeTeam == team1.Team)));
         }
 
-        private List<Schedule> GetH2HGamesPlayed(int season, List<Standings> teams)
+        private List<Game> GetH2HGamesPlayed(int season, List<Standings> teams)
         {
-            List<Schedule> games = new List<Schedule>();
+            List<Game> games = new List<Game>();
             for (int primaryIndex = 0; primaryIndex < teams.Count - 1; primaryIndex++)
             {
                 for (int secondaryIndex = primaryIndex + 1; secondaryIndex < teams.Count; secondaryIndex++)
@@ -710,7 +710,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             return games;
         }
 
-        private int[] GetH2HSeries(int season, Standings team1, Standings team2, List<Schedule>? h2hGamesPlayed = null)
+        private int[] GetH2HSeries(int season, Standings team1, Standings team2, List<Game>? h2hGamesPlayed = null)
         {
             h2hGamesPlayed ??= GetH2HGamesPlayed(season, team1, team2).ToList();
 
@@ -772,7 +772,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             return groupH2HStats;
         }
 
-        private int[] GetH2HGoalsFor(int season, Standings team1, Standings team2, List<Schedule>? h2hGamesPlayed = null)
+        private int[] GetH2HGoalsFor(int season, Standings team1, Standings team2, List<Game>? h2hGamesPlayed = null)
         {
             h2hGamesPlayed ??= GetH2HGamesPlayed(season, team1, team2).ToList();
             int[] h2hGoalsFor = { 0, 0 };

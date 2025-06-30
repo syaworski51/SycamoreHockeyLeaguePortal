@@ -1,4 +1,4 @@
-﻿@model IEnumerable<Schedule>
+﻿@model IEnumerable<Game>
 
 @{
     var date = ViewBag.Date;
@@ -91,15 +91,15 @@
                         {
                             if (game.IsLive)
                             {
-                                <a asp-action="StartOrResumeGame" asp-route-date="@game.Date.ToShortDateString()" asp-route-awayTeam="@game.AwayTeam.Code" asp-route-homeTeam="@game.HomeTeam.Code">Resume Game</a>
+                                <a asp-action="StartOrResumeGame" asp-route-date="@game.Date.ToString("yyyy-MM-dd")" asp-route-awayTeam="@game.AwayTeam.Code" asp-route-homeTeam="@game.HomeTeam.Code">Resume Game</a>
                             }
                             else
                             {
-                                <a asp-action="StartOrResumeGame" asp-route-date="@game.Date.ToShortDateString()" asp-route-awayTeam="@game.AwayTeam.Code" asp-route-homeTeam="@game.HomeTeam.Code">Start Game</a>
+                                <a asp-action="StartOrResumeGame" asp-route-date="@game.Date.ToString("yyyy-MM-dd")" asp-route-awayTeam="@game.AwayTeam.Code" asp-route-homeTeam="@game.HomeTeam.Code">Start Game</a>
                             }
                         }
                     }
-                    <a asp-action="GameCenter" asp-route-date="@game.Date.ToShortDateString()" asp-route-awayTeam="@game.AwayTeam.Code" asp-route-homeTeam="@game.HomeTeam.Code">Game Center</a>
+                    <a asp-action="GameCenter" asp-route-date="@game.Date.ToString("yyyy-MM-dd")" asp-route-awayTeam="@game.AwayTeam.Code" asp-route-homeTeam="@game.HomeTeam.Code">Game Center</a>
                 </td>
             </tr>
         }

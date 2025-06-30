@@ -1,14 +1,14 @@
 ﻿@using Microsoft.AspNetCore.Identity
-@model SycamoreHockeyLeaguePortal.Models.Schedule
+@model SycamoreHockeyLeaguePortal.Models.Game
 @inject UserManager<ApplicationUser> UserManager
 @inject SycamoreHockeyLeaguePortal.Data.ApplicationDbContext _context
 
 @{
     HeadToHeadSeries matchup = ViewBag.Matchup;
-    List<Schedule> results = ViewBag.Results;
+    List<Game> results = ViewBag.Results;
     List<Standings> teamStats = ViewBag.TeamStats;
 
-    ViewData["Title"] = $"{Model.Date.ToShortDateString()} - {Model.AwayTeam.Code} @ {Model.HomeTeam.Code}";
+    ViewData["Title"] = $"{Model.Date.ToString("yyyy-MM-dd")} - {Model.AwayTeam.Code} @ {Model.HomeTeam.Code}";
 
     string apiDomain = (string)TempData["APIDomain"]!;
     string mvcDomain = (string)TempData["MVCDomain"]!;
@@ -334,7 +334,7 @@
                 {
                     <div class="text-center" style="margin-top: 50px; margin-bottom: 50px;">
                         <h4 class="text-danger">This game cannot be started yet.</h4>
-                        <a asp-controller="Schedule" asp-action="Index" asp-route-weekOf="@Model.Date.ToShortDateString()">Back to Schedule</a>
+                        <a asp-controller="Schedule" asp-action="Index" asp-route-weekOf="@Model.Date.ToString("yyyy-MM-dd")">Back to Schedule</a>
                     </div>
                 }
             }
@@ -343,7 +343,7 @@
         {
             <div class="text-center" style="margin-top: 50px; margin-bottom: 50px;">
                 <h4 class="text-danger">This game has been finalized and cannot be manipulated.</h4>
-                <a asp-controller="Schedule" asp-action="Index" asp-route-weekOf="@Model.Date.ToShortDateString()">Back to Schedule</a>
+                <a asp-controller="Schedule" asp-action="Index" asp-route-weekOf="@Model.Date.ToString("yyyy-MM-dd")">Back to Schedule</a>
             </div>
         }
     }
@@ -351,7 +351,7 @@
     {
         <div class="text-center" style="margin-top: 50px; margin-bottom: 50px;">
             <h4 class="text-danger">You are not authorized to edit the data for this game.</h4>
-            <a asp-controller="Schedule" asp-action="Index" asp-route-weekOf="@Model.Date.ToShortDateString()">Back to Schedule</a>
+            <a asp-controller="Schedule" asp-action="Index" asp-route-weekOf="@Model.Date.ToString("yyyy-MM-dd")">Back to Schedule</a>
         </div>
     }
 </div>

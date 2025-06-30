@@ -4,12 +4,9 @@ using SycamoreHockeyLeaguePortal.Models;
 
 namespace SycamoreHockeyLeaguePortal.Data
 {
-    public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
+    public class LiveDbContext : IdentityDbContext<ApplicationUser>
     {
-        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
-            : base(options)
-        {
-        }
+        public LiveDbContext(DbContextOptions<LiveDbContext> options) : base(options) { }
         public DbSet<Team> Teams { get; set; } = default!;
         public DbSet<Season> Seasons { get; set; } = default!;
         public DbSet<Conference> Conferences { get; set; } = default!;

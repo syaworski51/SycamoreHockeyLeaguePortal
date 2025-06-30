@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace SycamoreHockeyLeaguePortal.Models
 {
     [Table("Schedule")]
-    public class Schedule
+    public class Game
     {
         private const string REGULAR_SEASON = "Regular Season";
         private const string PLAYOFFS = "Playoffs";

@@ -5,7 +5,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.VisualStudio.Web.CodeGeneration.EntityFrameworkCore;
 using SycamoreHockeyLeaguePortal.Data;
 using SycamoreHockeyLeaguePortal.Models;
+using SycamoreHockeyLeaguePortal.Models.DbSyncPackages;
 using SycamoreHockeyLeaguePortal.Models.InputForms;
+using SycamoreHockeyLeaguePortal.Services;
 using System.Net;
 using ZstdSharp.Unsafe;
 
@@ -15,10 +17,12 @@ namespace SycamoreHockeyLeaguePortal.Controllers
     public class SeasonsController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly LiveDbSyncService _syncService;
 
-        public SeasonsController(ApplicationDbContext context)
+        public SeasonsController(ApplicationDbContext local, LiveDbSyncService syncService)
         {
-            _context = context;
+            _context = local;
+            _syncService = syncService;
         }
 
         // GET: Seasons
@@ -70,7 +74,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             _context.Seasons.Update(season);
             await _context.SaveChangesAsync();
 
-            return RedirectToAction("Index", "Schedule", new { weekOf = schedule.Min(s => s.Date).ToShortDateString() });
+            return RedirectToAction("Index", "Schedule", new { weekOf = schedule.Min(s => s.Date).ToString("yyyy-MM-dd") });
         }
 
         // GET: Seasons/Details/5
@@ -168,6 +172,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 InTestMode = true
             };
             _context.Seasons.Add(season);
+            var syncPackage = new NewSeasonPackage { Season = season };
 
             var teams = _context.Standings
                 .Include(s => s.Season)
@@ -198,6 +203,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                     Team = team
                 };
                 _context.Alignments.Add(alignment);
+                syncPackage.Alignments.Add(alignment);
 
                 var teamStats = new Standings
                 {
@@ -210,6 +216,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                     Team = team
                 };
                 _context.Standings.Add(teamStats);
+                syncPackage.Standings.Add(teamStats);
             }
 
             var playoffRounds = _context.PlayoffRounds
@@ -239,6 +246,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                     MatchupsConfirmed = false
                 };
                 _context.PlayoffRounds.Add(newRound);
+                syncPackage.PlayoffRounds.Add(newRound);
 
                 int numberOfMatchups = (int)Math.Pow(2, 4 - round.Index);
                 for (int matchupIndex = 0; matchupIndex < numberOfMatchups; matchupIndex++)
@@ -262,6 +270,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                         HasEnded = false
                     };
                     _context.PlayoffSeries.Add(matchup);
+                    syncPackage.PlayoffSeries.Add(matchup);
 
                     ascii++;
                 }
@@ -286,8 +295,11 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                         Team2 = team2
                     };
                     _context.HeadToHeadSeries.Add(headToHead);
+                    syncPackage.HeadToHeadSeries.Add(headToHead);
                 }
             }
+
+            await _syncService.NewSeasonAsync(syncPackage);
 
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));

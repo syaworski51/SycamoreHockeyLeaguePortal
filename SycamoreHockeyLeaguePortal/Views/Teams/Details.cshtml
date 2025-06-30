@@ -26,7 +26,7 @@
         return $"{GetDayOfWeek(date)}, {GetMonth(date)} {date.Day}";
     }
 
-    string GetOpponent(Schedule game)
+    string GetOpponent(Game game)
     {
         if (game.AwayTeamId == teamId)
             return $"@ {game.HomeTeam}";
@@ -34,7 +34,7 @@
         return game.AwayTeam.ToString();
     }
 
-    string GetOpponentLogoPath(Schedule game)
+    string GetOpponentLogoPath(Game game)
     {
         if (game.AwayTeamId == teamId)
             return game.HomeTeam.LogoPath!;
@@ -42,7 +42,7 @@
         return game.AwayTeam.LogoPath!;
     }
 
-    string GetResult(Schedule game)
+    string GetResult(Game game)
     {
         if (!game.IsLive && game.Period >= 3)
         {
@@ -55,7 +55,7 @@
         return "";
     }
 
-    string GetResultColor(Schedule game, string? result)
+    string GetResultColor(Game game, string? result)
     {
         result = result ?? GetResult(game);
 

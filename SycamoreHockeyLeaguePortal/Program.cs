@@ -4,16 +4,45 @@ using Microsoft.Extensions.DependencyInjection;
 using SycamoreHockeyLeaguePortal.Data;
 using SycamoreHockeyLeaguePortal.Models;
 using Azure.Identity;
+using Microsoft.Data.SqlClient;
+using SycamoreHockeyLeaguePortal.Services;
+
+System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12;
 
 var builder = WebApplication.CreateBuilder(args);
+bool isDevelopmentEnvironment = builder.Environment.IsDevelopment();
 
 //var keyVaultEndpoint = new Uri(Environment.GetEnvironmentVariable("VaultUri")!);
 //builder.Configuration.AddAzureKeyVault(keyVaultEndpoint, new DefaultAzureCredential());
 
 // Add services to the container.
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(connectionString));
+builder.Services.AddDbContext<ApplicationDbContext>(options => 
+{
+    string connectionString = isDevelopmentEnvironment ?
+        builder.Configuration.GetConnectionString("Local") ??
+            throw new InvalidOperationException("Connection string 'Local' not found.") :
+        builder.Configuration.GetConnectionString("Live") ??
+            throw new InvalidOperationException("Connection string 'Live' not found.");
+
+    options.UseSqlServer(connectionString, options =>
+    {
+        options.EnableRetryOnFailure(maxRetryCount: 5);
+    });
+});
+
+builder.Services.AddDbContext<LiveDbContext>(options =>
+{
+    string connectionString = builder.Configuration.GetConnectionString("LiveSQLAuth") ??
+        throw new InvalidOperationException("Connection string 'LiveSQLAuth' not found.");
+
+    options.UseSqlServer(connectionString, options =>
+    {
+        options.EnableRetryOnFailure(maxRetryCount: 5);
+    });
+});
+
+builder.Services.AddScoped<LiveDbSyncService>();
+
 
 //builder.Services.AddDefaultIdentity<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true).AddEntityFrameworkStores<ApplicationDbContext>();
 

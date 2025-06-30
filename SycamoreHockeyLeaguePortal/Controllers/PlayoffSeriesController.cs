@@ -19,6 +19,8 @@ namespace SycamoreHockeyLeaguePortal.Controllers
     {
         private readonly ApplicationDbContext _context;
 
+        private const string PLAYOFFS = "Playoffs";
+
         public PlayoffSeriesController(ApplicationDbContext context)
         {
             _context = context;
@@ -104,7 +106,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
 
             var teams = _context.Standings
                 .Include(s => s.Team)
-                .Where(s => s.Season.Year == playoffSeries.Season.Year)
+                .Where(s => s.Season.Year == playoffSeries.Season.Year && s.PlayoffRanking <= 8)
                 .Select(s => s.Team)
                 .Distinct()
                 .OrderBy(s => s.City)
@@ -154,7 +156,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
 
             var teams = _context.Standings
                 .Include(s => s.Team)
-                .Where(s => s.Season.Year == series.Season.Year)
+                .Where(s => s.Season.Year == series.Season.Year && s.PlayoffRanking <= 8)
                 .Select(s => s.Team)
                 .Distinct()
                 .OrderBy(s => s.City)
@@ -164,6 +166,33 @@ namespace SycamoreHockeyLeaguePortal.Controllers
 
             return View(form);
         }
+
+        /*private IEnumerable<Team> FilterTeamsByMatchupIndex(int season, string index)
+        {
+            var standings = _context.Standings
+                .Include(s => s.Season)
+                .Include(s => s.Conference)
+                .Include(s => s.Division)
+                .Include(s => s.Team)
+                .Where(s => s.Season.Year == season && s.PlayoffRanking <= 8)
+                .OrderBy(s => s.Conference!.Code)
+                .ThenBy(s => s.PlayoffRanking);
+
+            var conferences = standings
+                .Select(s => s.Conference)
+                .OrderBy(c => c!.Name)
+                .ToDictionary(c => c!.Code);
+
+            if (index == "A" || index == "B" || index == "E" || index == "F")
+                return standings
+                    .Where(s => s.Conference == conferences["WEST"])
+                    .Select(s => s.Team);
+
+            if (index == "C" || index == "D" || index == "G" || index == "H")
+                return standings
+                    .Where(s => s.Conference == conferences["EAST"])
+                    .Select(s => s.Team);
+        }*/
 
         public async Task<IActionResult> ConfirmPlayoffMatchup(int season, string index)
         {
@@ -187,8 +216,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
 
             await GenerateSchedule(matchup);
 
-            matchup.Round.MatchupsConfirmed = matchups.Count(m => m.IsConfirmed) == matchups.Count();
-            if (matchup.Round.MatchupsConfirmed && matchup.Round.Index < 4)
+            if (matchup.Round.Index < 4)
                 await ReindexPlayoffGames(matchup.Round);
 
             await _context.SaveChangesAsync();
@@ -205,7 +233,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 .Include(s => s.AwayTeam)
                 .Include(s => s.HomeTeam)
                 .Where(s => s.Season.Year == round.Season.Year &&
-                            s.Type == "Playoffs" &&
+                            s.Type == PLAYOFFS &&
                             s.PlayoffRound == round)
                 .OrderBy(s => s.Date)
                 .ThenByDescending(s => s.PlayoffSeries!.StartDate)
@@ -257,7 +285,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
 
         private async Task GenerateSchedule(PlayoffSeries series)
         {
-            Schedule[] games = new Schedule[7];
+            Game[] games = new Game[7];
 
             for (int index = 0; index < games.Length; index++)
             {
@@ -268,12 +296,12 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 if (gameIndex > 1)
                 {
                     DateTime previousGameDate = games[index - 1].Date;
-                    int daysBetweenGames = DetermineDaysBetweenGames(series.Round.Index, gameIndex);
-                    gameDate = previousGameDate.AddDays(1 + daysBetweenGames);
+                    int restDaysBeforeGame = DetermineRestDaysBeforeGame(series.Round.Index, gameIndex);
+                    gameDate = previousGameDate.AddDays(1 + restDaysBeforeGame);
                 }
 
                 string gameString = $"Game {gameIndex}";
-                var game = new Schedule
+                var game = new Game
                 {
                     Id = Guid.NewGuid(),
                     SeasonId = series.SeasonId,
@@ -302,13 +330,12 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             await _context.SaveChangesAsync();
         }
 
-        private int DetermineDaysBetweenGames(int round, int game)
+        private int DetermineRestDaysBeforeGame(int round, int game)
         {
-            bool isBackToBack = game == 2 || game == 4;
+            if (round == 4)
+                return 1;
             
-            if (round == 4 && game == 5)
-                return 2;
-
+            bool isBackToBack = game == 2 || game == 4;
             return isBackToBack ? 0 : 1;
         }
 

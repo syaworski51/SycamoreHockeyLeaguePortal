@@ -31,22 +31,22 @@
                         <a class="page-link"
                            asp-action="Index"
                            asp-route-team="@ViewBag.Team"
-                           asp-route-weekOf="@Model.WeekOf.AddDays(-7).ToShortDateString()">&lang;</a>
+                           asp-route-weekOf="@Model.WeekOf.AddDays(-7).ToString("yyyy-MM-dd")">&lang;</a>
                     </li>
                     <li class="page-item">
-                        <input type="date" class="form-control page-link" name="weekOf" value="@Model.WeekOf.ToShortDateString()" onchange="EnableGoToDateButton()" />
+                        <input type="date" class="form-control page-link" name="weekOf" value="@Model.WeekOf.ToString("yyyy-MM-dd")" onchange="EnableGoToDateButton()" />
                     </li>
                     <li class="page-item" id="next-week">
                         <a class="page-link"
                            asp-action="Index"
                            asp-route-team="@ViewBag.Team"
-                           asp-route-weekOf="@Model.WeekOf.AddDays(7).ToShortDateString()">&rang;</a>
+                           asp-route-weekOf="@Model.WeekOf.AddDays(7).ToString("yyyy-MM-dd")">&rang;</a>
                     </li>
                     <li class="page-item" id="today">
                         <a class="page-link"
                            asp-action="Index"
                            asp-route-team="@ViewBag.Team"
-                           asp-route-weekOf="@DateTime.Now.ToShortDateString()">Today</a>
+                           asp-route-weekOf="@DateTime.Now.ToString("yyyy-MM-dd")">Today</a>
                     </li>
                     <li class="page-item" id="go-to-date">
                         <button type="submit" class="btn btn-primary disabled" id="btn-go-to-date">Go</button>

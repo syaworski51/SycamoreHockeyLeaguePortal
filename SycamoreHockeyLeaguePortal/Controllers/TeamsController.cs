@@ -14,7 +14,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
     public class TeamsController : Controller
     {
         private readonly ApplicationDbContext _context;
-        private IQueryable<Schedule> schedule;
+        private IQueryable<Game> schedule;
 
         public TeamsController(ApplicationDbContext context)
         {

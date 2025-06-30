@@ -765,3 +765,7 @@ img {
 .h2h-aggregate {
     font-weight: bold;
 }
+
+.unconfirmed-game {
+    background-color: #bfbfbf;
+}

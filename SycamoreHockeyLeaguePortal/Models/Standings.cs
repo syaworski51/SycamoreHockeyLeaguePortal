@@ -200,7 +200,7 @@ namespace SycamoreHockeyLeaguePortal.Models
         public Guid? NextGameId { get; set; }
 
         [Display(Name = "Next Game")]
-        public Schedule? NextGame { get; set; }
+        public Game? NextGame { get; set; }
 
 
 

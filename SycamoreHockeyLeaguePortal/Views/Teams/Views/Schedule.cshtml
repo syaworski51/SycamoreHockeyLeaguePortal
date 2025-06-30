@@ -2,7 +2,7 @@
 
 @{
     Guid teamId = Model.Id;
-    IEnumerable<Schedule> schedule = ViewBag.Schedule;
+    IEnumerable<Game> schedule = ViewBag.Schedule;
 
     string GetDayOfWeek(DateTime date)
     {
@@ -19,7 +19,7 @@
         return $"{GetDayOfWeek(date)}, {GetMonth(date)} {date.Day}";
     }
 
-    string GetOpponent(Schedule game)
+    string GetOpponent(Game game)
     {
         if (game.AwayTeamId == teamId)
             return $"@ {game.HomeTeam}";
@@ -27,7 +27,7 @@
         return game.AwayTeam.ToString();
     }
 
-    string GetOpponentLogoPath(Schedule game)
+    string GetOpponentLogoPath(Game game)
     {
         if (game.AwayTeamId == teamId)
             return game.HomeTeam.LogoPath!;
@@ -35,7 +35,7 @@
         return game.AwayTeam.LogoPath!;
     }
 
-    string GetOpponentCode(Schedule game)
+    string GetOpponentCode(Game game)
     {
         if (game.AwayTeamId == teamId)
             return game.HomeTeam.Code;
@@ -43,7 +43,7 @@
         return game.AwayTeam.Code;
     }
 
-    string GetResult(Schedule game)
+    string GetResult(Game game)
     {
         if (game.IsFinalized)
         {
@@ -56,7 +56,7 @@
         return game.ShortStatus;
     }
 
-    string GetResultColor(Schedule game, string? result = null)
+    string GetResultColor(Game game, string? result = null)
     {
         result ??= GetResult(game);
 
@@ -73,7 +73,7 @@
         }
     }
 
-    string GetScoreString(Schedule game)
+    string GetScoreString(Game game)
     {
         string scoreString = "";
 
@@ -117,10 +117,10 @@
 
             <tr class="@isAwayGame">
                 <td>
-                    <a class="muted-link" asp-controller="Schedule" asp-action="GameCenter" asp-route-date="@game.Date.ToShortDateString()" asp-route-awayTeam="@game.AwayTeam.Code" asp-route-homeTeam="@game.HomeTeam.Code">@GetDateString(game.Date)</a>
+                    <a class="muted-link" asp-controller="Schedule" asp-action="GameCenter" asp-route-date="@game.Date.ToString("yyyy-MM-dd")" asp-route-awayTeam="@game.AwayTeam.Code" asp-route-homeTeam="@game.HomeTeam.Code">@GetDateString(game.Date)</a>
                 </td>
                 <td class="opponent-name">
-                    <a class="muted-link" asp-controller="Schedule" asp-action="GameCenter" asp-route-date="@game.Date.ToShortDateString()" asp-route-awayTeam="@game.AwayTeam.Code" asp-route-homeTeam="@game.HomeTeam.Code">@GetOpponent(game)</a>
+                    <a class="muted-link" asp-controller="Schedule" asp-action="GameCenter" asp-route-date="@game.Date.ToString("yyyy-MM-dd")" asp-route-awayTeam="@game.AwayTeam.Code" asp-route-homeTeam="@game.HomeTeam.Code">@GetOpponent(game)</a>
                 </td>
                 <td class="opponent-logo">
                     <img class="schedule-team-logo" src="~/@GetOpponentLogoPath(game)" />

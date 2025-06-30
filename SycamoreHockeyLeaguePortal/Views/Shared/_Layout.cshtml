@@ -33,7 +33,7 @@
                     
                     @for (int index = 0; index < games.Count; index++)
                     {
-                        Schedule currentGame = games[index];
+                        Game currentGame = games[index];
                         var previousGame = (index > 0) ? games[index - 1] : null;
 
                         if (index == 0 || previousGame.Date.Date.CompareTo(currentGame.Date.Date) != 0)
@@ -68,7 +68,7 @@
                                 <a class="game-status-link" 
                                     asp-controller="Schedule" 
                                     asp-action="@(userIsAdmin ? "GameControls" : "GameCenter")" 
-                                    asp-route-date="@currentGame.Date.ToShortDateString()" 
+                                    asp-route-date="@currentGame.Date.ToString("yyyy-MM-dd")" 
                                     asp-route-awayTeam="@currentGame.AwayTeam.Code" 
                                     asp-route-homeTeam="@currentGame.HomeTeam.Code">@currentGame.Status</a>
                             </div>
@@ -91,7 +91,7 @@
                             <a class="nav-link text-light" 
                                asp-controller="Schedule" asp-action="Index" 
                                asp-route-season="@currentYear"
-                               asp-route-weekOf="@currentDate.ToShortDateString()">Schedule</a>
+                               asp-route-weekOf="@currentDate.ToString("yyyy-MM-dd")">Schedule</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link text-light" 
