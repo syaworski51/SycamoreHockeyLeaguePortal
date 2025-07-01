@@ -178,6 +178,11 @@
             date.ToString("ddd, MMM d") :
             date.ToString("MMM d, yyyy");
     }
+
+    string IsCurrentGame(Game game)
+    {
+        return game.Id == Model.Id ? "current-game" : "";
+    }
 }
 
 @Html.Partial("Partials/Scoreboard.cshtml", Model)
@@ -300,7 +305,7 @@
                                     <tbody>
                                         @foreach (var game in results)
                                         {
-                                            <tr>
+                                            <tr class="@IsCurrentGame(game)">
                                                 <td class="col-2">
                                                     <img class="team-logo" src="~/@game.AwayTeam.LogoPath" />
                                                 </td>

@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SycamoreHockeyLeaguePortal.Data;
 using SycamoreHockeyLeaguePortal.Models;
+using SycamoreHockeyLeaguePortal.Models.DataTransferPackages;
 using SycamoreHockeyLeaguePortal.Models.DbSyncPackages;
 
 namespace SycamoreHockeyLeaguePortal.Services

@@ -769,3 +769,11 @@ img {
 .unconfirmed-game {
     background-color: #bfbfbf;
 }
+
+.current-game {
+    background-color: #ffffe6;
+}
+
+.current-game:hover {
+    background-color: #cccc00;
+}

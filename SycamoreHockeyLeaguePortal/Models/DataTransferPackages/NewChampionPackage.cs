@@ -1,4 +1,4 @@
-﻿namespace SycamoreHockeyLeaguePortal.Models
+﻿namespace SycamoreHockeyLeaguePortal.Models.DataTransferPackages
 {
     public class NewChampionPackage
     {
