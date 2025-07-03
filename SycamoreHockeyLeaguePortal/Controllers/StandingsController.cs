@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using SycamoreHockeyLeaguePortal.Data;
 using SycamoreHockeyLeaguePortal.Models;
 using SycamoreHockeyLeaguePortal.Models.InputForms;
+using SycamoreHockeyLeaguePortal.Models.ViewModels;
 
 namespace SycamoreHockeyLeaguePortal.Controllers
 {
@@ -112,8 +113,6 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         [Route("Standings/PlayoffMatchups/{season}")]
         public async Task<IActionResult> PlayoffMatchups(int season)
         {
-            ViewBag.Season = season;
-
             List<List<int[]>> seeds = new();
             List<List<Standings[]>> matchups = new();
 
@@ -123,18 +122,35 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             
             List<Standings> standings;
             if (isDivisionalFormat)
+            {
                 standings = await GetStandings(season, VIEWBY_DIVISION);
+                standings = standings
+                    .Where(s => s.DivisionRanking <= cutoff)
+                    .OrderBy(s => s.DivisionRanking)
+                    .ToList();
+            }
             else if (isWildCardFormat)
+            {
                 standings = await GetStandings(season, VIEWBY_PLAYOFFS);
+                standings = standings
+                    .Where(s => s.PlayoffRanking <= cutoff)
+                    .OrderBy(s => s.PlayoffRanking)
+                    .ToList();
+            }
             else
+            {
                 standings = await GetStandings(season, VIEWBY_CONFERENCE);
+                standings = standings
+                    .Where(s => s.ConferenceRanking <= cutoff)
+                    .OrderBy(s => s.ConferenceRanking)
+                    .ToList();
+            }   
 
             var conferences = standings
                 .Select(s => s.Conference)
                 .Distinct()
                 .OrderByDescending(c => c!.Name)
                 .ToList();
-            ViewBag.Conferences = conferences;
 
             if (isDivisionalFormat)
             {
@@ -152,9 +168,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                     foreach (var division in divisions)
                     {
                         var teams = standings
-                            .Where(s => s.Division == division &&
-                                        s.DivisionRanking <= cutoff)
-                            .OrderBy(s => s.DivisionRanking)
+                            .Where(s => s.Division == division)
                             .ToList();
 
                         for (int higherSeed = 1; higherSeed <= (cutoff / 2); higherSeed++)
@@ -180,9 +194,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                     matchups.Add(new List<Standings[]>());
                     
                     var teams = standings
-                        .Where(s => s.Conference == conference &&
-                                    s.PlayoffRanking <= cutoff)
-                        .OrderBy(s => s.PlayoffRanking)
+                        .Where(s => s.Conference == conference)
                         .ToList();
                     
                     for (int higherSeed = 1; higherSeed <= (cutoff / 4); higherSeed++)
@@ -196,10 +208,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                         };
 
                         var group = teams
-                            .Where(s => s.PlayoffRanking == groupSeeds[0] ||
-                                        s.PlayoffRanking == groupSeeds[1] ||
-                                        s.PlayoffRanking == groupSeeds[2] ||
-                                        s.PlayoffRanking == groupSeeds[3])
+                            .Where(s => groupSeeds.Contains(s.PlayoffRanking))
                             .ToArray();
 
                         seeds.Last().Add(new int[] { groupSeeds[0], groupSeeds[3] });
@@ -217,9 +226,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                     matchups.Add(new List<Standings[]>());
 
                     var teams = standings
-                        .Where(s => s.Conference == conference &&
-                                    s.ConferenceRanking <= cutoff)
-                        .OrderBy(s => s.ConferenceRanking)
+                        .Where(s => s.Conference == conference)
                         .ToList();
 
                     for (int higherSeed = 1; higherSeed <= (cutoff / 4); higherSeed++)
@@ -232,12 +239,17 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                             cutoff - (higherSeed - 1)
                         };
 
-                        var group = teams
-                            .Where(s => s.ConferenceRanking == groupSeeds[0] ||
-                                        s.ConferenceRanking == groupSeeds[1] ||
-                                        s.ConferenceRanking == groupSeeds[2] ||
-                                        s.ConferenceRanking == groupSeeds[3])
-                            .ToArray();
+                        Standings[] group;
+                        if (teams.Min(t => t.ConferenceRanking) == 0)
+                        {
+                            group = new Standings[4];
+                            for (int index = 0; index < group.Length; index++)
+                                group[index] = teams[groupSeeds[index] - 1];
+                        }
+                        else
+                            group = teams
+                                .Where(s => groupSeeds.Contains(s.ConferenceRanking))
+                                .ToArray();
 
                         seeds.Last().Add(new int[] { groupSeeds[0], groupSeeds[3] });
                         seeds.Last().Add(new int[] { groupSeeds[1], groupSeeds[2] });
@@ -247,9 +259,15 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 }
             }
 
-            ViewBag.Seeds = seeds;
+            PlayoffMatchupsViewModel viewModel = new()
+            {
+                Season = season,
+                Seeds = seeds,
+                Conferences = conferences!,
+                Teams = matchups
+            };
 
-            return View(matchups);
+            return View(viewModel);
         }
 
         [HttpGet]

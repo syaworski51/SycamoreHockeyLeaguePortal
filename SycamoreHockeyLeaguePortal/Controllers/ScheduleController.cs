@@ -9,6 +9,7 @@ using Microsoft.IdentityModel.Tokens;
 using MongoDB.Bson;
 using SycamoreHockeyLeaguePortal.Data;
 using SycamoreHockeyLeaguePortal.Models;
+using SycamoreHockeyLeaguePortal.Models.DataTransferPackages;
 using SycamoreHockeyLeaguePortal.Models.Exceptions;
 using SycamoreHockeyLeaguePortal.Models.InputForms;
 using SycamoreHockeyLeaguePortal.Models.ViewModels;
@@ -24,7 +25,6 @@ namespace SycamoreHockeyLeaguePortal.Controllers
     {
         private readonly ApplicationDbContext _localContext;
         private readonly LiveDbContext _liveContext;
-        private readonly LiveDbSyncService _syncService;
         Random random = new Random();
 
         private const string REGULAR_SEASON = "Regular Season";
@@ -42,12 +42,10 @@ namespace SycamoreHockeyLeaguePortal.Controllers
 
         public ScheduleController(ApplicationDbContext local, 
                                   LiveDbContext live, 
-                                  LiveDbSyncService syncService,
                                   IConfiguration config)
         {
             _localContext = local;
             _liveContext = live;
-            _syncService = syncService;
             _secrets = config.GetSection("Secrets");
         }
 
@@ -257,7 +255,6 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                         }
                     }
 
-                    await _syncService.AddManyGamesAsync(schedule);
                     await _localContext.SaveChangesAsync();
                     return RedirectToAction(nameof(Index), new { weekOf = firstDay.ToString("yyyy-MM-dd") });
                 }
@@ -506,6 +503,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 .Include(s => s.PlayoffRound)
                 .Include(s => s.AwayTeam)
                 .Include(s => s.HomeTeam)
+                .AsNoTracking()
                 .FirstOrDefaultAsync(s => s.Id == id);
 
             return game!;
@@ -561,7 +559,6 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 }
 
                 await _localContext.SaveChangesAsync();
-                await _syncService.WriteOneResultAsync(game);
 
                 return RedirectToAction(nameof(GameCenter), new
                 {
@@ -668,6 +665,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             return (_localContext.Schedule?.Any(e => e.Id == id)).GetValueOrDefault();
         }
 
+        [AllowAnonymous]
         public IActionResult Formula()
         {
             return View();
@@ -753,7 +751,6 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                         Team = _champion
                     };
                     _localContext.Champions.Add(champion);
-                    var package = new NewChampionPackage { Champion = champion };
 
                     var roundsWon = _localContext.PlayoffSeries
                         .Include(s => s.Season)
@@ -781,14 +778,12 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                             BestOf = 7
                         };
                         _localContext.ChampionsRounds.Add(roundWon);
-                        package.Rounds.Add(roundWon);
                     }
 
                     series.Season.IsLive = false;
                     series.Season.IsComplete = true;
                     
                     _localContext.Seasons.Update(series.Season);
-                    await _syncService.NewChampionAsync(package);
                 }
             }
 

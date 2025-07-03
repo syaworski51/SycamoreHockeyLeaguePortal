@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.VisualStudio.Web.CodeGeneration.EntityFrameworkCore;
 using SycamoreHockeyLeaguePortal.Data;
 using SycamoreHockeyLeaguePortal.Models;
@@ -17,12 +18,10 @@ namespace SycamoreHockeyLeaguePortal.Controllers
     public class SeasonsController : Controller
     {
         private readonly ApplicationDbContext _context;
-        private readonly LiveDbSyncService _syncService;
 
-        public SeasonsController(ApplicationDbContext local, LiveDbSyncService syncService)
+        public SeasonsController(ApplicationDbContext local)
         {
             _context = local;
-            _syncService = syncService;
         }
 
         // GET: Seasons
@@ -32,17 +31,22 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             var seasons = _context.Seasons.OrderByDescending(s => s.Year);
 
             Dictionary<int, DateTime?> firstDaysOfSeasons = new();
+            Dictionary<int, bool> doSeasonsHavePlayoffSchedules = new();
             foreach (var season in seasons)
             {
-                DateTime? firstDay = _context.Schedule
+                var schedule = _context.Schedule
                     .Where(s => s.Season.Year == season.Year)
-                    .OrderBy(s => s.Date.Date)
-                    .Select(s => s.Date)
-                    .FirstOrDefault();
+                    .OrderBy(s => s.Date)
+                    .ThenBy(s => s.GameIndex);
+
+                DateTime firstDay = !schedule.IsNullOrEmpty() ? schedule.FirstOrDefault()!.Date : DateTime.MinValue;
+                bool hasPlayoffSchedule = schedule!.Any(s => s.Type == "Playoffs");
 
                 firstDaysOfSeasons.Add(season.Year, firstDay);
+                doSeasonsHavePlayoffSchedules.Add(season.Year, hasPlayoffSchedule);
             }
             ViewBag.FirstDaysOfSeasons = firstDaysOfSeasons;
+            ViewBag.DoSeasonsHavePlayoffSchedules = doSeasonsHavePlayoffSchedules;
 
             return View(await seasons.AsNoTracking().ToListAsync());
         }
@@ -172,7 +176,6 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 InTestMode = true
             };
             _context.Seasons.Add(season);
-            var package = new NewSeasonPackage { Season = season };
 
             var teams = _context.Standings
                 .Include(s => s.Season)
@@ -203,7 +206,6 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                     Team = team
                 };
                 _context.Alignments.Add(alignment);
-                package.Alignments.Add(alignment);
 
                 var teamStats = new Standings
                 {
@@ -216,7 +218,6 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                     Team = team
                 };
                 _context.Standings.Add(teamStats);
-                package.Standings.Add(teamStats);
             }
 
             var playoffRounds = _context.PlayoffRounds
@@ -246,7 +247,6 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                     MatchupsConfirmed = false
                 };
                 _context.PlayoffRounds.Add(newRound);
-                package.PlayoffRounds.Add(newRound);
 
                 int numberOfMatchups = (int)Math.Pow(2, 4 - round.Index);
                 for (int matchupIndex = 0; matchupIndex < numberOfMatchups; matchupIndex++)
@@ -270,7 +270,6 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                         HasEnded = false
                     };
                     _context.PlayoffSeries.Add(matchup);
-                    package.PlayoffSeries.Add(matchup);
 
                     ascii++;
                 }
@@ -295,11 +294,8 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                         Team2 = team2
                     };
                     _context.HeadToHeadSeries.Add(headToHead);
-                    package.HeadToHeadSeries.Add(headToHead);
                 }
             }
-
-            await _syncService.NewSeasonAsync(package);
 
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));

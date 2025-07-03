@@ -19,14 +19,12 @@ namespace SycamoreHockeyLeaguePortal.Controllers
     public class PlayoffSeriesController : Controller
     {
         private readonly ApplicationDbContext _context;
-        private readonly LiveDbSyncService _syncService;
 
         private const string PLAYOFFS = "Playoffs";
 
-        public PlayoffSeriesController(ApplicationDbContext context, LiveDbSyncService syncService)
+        public PlayoffSeriesController(ApplicationDbContext context)
         {
             _context = context;
-            _syncService = syncService;
         }
 
         // GET: PlayoffSeries
@@ -252,7 +250,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             await _context.SaveChangesAsync();
         }
 
-        public async Task<IActionResult> SetMatchups(int year, int index)
+        public async Task<IActionResult> SetMatchups(int year, int round)
         {
             var season = await _context.Seasons.FirstOrDefaultAsync(s => s.Year == year);
             if (season == null)
@@ -263,11 +261,11 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 .Include(s => s.Round)
                 .Include(s => s.Team1)
                 .Include(s => s.Team2)
-                .Where(s => s.Season.Year == year && s.Round.Index == index)
+                .Where(s => s.Season.Year == year && s.Round.Index == round)
                 .OrderBy(s => s.Index)
                 .ToList()!;
             if (matchups == null)
-                return ErrorMessage($"There are no matchups for Round {index} of the {year} Sycamore Cup Playoffs.");
+                return ErrorMessage($"There are no matchups for Round {round} of the {year} Sycamore Cup Playoffs.");
 
             var form = new PlayoffSeries_MatchupsForm { Matchups = matchups };
             return View(form);
@@ -281,28 +279,47 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             return View(form);
         }
 
+        [AllowAnonymous]
         public IActionResult IncorrectHomeIceAdvantageDisclaimer()
         {
             return View();
         }
 
+        /// <summary>
+        ///     Generate a schedule for a playoff series.
+        /// </summary>
+        /// <param name="series">The series to generate a schedule for.</param>
+        /// <returns></returns>
         private async Task GenerateSchedule(PlayoffSeries series)
         {
+            // Store games in this array for the purpose of date tracking
             Game[] games = new Game[7];
+            
+            // Get the start date for the playoff series
+            DateTime gameDate = (DateTime)series.StartDate!;
 
+            // For each possible game...
             for (int index = 0; index < games.Length; index++)
             {
+                // Store the game index here (Game 1, Game 2,... Game 7)
                 int gameIndex = index + 1;
+
+                // Higher seeds host games 1, 2, 5 and 7
                 bool team1IsHome = gameIndex == 1 || gameIndex == 2 || gameIndex == 5 || gameIndex == 7;
 
-                DateTime gameDate = (DateTime)series.StartDate!;
+                // If we are past scheduling game 1...
                 if (gameIndex > 1)
                 {
+                    // Get the date of the previous game and determine the appropriate amount of rest days before this game
+                    // according to SHL conventions
                     DateTime previousGameDate = games[index - 1].Date;
                     int restDaysBeforeGame = DetermineRestDaysBeforeGame(series.Round.Index, gameIndex);
+                    
+                    // Set the date of the current game to the number of rest days + 1 after the previous game
                     gameDate = previousGameDate.AddDays(1 + restDaysBeforeGame);
                 }
 
+                // Create a new Game object
                 string gameString = $"Game {gameIndex}";
                 var game = new Game
                 {
@@ -321,24 +338,34 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                     AwayTeam = (team1IsHome ? series.Team2 : series.Team1)!,
                     HomeTeamId = (Guid)(team1IsHome ? series.Team1Id : series.Team2Id)!,
                     HomeTeam = (team1IsHome ? series.Team1 : series.Team2)!,
-                    IsConfirmed = gameIndex <= 4,
+                    IsConfirmed = gameIndex <= 4,  // The first 4 games of a best-of-7 series are always confirmed
                     Notes = gameString,
                     PlayoffSeriesScore = gameString
                 };
 
+                // Write the game into the current index of the array and add it to the local schedule table
                 games[index] = game;
                 _context.Schedule.Add(game);
             }
 
-            await _syncService.AddManyGamesAsync(games.ToList());
+            // Convert the schedule array to a list and send it to the LiveDbSyncService, and save the changes locally
             await _context.SaveChangesAsync();
         }
 
+        /// <summary>
+        ///     Determine the appropriate amount of rest days before a playoff game.
+        /// </summary>
+        /// <param name="round">The current round.</param>
+        /// <param name="game">The game to determine the amount of rest days before.</param>
+        /// <returns>The appropriate amount of rest days before the game.</returns>
         private int DetermineRestDaysBeforeGame(int round, int game)
         {
-            if (round == 4)
-                return 1;
+            // Before Game 5 of the Sycamore Cup Final, there should be 2 rest days
+            if (round == 4 && game == 5)
+                return 2;
             
+            // In all rounds, Games 1 and 2 are played back-to-back, and so are Games 3 and 4.
+            // In all other cases, there shall be 1 rest day between games.
             bool isBackToBack = game == 2 || game == 4;
             return isBackToBack ? 0 : 1;
         }

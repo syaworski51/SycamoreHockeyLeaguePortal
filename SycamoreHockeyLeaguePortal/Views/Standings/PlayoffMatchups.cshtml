@@ -1,14 +1,11 @@
-﻿@model List<List<Standings[]>>
+﻿@using SycamoreHockeyLeaguePortal.Models.ViewModels
+@model PlayoffMatchupsViewModel
 @inject SycamoreHockeyLeaguePortal.Data.ApplicationDbContext _context
 
 @{
     ViewData["Title"] = "Playoff Matchups";
 
-    List<Conference> conferences = ViewBag.Conferences;
     int conferenceIndex = 0;
-    int season = ViewBag.Season;
-
-    List<List<int[]>> seeds = ViewBag.Seeds;
 
     string IsThickerLineNeeded(int index, int numberOfMatchups)
     {
@@ -24,15 +21,15 @@
 <div class="container text-center align-content-center">
     <div class="row">
         <div class="col">
-            <a asp-controller="Standings" asp-action="PlayoffBracket" asp-route-season="@season">Go to Playoff Bracket</a>
+            <a asp-controller="Standings" asp-action="PlayoffBracket" asp-route-season="@Model.Season">Go to Playoff Bracket</a>
         </div>
     </div>
     <div class="row d-flex justify-content-center">
-        @foreach (var conference in Model)
+        @foreach (var conference in Model.Teams)
         {
             <div class="col-6" style="text-align: center;">
                 <h3 class="conference" style="text-align: center; margin-bottom: 20px;">
-                    @conferences[conferenceIndex].Name
+                    @Model.Conferences[conferenceIndex].Name
                 </h3>
                 <table class="table" style="margin: auto;">
                     <tbody>
@@ -53,21 +50,21 @@
                                     </div>
                                 </td>
                                 <td>
-                                    <strong style="font-size: 18pt;">@seeds[conferenceIndex][matchupIndex][0]</strong>
+                                    <strong style="font-size: 18pt;">@Model.Seeds[conferenceIndex][matchupIndex][0]</strong>
                                 </td>
                                 <td class="col-1">
                                     <img class="team-logo" src="~/@team1.Team.LogoPath"
-                                         title="@team1.Team - @team1.Division!.Code" />
+                                         title="@team1" />
                                 </td>
                                 <td class="vs">
                                     VS
                                 </td>
                                 <td class="col-1">
                                     <img class="team-logo" src="~/@team2.Team.LogoPath"
-                                         title="@team2.Team - @team2.Division!.Code" />
+                                         title="@team2" />
                                 </td>
                                 <td>
-                                    <strong style="font-size: 18pt;">@seeds[conferenceIndex][matchupIndex][1]</strong>
+                                    <strong style="font-size: 18pt;">@Model.Seeds[conferenceIndex][matchupIndex][1]</strong>
                                 </td>
                                 <td style="text-align: left; width: 35%;">
                                     <div style="margin-left: 15px;">

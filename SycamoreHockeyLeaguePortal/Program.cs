@@ -41,8 +41,6 @@ builder.Services.AddDbContext<LiveDbContext>(options =>
     });
 });
 
-builder.Services.AddScoped<LiveDbSyncService>();
-
 
 //builder.Services.AddDefaultIdentity<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true).AddEntityFrameworkStores<ApplicationDbContext>();
 

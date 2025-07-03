@@ -771,9 +771,5 @@ img {
 }
 
 .current-game {
-    background-color: #ffffe6;
-}
-
-.current-game:hover {
-    background-color: #cccc00;
+    background-color: #f2f2f2;
 }
