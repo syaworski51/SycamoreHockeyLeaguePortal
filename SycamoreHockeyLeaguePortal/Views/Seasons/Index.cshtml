@@ -23,36 +23,42 @@
     <div class="row d-flex justify-content-center">
         @foreach (var season in Model)
         {
+            bool seasonHasSchedule = firstDaysOfSeasons[season.Year] != DateTime.MinValue;
+
             <div class="col-2 card text-center align-content-center">
                 <h4>@season.Year</h4>
                 <p class="text-secondary">@season.GamesPerTeam games</p>
                 <div class="container">
-                    @if (firstDaysOfSeasons[season.Year] != DateTime.MinValue)
+                    @if (userIsAdmin) 
                     {
-                        @if (season.InTestMode)
+                        if (seasonHasSchedule)
                         {
                             <div class="row">
                                 <div class="col">
-                                    <a class="text-danger" href="#">Go Live</a>
+                                    <a class="text-danger"
+                                       asp-controller="Seasons" asp-action="GoLive"
+                                       asp-route-year="@season.Year">Go Live</a>
                                 </div>
                             </div>
                         }
-                        <div class="row">
-                            <div class="col">
-                                <a class="text-primary" asp-controller="Schedule" asp-action="Index"
-                                   asp-route-weekOf="@firstDaysOfSeasons[season.Year]!.Value.ToString("yyyy-MM-dd")">
-                                    Schedule
-                                </a>
+                        else
+                        {
+                            <div class="row">
+                                <div class="col">
+                                    <a class="text-primary"
+                                       asp-controller="Schedule" asp-action="UploadSchedule"
+                                       asp-route-year="@season.Year">Upload Schedule</a>
+                                </div>
                             </div>
-                        </div>
+                        }
                     }
-                    else
+                    @if (seasonHasSchedule)
                     {
                         <div class="row">
                             <div class="col">
-                                <a class="text-primary" 
-                                   asp-controller="Schedule" asp-action="UploadSchedule"
-                                   asp-route-year="@season.Year">Upload Schedule</a>
+                                <a class="text-primary"
+                                   asp-controller="Schedule" asp-action="Index"
+                                   asp-route-weekOf="@firstDaysOfSeasons[season.Year]">Schedule</a>
                             </div>
                         </div>
                     }
