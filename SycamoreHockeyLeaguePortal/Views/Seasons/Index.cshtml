@@ -24,6 +24,7 @@
         @foreach (var season in Model)
         {
             bool seasonHasSchedule = firstDaysOfSeasons[season.Year] != DateTime.MinValue;
+            bool seasonHasPlayoffSchedule = doSeasonsHavePlayoffSchedules[season.Year];
 
             <div class="col-2 card text-center align-content-center">
                 <h4>@season.Year</h4>
@@ -70,7 +71,7 @@
                                asp-route-viewBy="division">Standings</a>
                         </div>
                     </div>
-                    @if (doSeasonsHavePlayoffSchedules[season.Year])
+                    @if (seasonHasPlayoffSchedule)
                     {
                         <div class="row">
                             <div class="col">

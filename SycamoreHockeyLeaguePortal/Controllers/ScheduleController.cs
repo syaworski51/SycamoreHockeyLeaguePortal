@@ -183,6 +183,13 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             return View(await playoffs.AsNoTracking().ToListAsync());
         }
 
+        public IActionResult ReturnToPlayoffsSchedule(int season, int round, DateTime date)
+        {
+            string dateSection = "#" + date.ToString("MMMdd");
+            var url = Url.Action("Playoffs", "Schedule", new { season = season, round = round });
+            return Redirect(url + dateSection);
+        }
+
         public IActionResult UploadSchedule(int year)
         {
             bool seasonExists = DoesSeasonExist(year);
@@ -468,10 +475,22 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                             (s.AwayTeam.Code == homeTeam && s.HomeTeam.Code == awayTeam));
 
             if (game.Type == PLAYOFFS)
+            {
+                var series = _localContext.PlayoffSeries
+                    .Include(s => s.Season)
+                    .Include(s => s.Round)
+                    .Include(s => s.Team1)
+                    .Include(s => s.Team2)
+                    .FirstOrDefault(s => s.Season.Year == season &&
+                                         ((s.Team1!.Code == awayTeam && s.Team2!.Code == homeTeam) ||
+                                          (s.Team1!.Code == homeTeam && s.Team2!.Code == awayTeam)));
+                ViewBag.PlayoffSeries = series;
+
                 results = results
                     .Where(r => r.Type == PLAYOFFS &&
                                 r.Season.Year == season)
                     .OrderBy(r => r.Date);
+            }
             else
             {
                 results = results.Where(r => r.Type != PLAYOFFS);

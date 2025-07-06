@@ -5,6 +5,7 @@
 
 @{
     HeadToHeadSeries matchup = ViewBag.Matchup;
+    PlayoffSeries? series = ViewBag.PlayoffSeries;
     List<Game> results = ViewBag.Results;
     List<Standings> teamStats = ViewBag.TeamStats;
 
@@ -59,62 +60,65 @@
 
     string GetSeasonSeriesScoreString()
     {
-        int gamesPlayed;
-
-        if (teamStats[0].Conference != teamStats[1].Conference)
-        {
-            gamesPlayed = results.Count;
-
-            return gamesPlayed switch
-            {
-                0 => "First-Ever Meeting!",
-                1 => "Last Meeting",
-                _ => $"Last {gamesPlayed} Meetings"
-            };
-        }   
+        if (Model.Type == "Playoffs")
+            return series.SeriesScoreString;
         else
         {
-            gamesPlayed = results.Count(r => r.IsFinalized);
-            bool seriesComplete = gamesPlayed == results.Count;
-
-            string verb;
-            Team? leader;
-            int leadingScore;
-            int trailingScore;
-            if (matchup.Team1Wins == matchup.Team2Wins)
+            if (teamStats[0].Conference != teamStats[1].Conference)
             {
-                verb = seriesComplete ? "split" : "is tied";
-                leader = (matchup.Team1GoalsFor != matchup.Team2GoalsFor) ?
-                    ((matchup.Team1GoalsFor > matchup.Team2GoalsFor) ? matchup.Team1 : matchup.Team2) : null;
+                int gamesPlayed = results.Count;
 
-                leadingScore = Math.Max(matchup.Team1GoalsFor, matchup.Team2GoalsFor);
-                trailingScore = Math.Min(matchup.Team1GoalsFor, matchup.Team2GoalsFor);
-                string scoreString = $"Season series {verb} {matchup.Team1Wins}-{matchup.Team2Wins}";
-
-                if (gamesPlayed > 0)
+                return gamesPlayed switch
                 {
-                    scoreString += $" (Agg. {leadingScore}-{trailingScore}";
-
-                    if (leader != null)
-                        scoreString += $" {leader.Code})";
-                    else
-                        scoreString += ")";
-                }
-
-                return scoreString;
+                    0 => "First-Ever Meeting!",
+                    1 => "Last Meeting",
+                    _ => $"Last {gamesPlayed} Meetings"
+                };
             }
             else
             {
-                leader = (matchup.Team1Wins > matchup.Team2Wins) ? matchup.Team1 : matchup.Team2;
-                if (leader.City == "New York")
-                    verb = seriesComplete ? "win" : "lead";
+                int gamesPlayed = results.Count(r => r.IsFinalized);
+                bool seriesComplete = gamesPlayed == results.Count;
+
+                string verb;
+                Team? leader;
+                int leadingScore;
+                int trailingScore;
+                if (matchup.Team1Wins == matchup.Team2Wins)
+                {
+                    verb = seriesComplete ? "split" : "is tied";
+                    leader = (matchup.Team1GoalsFor != matchup.Team2GoalsFor) ?
+                        ((matchup.Team1GoalsFor > matchup.Team2GoalsFor) ? matchup.Team1 : matchup.Team2) : null;
+
+                    leadingScore = Math.Max(matchup.Team1GoalsFor, matchup.Team2GoalsFor);
+                    trailingScore = Math.Min(matchup.Team1GoalsFor, matchup.Team2GoalsFor);
+                    string scoreString = $"Season series {verb} {matchup.Team1Wins}-{matchup.Team2Wins}";
+
+                    if (gamesPlayed > 0)
+                    {
+                        scoreString += $" (Agg. {leadingScore}-{trailingScore}";
+
+                        if (leader != null)
+                            scoreString += $" {leader.Code})";
+                        else
+                            scoreString += ")";
+                    }
+
+                    return scoreString;
+                }
                 else
-                    verb = seriesComplete ? "wins" : "leads";
+                {
+                    leader = (matchup.Team1Wins > matchup.Team2Wins) ? matchup.Team1 : matchup.Team2;
+                    if (leader.City == "New York")
+                        verb = seriesComplete ? "win" : "lead";
+                    else
+                        verb = seriesComplete ? "wins" : "leads";
 
-                leadingScore = Math.Max(matchup.Team1Wins, matchup.Team2Wins);
-                trailingScore = Math.Min(matchup.Team1Wins, matchup.Team2Wins);
+                    leadingScore = Math.Max(matchup.Team1Wins, matchup.Team2Wins);
+                    trailingScore = Math.Min(matchup.Team1Wins, matchup.Team2Wins);
 
-                return $"{GetTeamString(leader)} {verb} season series {leadingScore}-{trailingScore}";
+                    return $"{GetTeamString(leader)} {verb} season series {leadingScore}-{trailingScore}";
+                }
             }
         }
     }

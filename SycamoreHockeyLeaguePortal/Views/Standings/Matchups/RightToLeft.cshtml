@@ -9,34 +9,59 @@
     bool hasStartDate = matchup.StartDate != null;
     bool hasTeam1 = matchup.Team1 != null;
     bool hasTeam2 = matchup.Team2 != null;
+
+    int DetermineTeamColumnWidth()
+    {
+        return matchup.IsConfirmed ? 6 : 9;
+    }
+
+    string IsTeamEliminated(Team team, int wins)
+    {
+        return Math.Max(matchup.Team1Wins, matchup.Team2Wins) == 4 && wins < 4 ?
+            "text-muted" : "";
+    }
 }
 
 <div class="row team">
-    <div class="col-3 wins">
-        @matchup.Team1Wins
-    </div>
+    @if (matchup.IsConfirmed)
+    {
+        <div class="col-3 wins @IsTeamEliminated(matchup.Team1!, matchup.Team1Wins)">
+            @matchup.Team1Wins
+        </div>
+    }
     @if (hasTeam1) {
-        <div class="col-6">
-            <a class="team-code" asp-controller="Teams" asp-action="Details" asp-route-id="@matchup.Team1!.Code" asp-route-season="@season" asp-route-gameType="playoffs">@matchup.Team1.Code</a>
+        <div class="col-@DetermineTeamColumnWidth()">
+            <a class="team-code muted-link @IsTeamEliminated(matchup.Team1, matchup.Team1Wins)" 
+               asp-controller="Teams" asp-action="Details" 
+               asp-route-id="@matchup.Team1!.Code" 
+               asp-route-season="@season" 
+               asp-route-gameType="playoffs">@matchup.Team1!.Code</a>
         </div>
         <div class="col-3 playoff-team">
             <img class="playoff-team logo" src="~/@matchup.Team1!.LogoPath" title="@matchup.Team1" alt="@matchup.Team1.Code" />
         </div>
     }
     else {
-        <div class="col-9">
+        <div class="col">
             <p>@matchup.Team1Placeholder</p>
         </div>
     }
 </div>
 <div class="row team">
-    <div class="col-3">
-        @matchup.Team2Wins
-    </div>
+    @if (matchup.IsConfirmed)
+    {
+        <div class="col-3 wins @IsTeamEliminated(matchup.Team2!, matchup.Team2Wins)">
+            @matchup.Team2Wins
+        </div>
+    }
     @if (hasTeam2)
     {
-        <div class="col-6">
-            <a class="team-code" asp-controller="Teams" asp-action="Details" asp-route-id="@matchup.Team2!.Code" asp-route-season="@season" asp-route-gameType="playoffs">@matchup.Team2.Code</a>
+        <div class="col-@DetermineTeamColumnWidth()">
+            <a class="team-code muted-link @IsTeamEliminated(matchup.Team2!, matchup.Team2Wins)" 
+            asp-controller="Teams" asp-action="Details" 
+            asp-route-id="@matchup.Team2!.Code" 
+            asp-route-season="@season" 
+            asp-route-gameType="playoffs">@matchup.Team2!.Code</a>
         </div>
         <div class="col-3 playoff-team">
             <img class="playoff-team logo" src="~/@matchup.Team2!.LogoPath" title="@matchup.Team2" alt="@matchup.Team2.Code" />
@@ -44,7 +69,7 @@
     }
     else
     {
-        <div class="col-9">
+        <div class="col">
             <p>@matchup.Team2Placeholder</p>
         </div>
     }

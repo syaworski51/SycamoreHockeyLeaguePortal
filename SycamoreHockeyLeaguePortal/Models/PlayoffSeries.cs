@@ -74,6 +74,9 @@ namespace SycamoreHockeyLeaguePortal.Models
                     int leadingWins = Math.Max(Team1Wins, Team2Wins);
                     int trailingWins = Math.Min(Team1Wins, Team2Wins);
 
+                    if (leader.StartsWith("NY"))
+                        verb = verb.Remove(verb.Length - 1);
+
                     return $"{leader} {verb} series {leadingWins}-{trailingWins}";
                 }
 

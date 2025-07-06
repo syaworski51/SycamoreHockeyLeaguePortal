@@ -211,6 +211,11 @@ img {
     width: 70px;
 }
 
+.schedule-score .winner {
+    color: green;
+    font-weight: bold;
+}
+
 .pregame {
     width: 140px;
 }
@@ -338,8 +343,40 @@ img {
     width: 115px;
 }
 
+.winner {
+    color: green;
+    font-weight: bold;
+}
+
+.text-muted {
+    color: #b3b3b3;
+}
+
 .playoff-matchup {
     text-align: center;
+}
+
+.playoff-matchup .team a, .playoff-matchup .wins {
+    vertical-align: middle;
+    font-family: "Druk Wide Trial";
+}
+
+.playoff-matchup .team a {
+    font-size: 10pt;
+}
+
+.playoff-matchup .wins {
+    font-size: 14pt;
+}
+
+.playoff-matchup .col-3, .playoff-matchup .col-6 {
+    padding-left: 3px;
+    padding-right: 3px;
+}
+
+.playoff-series .score {
+    font-family: "Druk Wide Trial";
+    font-size: 50pt;
 }
 
 .bracket .playoff-matchup, .conference-semifinals {

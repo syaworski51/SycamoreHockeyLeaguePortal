@@ -55,7 +55,10 @@
             foreach (var gameDate in dates)
             {
                 ViewBag.Date = gameDate;
-                <partial name="Layouts/Playoffs.cshtml" />
+                <section id="@gameDate.ToString("MMMdd")">
+                    <partial name="Layouts/Playoffs.cshtml" />
+                </section>
+                
             }
         }
         else

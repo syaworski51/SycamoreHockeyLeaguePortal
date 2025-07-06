@@ -192,7 +192,10 @@
             }
             else
             {
-                <a asp-action="Playoffs" asp-route-season="@Model.Date.Year" asp-route-round="@Model.PlayoffRound!.Index">Back to Playoffs</a>
+                <a asp-action="ReturnToPlayoffsSchedule" 
+                asp-route-season="@Model.Date.Year" 
+                asp-route-round="@Model.PlayoffRound!.Index"
+                asp-route-date="@Model.Date.ToString("yyyy-MM-dd")">Back to Playoffs</a>
             }
         </div>
     </div>

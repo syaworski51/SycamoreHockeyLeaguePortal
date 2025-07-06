@@ -85,17 +85,17 @@
                     <a class="muted-link" asp-action="PlayoffSeries" asp-route-season="@game.Season.Year" asp-route-team1="@game.AwayTeam.Code" asp-route-team2="@game.HomeTeam.Code">@game.PlayoffSeriesScore</a>
                 </td>
                 <td>
-                    @if (userIsAdmin && DateTime.Now.Date == game.Date.Date)
+                    @if (userIsAdmin && DateTime.Now.Date >= game.Date.Date)
                     {
                         if (!game.IsFinalized)
                         {
-                            if (game.IsLive)
+                            if (game.Period == 0)
                             {
-                                <a asp-action="StartOrResumeGame" asp-route-date="@game.Date.ToString("yyyy-MM-dd")" asp-route-awayTeam="@game.AwayTeam.Code" asp-route-homeTeam="@game.HomeTeam.Code">Resume Game</a>
+                                <a asp-action="GameControls" asp-route-date="@game.Date.ToString("yyyy-MM-dd")" asp-route-awayTeam="@game.AwayTeam.Code" asp-route-homeTeam="@game.HomeTeam.Code">Start Game</a>
                             }
                             else
                             {
-                                <a asp-action="StartOrResumeGame" asp-route-date="@game.Date.ToString("yyyy-MM-dd")" asp-route-awayTeam="@game.AwayTeam.Code" asp-route-homeTeam="@game.HomeTeam.Code">Start Game</a>
+                                <a asp-action="GameControls" asp-route-date="@game.Date.ToString("yyyy-MM-dd")" asp-route-awayTeam="@game.AwayTeam.Code" asp-route-homeTeam="@game.HomeTeam.Code">Resume Game</a>
                             }
                         }
                     }
