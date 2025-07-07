@@ -1,8 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SycamoreHockeyLeaguePortal.Data;
 using SycamoreHockeyLeaguePortal.Models;
-using SycamoreHockeyLeaguePortal.Models.DataTransferPackages;
-using SycamoreHockeyLeaguePortal.Models.DbSyncPackages;
+using SycamoreHockeyLeaguePortal.Models.DataTransferModels.Packages;
 
 namespace SycamoreHockeyLeaguePortal.Services
 {
@@ -71,7 +70,7 @@ namespace SycamoreHockeyLeaguePortal.Services
         /// </summary>
         /// <param name="package">Contains all the information necessary to create a new season.</param>
         /// <returns></returns>
-        public async Task NewSeasonAsync(NewSeasonPackage package)
+        public async Task NewSeasonAsync(DTP_NewSeason package)
         {
             // Add a new season record
             await AddRecordToTableAsync(_liveContext.Seasons, package.Season, new InvalidOperationException($"The {package.Season.Year} season already exists in the database;"));
@@ -97,7 +96,7 @@ namespace SycamoreHockeyLeaguePortal.Services
         /// </summary>
         /// <param name="package">Contains the necessary data to add a new champion.</param>
         /// <returns></returns>
-        public async Task NewChampionAsync(NewChampionPackage package)
+        public async Task NewChampionAsync(DTP_NewChampion package)
         {
             // Add the new champion to the Champions table
             var exception = new InvalidOperationException($"The {package.Champion.Season.Year} {package.Champion.Team.FullName} are already in the Champions table.");
@@ -115,17 +114,6 @@ namespace SycamoreHockeyLeaguePortal.Services
         /// <returns></returns>
         public async Task WriteOneResultAsync(Game game)
         {
-            // Strip the navigation properties if any of them have not been stripped yet
-            if (game.Season != null || game.PlayoffRound != null || game.PlayoffSeries != null ||
-                game.AwayTeam != null || game.HomeTeam != null)
-            {
-                game.Season = null;
-                game.PlayoffRound = null;
-                game.PlayoffSeries = null;
-                game.AwayTeam = null;
-                game.HomeTeam = null;
-            }
-            
             // If the game already exists, update it
             bool gameExistsInLiveDB = await _liveContext.Schedule.AnyAsync(s => s.Id == game.Id);
             if (gameExistsInLiveDB)

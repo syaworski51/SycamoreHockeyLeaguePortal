@@ -1,6 +1,6 @@
-﻿namespace SycamoreHockeyLeaguePortal.Models.DbSyncPackages
+﻿namespace SycamoreHockeyLeaguePortal.Models.DataTransferModels.Packages
 {
-    public class NewSeasonPackage
+    public class DTP_NewSeason
     {
         public Season Season { get; set; }
         public List<Alignment> Alignments { get; set; }
