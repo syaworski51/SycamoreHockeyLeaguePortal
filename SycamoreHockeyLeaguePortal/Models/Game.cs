@@ -66,7 +66,7 @@ namespace SycamoreHockeyLeaguePortal.Models
         [Display(Name = "Period")]
         public int Period { get; set; }
 
-        public bool IsConfirmed { get; set; } = true;
+        public bool IsConfirmed { get; set; }
 
         [Display(Name = "Live?")]
         public bool IsLive { get; set; }

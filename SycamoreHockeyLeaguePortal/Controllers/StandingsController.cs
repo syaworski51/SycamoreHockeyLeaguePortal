@@ -4,6 +4,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
 using SycamoreHockeyLeaguePortal.Data;
 using SycamoreHockeyLeaguePortal.Models;
+using SycamoreHockeyLeaguePortal.Models.ConstantClasses;
 using SycamoreHockeyLeaguePortal.Models.InputForms;
 using SycamoreHockeyLeaguePortal.Models.ViewModels;
 
@@ -12,9 +13,6 @@ namespace SycamoreHockeyLeaguePortal.Controllers
     public class StandingsController : Controller
     {
         private readonly ApplicationDbContext _context;
-
-        private const string REGULAR_SEASON = "Regular Season";
-        private const string PLAYOFFS = "Playoffs";
 
         private const string VIEWBY_DIVISION = "division";
         private const string VIEWBY_CONFERENCE = "conference";
@@ -659,7 +657,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 .Include(s => s.AwayTeam)
                 .Include(s => s.HomeTeam)
                 .Where(s => s.Season.Year == season &&
-                            s.Type == REGULAR_SEASON)
+                            s.Type == GameTypes.REGULAR_SEASON)
                 .OrderBy(s => s.Date)
                 .ThenBy(s => s.GameIndex);
         }

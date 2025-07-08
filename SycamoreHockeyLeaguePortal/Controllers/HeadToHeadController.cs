@@ -7,14 +7,13 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using SycamoreHockeyLeaguePortal.Data;
 using SycamoreHockeyLeaguePortal.Models;
+using SycamoreHockeyLeaguePortal.Models.ConstantClasses;
 
 namespace SycamoreHockeyLeaguePortal.Controllers
 {
     public class HeadToHeadController : Controller
     {
         private readonly ApplicationDbContext _context;
-
-        private const string REGULAR_SEASON = "Regular Season";
 
         public HeadToHeadController(ApplicationDbContext context)
         {
@@ -65,7 +64,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 .Include(s => s.AwayTeam)
                 .Include(s => s.HomeTeam)
                 .Where(s => s.Season.Year == season &&
-                            s.Type == "Regular Season" &&
+                            s.Type == GameTypes.REGULAR_SEASON &&
                             ((s.AwayTeam.Code == team1 && s.HomeTeam.Code == team2) ||
                              (s.AwayTeam.Code == team2 && s.HomeTeam.Code == team1)))
                 .OrderBy(s => s.Date.Date)

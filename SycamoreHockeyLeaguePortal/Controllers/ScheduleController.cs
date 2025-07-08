@@ -9,7 +9,9 @@ using Microsoft.IdentityModel.Tokens;
 using MongoDB.Bson;
 using SycamoreHockeyLeaguePortal.Data;
 using SycamoreHockeyLeaguePortal.Models;
-using SycamoreHockeyLeaguePortal.Models.DataTransferPackages;
+using SycamoreHockeyLeaguePortal.Models.ConstantClasses;
+using SycamoreHockeyLeaguePortal.Models.DataTransferModels.Objects;
+using SycamoreHockeyLeaguePortal.Models.DataTransferModels.Packages;
 using SycamoreHockeyLeaguePortal.Models.Exceptions;
 using SycamoreHockeyLeaguePortal.Models.InputForms;
 using SycamoreHockeyLeaguePortal.Models.ViewModels;
@@ -26,10 +28,6 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         private readonly ApplicationDbContext _localContext;
         private readonly LiveDbContext _liveContext;
         Random random = new Random();
-
-        private const string REGULAR_SEASON = "Regular Season";
-        private const string TIEBREAKER = "Tiebreaker";
-        private const string PLAYOFFS = "Playoffs";
 
         private const string DIVISION = "division";
         private const string CONFERENCE = "conference";
@@ -166,7 +164,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                     .Include(s => s.AwayTeam)
                     .Include(s => s.HomeTeam)
                     .Where(s => s.Season.Year == season &&
-                                s.Type == PLAYOFFS &&
+                                s.Type == GameTypes.PLAYOFFS &&
                                 s.PlayoffRound!.Index == round)
                     .OrderBy(s => s.Date)
                     .ThenBy(s => s.GameIndex);
@@ -388,7 +386,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 .Where(s => (s.AwayTeam.Code == awayTeam && s.HomeTeam.Code == homeTeam) ||
                             (s.AwayTeam.Code == homeTeam && s.HomeTeam.Code == awayTeam));
 
-            if (game.Type == PLAYOFFS)
+            if (game.Type == GameTypes.PLAYOFFS)
             {
                 var series = _localContext.PlayoffSeries
                     .Include(s => s.Season)
@@ -401,13 +399,13 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 ViewBag.PlayoffSeries = series;
                 
                 results = results
-                    .Where(r => r.Type == PLAYOFFS &&
+                    .Where(r => r.Type == GameTypes.PLAYOFFS &&
                                 r.Season.Year == season)
                     .OrderBy(r => r.Date);
             }
             else
             {
-                results = results.Where(r => r.Type != PLAYOFFS);
+                results = results.Where(r => r.Type != GameTypes.PLAYOFFS);
 
                 if (teamStats[0].Conference != teamStats[1].Conference)
                     results = results
@@ -474,7 +472,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 .Where(s => (s.AwayTeam.Code == awayTeam && s.HomeTeam.Code == homeTeam) ||
                             (s.AwayTeam.Code == homeTeam && s.HomeTeam.Code == awayTeam));
 
-            if (game.Type == PLAYOFFS)
+            if (game.Type == GameTypes.PLAYOFFS)
             {
                 var series = _localContext.PlayoffSeries
                     .Include(s => s.Season)
@@ -487,13 +485,13 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 ViewBag.PlayoffSeries = series;
 
                 results = results
-                    .Where(r => r.Type == PLAYOFFS &&
+                    .Where(r => r.Type == GameTypes.PLAYOFFS &&
                                 r.Season.Year == season)
                     .OrderBy(r => r.Date);
             }
             else
             {
-                results = results.Where(r => r.Type != PLAYOFFS);
+                results = results.Where(r => r.Type != GameTypes.PLAYOFFS);
 
                 if (teamStats[0].Conference != teamStats[1].Conference)
                     results = results
@@ -544,7 +542,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 await UpdateGameAsync(game);
             }
 
-            if (game.Type == PLAYOFFS)
+            if (game.Type == GameTypes.PLAYOFFS)
                 return RedirectToAction(nameof(Playoffs), new { season = game.Date.Year, round = game.PlayoffRound!.Index });
 
             return RedirectToAction(nameof(Index), new { weekOf = game.Date.ToString("yyyy-MM-dd") });
@@ -562,13 +560,13 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 game.IsFinalized = true;
                 await UpdateGameAsync(game);
 
-                if (game.Type == PLAYOFFS)
+                if (game.Type == GameTypes.PLAYOFFS)
                     await UpdatePlayoffSeries(season, game);
                 else
                 {
                     await UpdateH2HSeries(game);
 
-                    if (game.Type == REGULAR_SEASON)
+                    if (game.Type == GameTypes.REGULAR_SEASON)
                     {
                         await UpdateStandings(season, game.AwayTeam, game.HomeTeam);
 
@@ -711,7 +709,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 .Include(s => s.AwayTeam)
                 .Include(s => s.HomeTeam)
                 .Where(s => s.Season.Year == season &&
-                            s.Type == PLAYOFFS &&
+                            s.Type == GameTypes.PLAYOFFS &&
                             ((s.AwayTeam == game.AwayTeam && s.HomeTeam == game.HomeTeam) ||
                              (s.AwayTeam == game.HomeTeam && s.HomeTeam == game.AwayTeam)))
                 .OrderBy(s => s.Date);
@@ -770,6 +768,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                         Team = _champion
                     };
                     _localContext.Champions.Add(champion);
+                    var package = new DTP_NewChampion(champion);
 
                     var roundsWon = _localContext.PlayoffSeries
                         .Include(s => s.Season)
@@ -796,7 +795,17 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                             SeriesLength = round.Team1Wins + round.Team2Wins,
                             BestOf = 7
                         };
+                        var roundWonDTO = new DTO_ChampionsRound
+                        {
+                            Id = roundWon.Id,
+                            ChampionId = roundWon.ChampionId,
+                            RoundIndex = roundWon.RoundIndex,
+                            OpponentId = roundWon.OpponentId,
+                            SeriesLength = roundWon.SeriesLength,
+                            BestOf = roundWon.BestOf
+                        };
                         _localContext.ChampionsRounds.Add(roundWon);
+                        package.Rounds.Add(roundWonDTO);
                     }
 
                     series.Season.IsLive = false;
@@ -1247,7 +1256,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                         .Include(s => s.AwayTeam)
                         .Include(s => s.HomeTeam)
                         .Where(s => s.Season.Year == SEASON &&
-                                    s.Type == REGULAR_SEASON &&
+                                    s.Type == GameTypes.REGULAR_SEASON &&
                                     !s.IsLive && s.IsFinalized &&
                                     ((s.AwayTeam == nextTeam && s.HomeTeam == currentTeam) ||
                                      (s.AwayTeam == currentTeam && s.HomeTeam == nextTeam)))
@@ -1518,7 +1527,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 .Include(s => s.AwayTeam)
                 .Include(s => s.HomeTeam)
                 .Where(s => s.Season.Year == season &&
-                            s.Type == REGULAR_SEASON &&
+                            s.Type == GameTypes.REGULAR_SEASON &&
                             (s.AwayTeam == team || s.HomeTeam == team) &&
                             s.IsFinalized && s.Period >= 3)
                 .OrderByDescending(s => s.Date.Date)
@@ -1541,7 +1550,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 .Include(s => s.HomeTeam)
                 .OrderBy(s => s.Date.Date)
                 .FirstOrDefaultAsync(s => s.Season.Year == season &&
-                                          s.Type == REGULAR_SEASON &&
+                                          s.Type == GameTypes.REGULAR_SEASON &&
                                           s.Period == 0 &&
                                           (s.AwayTeam == team || s.HomeTeam == team))!;
         }
@@ -1576,7 +1585,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 .Include(s => s.AwayTeam)
                 .Include(s => s.HomeTeam)
                 .Where(s => s.Season.Year == season &&
-                            s.Type == REGULAR_SEASON &&
+                            s.Type == GameTypes.REGULAR_SEASON &&
                             (s.AwayTeam == team || s.HomeTeam == team) &&
                             s.IsFinalized &&
                             s.Period >= 3)

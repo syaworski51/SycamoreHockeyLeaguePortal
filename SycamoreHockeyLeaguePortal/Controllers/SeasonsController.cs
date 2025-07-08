@@ -6,7 +6,8 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.VisualStudio.Web.CodeGeneration.EntityFrameworkCore;
 using SycamoreHockeyLeaguePortal.Data;
 using SycamoreHockeyLeaguePortal.Models;
-using SycamoreHockeyLeaguePortal.Models.DbSyncPackages;
+using SycamoreHockeyLeaguePortal.Models.DataTransferModels.Objects;
+using SycamoreHockeyLeaguePortal.Models.DataTransferModels.Packages;
 using SycamoreHockeyLeaguePortal.Models.InputForms;
 using SycamoreHockeyLeaguePortal.Services;
 using System.Net;
@@ -17,24 +18,24 @@ namespace SycamoreHockeyLeaguePortal.Controllers
     [Authorize(Roles = "Admin")]
     public class SeasonsController : Controller
     {
-        private readonly ApplicationDbContext _context;
+        private readonly ApplicationDbContext _localContext;
 
         public SeasonsController(ApplicationDbContext local)
         {
-            _context = local;
+            _localContext = local;
         }
 
         // GET: Seasons
         [AllowAnonymous]
         public async Task<IActionResult> Index()
         {
-            var seasons = _context.Seasons.OrderByDescending(s => s.Year);
+            var seasons = _localContext.Seasons.OrderByDescending(s => s.Year);
 
             Dictionary<int, DateTime?> firstDaysOfSeasons = new();
             Dictionary<int, bool> doSeasonsHavePlayoffSchedules = new();
             foreach (var season in seasons)
             {
-                var schedule = _context.Schedule
+                var schedule = _localContext.Schedule
                     .Where(s => s.Season.Year == season.Year)
                     .OrderBy(s => s.Date)
                     .ThenBy(s => s.GameIndex);
@@ -53,8 +54,8 @@ namespace SycamoreHockeyLeaguePortal.Controllers
 
         public async Task<IActionResult> GoLive(int year)
         {
-            var season = _context.Seasons.FirstOrDefault(s => s.Year == year)!;
-            var schedule = _context.Schedule
+            var season = _localContext.Seasons.FirstOrDefault(s => s.Year == year)!;
+            var schedule = _localContext.Schedule
                 .Include(s => s.Season)
                 .Include(s => s.AwayTeam)
                 .Include(s => s.HomeTeam)
@@ -75,8 +76,8 @@ namespace SycamoreHockeyLeaguePortal.Controllers
 
             season.InTestMode = false;
             season.IsLive = true;
-            _context.Seasons.Update(season);
-            await _context.SaveChangesAsync();
+            _localContext.Seasons.Update(season);
+            await _localContext.SaveChangesAsync();
 
             return RedirectToAction("Index", "Schedule", new { weekOf = schedule.Min(s => s.Date).ToString("yyyy-MM-dd") });
         }
@@ -85,12 +86,12 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> Details(Guid? id)
         {
-            if (id == null || _context.Seasons == null)
+            if (id == null || _localContext.Seasons == null)
             {
                 return NotFound();
             }
 
-            var season = await _context.Seasons
+            var season = await _localContext.Seasons
                 .FirstOrDefaultAsync(m => m.Id == id);
             if (season == null)
             {
@@ -103,7 +104,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         // GET: Seasons/Create
         public async Task<IActionResult> Create()
         {
-            List<Season> seasons = _context.Seasons
+            List<Season> seasons = _localContext.Seasons
                 .OrderBy(s => s.Year)
                 .ToList();
 
@@ -114,11 +115,11 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 .Select(s => s.GamesPerTeam)
                 .FirstOrDefault();
 
-            var conferences = _context.Conferences
+            var conferences = _localContext.Conferences
                 .OrderBy(c => c.Name)
                 .ToDictionary(c => c.Code);
 
-            var previousTeams = _context.Standings
+            var previousTeams = _localContext.Standings
                 .Include(s => s.Season)
                 .Include(s => s.Conference)
                 .Include(s => s.Division)
@@ -126,13 +127,13 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 .Where(s => s.Season.Year == previousYear)
                 .Select(s => s.Team);
 
-            var easternReplacements = _context.Teams
+            var easternReplacements = _localContext.Teams
                 .Where(t => t.Conference == conferences["EAST"] && !previousTeams.Contains(t))
                 .OrderBy(t => t.City)
                 .ThenBy(t => t.Name);
             ViewBag.EasternReplacements = new SelectList(easternReplacements, "Id", "FullName");
 
-            var westernReplacements = _context.Teams
+            var westernReplacements = _localContext.Teams
                 .Where(t => t.Conference == conferences["WEST"] && !previousTeams.Contains(t))
                 .OrderBy(t => t.City)
                 .ThenBy(t => t.Name);
@@ -157,11 +158,11 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             if (form.EasternReplacementId == null || form.WesternReplacementId == null)
                 return RedirectToAction(nameof(Create));
 
-            form.EasternReplacement = _context.Teams.FirstOrDefault(t => t.Id == form.EasternReplacementId);
-            form.WesternReplacement = _context.Teams.FirstOrDefault(t => t.Id == form.WesternReplacementId);
+            form.EasternReplacement = _localContext.Teams.FirstOrDefault(t => t.Id == form.EasternReplacementId);
+            form.WesternReplacement = _localContext.Teams.FirstOrDefault(t => t.Id == form.WesternReplacementId);
             
-            var previousYear = _context.Seasons.Max(s => s.Year);
-            var conferences = _context.Conferences
+            var previousYear = _localContext.Seasons.Max(s => s.Year);
+            var conferences = _localContext.Conferences
                 .OrderBy(c => c.Name)
                 .ToDictionary(c => c.Code);
 
@@ -175,9 +176,10 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 GamesPerTeam = form.GamesPerTeam,
                 InTestMode = true
             };
-            _context.Seasons.Add(season);
+            _localContext.Seasons.Add(season);
+            var package = new DTP_NewSeason(season);
 
-            var teams = _context.Standings
+            var teams = _localContext.Standings
                 .Include(s => s.Season)
                 .Include(s => s.Conference)
                 .Include(s => s.Division)
@@ -205,7 +207,15 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                     TeamId = team.Id,
                     Team = team
                 };
-                _context.Alignments.Add(alignment);
+                var alignmentDTO = new DTO_Alignment
+                {
+                    Id = alignment.Id,
+                    SeasonId = alignment.SeasonId,
+                    ConferenceId = alignment.ConferenceId,
+                    TeamId = alignment.TeamId
+                };
+                _localContext.Alignments.Add(alignment);
+                package.Alignments.Add(alignmentDTO);
 
                 var teamStats = new Standings
                 {
@@ -217,15 +227,23 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                     TeamId = team.Id,
                     Team = team
                 };
-                _context.Standings.Add(teamStats);
+                var teamStatsDTO = new DTO_Standings
+                {
+                    Id = teamStats.Id,
+                    SeasonId = teamStats.SeasonId,
+                    ConferenceId = teamStats.ConferenceId,
+                    TeamId = teamStats.TeamId
+                };
+                _localContext.Standings.Add(teamStats);
+                package.Standings.Add(teamStatsDTO);
             }
 
-            var playoffRounds = _context.PlayoffRounds
+            var playoffRounds = _localContext.PlayoffRounds
                 .Include(r => r.Season)
                 .Where(r => r.Season.Year == previousYear)
                 .OrderBy(r => r.Index);
 
-            var lastYearsMatchups = _context.PlayoffSeries
+            var lastYearsMatchups = _localContext.PlayoffSeries
                 .Include(s => s.Season)
                 .Include(s => s.Round)
                 .Include(s => s.Team1)
@@ -246,7 +264,16 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                     Name = round.Name,
                     MatchupsConfirmed = false
                 };
-                _context.PlayoffRounds.Add(newRound);
+                var newRoundDTO = new DTO_PlayoffRound
+                {
+                    Id = newRound.Id,
+                    SeasonId = newRound.SeasonId,
+                    Index = newRound.Index,
+                    Name = newRound.Name,
+                    MatchupsConfirmed = newRound.MatchupsConfirmed
+                };
+                _localContext.PlayoffRounds.Add(newRound);
+                package.PlayoffRounds.Add(newRoundDTO);
 
                 int numberOfMatchups = (int)Math.Pow(2, 4 - round.Index);
                 for (int matchupIndex = 0; matchupIndex < numberOfMatchups; matchupIndex++)
@@ -269,12 +296,25 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                         IsConfirmed = false,
                         HasEnded = false
                     };
-                    _context.PlayoffSeries.Add(matchup);
+                    var matchupDTO = new DTO_PlayoffSeries
+                    {
+                        Id = matchup.Id,
+                        SeasonId = matchup.SeasonId,
+                        RoundId = matchup.RoundId,
+                        Index = matchup.Index,
+                        Description = matchup.Description,
+                        Team1Placeholder = matchup.Team1Placeholder,
+                        Team2Placeholder = matchup.Team2Placeholder,
+                        IsConfirmed = matchup.IsConfirmed,
+                        HasEnded = matchup.HasEnded
+                    };
+                    _localContext.PlayoffSeries.Add(matchup);
+                    package.PlayoffSeries.Add(matchupDTO);
 
                     ascii++;
                 }
             }
-            await _context.SaveChangesAsync();
+            await _localContext.SaveChangesAsync();
 
             for (int index = 0; index < teams.Count - 1; index++)
             {
@@ -283,7 +323,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 {
                     Team team2 = teams[cursor];
 
-                    var headToHead = new HeadToHeadSeries
+                    var matchup = new HeadToHeadSeries
                     {
                         Id = Guid.NewGuid(),
                         SeasonId = season.Id,
@@ -293,23 +333,31 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                         Team2Id = team2.Id,
                         Team2 = team2
                     };
-                    _context.HeadToHeadSeries.Add(headToHead);
+                    var matchupDTO = new DTO_HeadToHeadSeries
+                    {
+                        Id = matchup.Id,
+                        SeasonId = matchup.SeasonId,
+                        Team1Id = matchup.Team1Id,
+                        Team2Id = matchup.Team2Id
+                    };
+                    _localContext.HeadToHeadSeries.Add(matchup);
+                    package.HeadToHeadSeries.Add(matchupDTO);
                 }
             }
 
-            await _context.SaveChangesAsync();
+            await _localContext.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
         // GET: Seasons/Edit/5
         public async Task<IActionResult> Edit(Guid? id)
         {
-            if (id == null || _context.Seasons == null)
+            if (id == null || _localContext.Seasons == null)
             {
                 return NotFound();
             }
 
-            var season = await _context.Seasons.FindAsync(id);
+            var season = await _localContext.Seasons.FindAsync(id);
             if (season == null)
             {
                 return NotFound();
@@ -333,8 +381,8 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             {
                 try
                 {
-                    _context.Update(season);
-                    await _context.SaveChangesAsync();
+                    _localContext.Update(season);
+                    await _localContext.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
                 {
@@ -355,12 +403,12 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         // GET: Seasons/Delete/5
         public async Task<IActionResult> Delete(Guid? id)
         {
-            if (id == null || _context.Seasons == null)
+            if (id == null || _localContext.Seasons == null)
             {
                 return NotFound();
             }
 
-            var season = await _context.Seasons
+            var season = await _localContext.Seasons
                 .FirstOrDefaultAsync(m => m.Id == id);
             if (season == null)
             {
@@ -375,11 +423,11 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(Guid id)
         {
-            if (_context.Seasons == null)
+            if (_localContext.Seasons == null)
             {
                 return Problem("Entity set 'ApplicationDbContext.Season'  is null.");
             }
-            var season = await _context.Seasons.FindAsync(id);
+            var season = await _localContext.Seasons.FindAsync(id);
             if (season != null)
             {
                 var year = season.Year;
@@ -392,21 +440,21 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 await RemoveChampionsRounds(year);
                 await RemoveChampion(year);
                 
-                _context.Seasons.Remove(season);
+                _localContext.Seasons.Remove(season);
             }
             
-            await _context.SaveChangesAsync();
+            await _localContext.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
         private bool SeasonExists(Guid id)
         {
-          return (_context.Seasons?.Any(e => e.Id == id)).GetValueOrDefault();
+          return (_localContext.Seasons?.Any(e => e.Id == id)).GetValueOrDefault();
         }
 
         private async Task RemoveSchedule(int season)
         {
-            var schedule = _context.Schedule
+            var schedule = _localContext.Schedule
                 .Include(s => s.Season)
                 .Include(s => s.PlayoffRound)
                 .Include(s => s.AwayTeam)
@@ -414,14 +462,14 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 .Where(s => s.Season.Year == season);
             
             foreach (var game in schedule)
-                _context.Schedule.Remove(game);
+                _localContext.Schedule.Remove(game);
 
-            await _context.SaveChangesAsync();
+            await _localContext.SaveChangesAsync();
         }
 
         private async Task RemoveStandings(int season)
         {
-            var standings = _context.Standings
+            var standings = _localContext.Standings
                 .Include(s => s.Season)
                 .Include(s => s.Conference)
                 .Include(s => s.Division)
@@ -429,14 +477,14 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 .Where(s => s.Season.Year == season);
             
             foreach (var statLine in standings)
-                _context.Standings.Remove(statLine);
+                _localContext.Standings.Remove(statLine);
 
-            await _context.SaveChangesAsync();
+            await _localContext.SaveChangesAsync();
         }
 
         private async Task RemoveAlignments(int season)
         {
-            var alignments = _context.Alignments
+            var alignments = _localContext.Alignments
                 .Include(s => s.Season)
                 .Include(s => s.Conference)
                 .Include(s => s.Division)
@@ -444,14 +492,14 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 .Where(s => s.Season.Year == season);
 
             foreach (var alignment in alignments)
-                _context.Alignments.Remove(alignment);
+                _localContext.Alignments.Remove(alignment);
 
-            await _context.SaveChangesAsync();
+            await _localContext.SaveChangesAsync();
         }
 
         private async Task RemovePlayoffSeries(int season)
         {
-            var playoffSeries = _context.PlayoffSeries
+            var playoffSeries = _localContext.PlayoffSeries
                 .Include(s => s.Season)
                 .Include(s => s.Round)
                 .Include(s => s.Team1)
@@ -459,48 +507,48 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 .Where(s => s.Season.Year == season);
 
             foreach (var series in playoffSeries)
-                _context.PlayoffSeries.Remove(series);
+                _localContext.PlayoffSeries.Remove(series);
 
-            await _context.SaveChangesAsync();
+            await _localContext.SaveChangesAsync();
         }
 
         private async Task RemovePlayoffRounds(int season)
         {
-            var playoffRounds = _context.PlayoffRounds
+            var playoffRounds = _localContext.PlayoffRounds
                 .Include(r => r.Season)
                 .Where(r => r.Season.Year == season);
 
             foreach (var round in playoffRounds)
-                _context.PlayoffRounds.Remove(round);
+                _localContext.PlayoffRounds.Remove(round);
 
-            await _context.SaveChangesAsync();
+            await _localContext.SaveChangesAsync();
         }
 
         private async Task RemoveChampionsRounds(int season)
         {
-            var championsRounds = _context.ChampionsRounds
+            var championsRounds = _localContext.ChampionsRounds
                 .Include(r => r.Champion)
                 .Include(r => r.Opponent)
                 .Where(r => r.Champion.Season.Year == season);
 
             foreach (var round in championsRounds)
-                _context.ChampionsRounds.Remove(round);
+                _localContext.ChampionsRounds.Remove(round);
 
-            await _context.SaveChangesAsync();
+            await _localContext.SaveChangesAsync();
         }
 
         private async Task RemoveChampion(int season)
         {
-            var champion = _context.Champions
+            var champion = _localContext.Champions
                 .Include(c => c.Season)
                 .Include(c => c.Team)
                 .Where(c => c.Season.Year == season)
                 .FirstOrDefault();
 
             if (champion != null)
-                _context.Champions.Remove(champion);
+                _localContext.Champions.Remove(champion);
 
-            await _context.SaveChangesAsync();
+            await _localContext.SaveChangesAsync();
         }
 
         private Guid GenerateGuid(IEnumerable<object> table)

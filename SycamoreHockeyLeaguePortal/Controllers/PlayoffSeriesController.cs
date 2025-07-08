@@ -10,6 +10,7 @@ using NuGet.ProjectModel;
 using SycamoreHockeyLeaguePortal.Data;
 using SycamoreHockeyLeaguePortal.Data.Migrations;
 using SycamoreHockeyLeaguePortal.Models;
+using SycamoreHockeyLeaguePortal.Models.ConstantClasses;
 using SycamoreHockeyLeaguePortal.Models.InputForms;
 using SycamoreHockeyLeaguePortal.Services;
 
@@ -19,8 +20,6 @@ namespace SycamoreHockeyLeaguePortal.Controllers
     public class PlayoffSeriesController : Controller
     {
         private readonly ApplicationDbContext _context;
-
-        private const string PLAYOFFS = "Playoffs";
 
         public PlayoffSeriesController(ApplicationDbContext context)
         {
@@ -234,7 +233,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 .Include(s => s.AwayTeam)
                 .Include(s => s.HomeTeam)
                 .Where(s => s.Season.Year == round.Season.Year &&
-                            s.Type == PLAYOFFS &&
+                            s.Type == GameTypes.PLAYOFFS &&
                             s.PlayoffRound == round)
                 .OrderBy(s => s.Date)
                 .ThenByDescending(s => s.PlayoffSeries!.StartDate)

@@ -26,7 +26,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Models\DataTransferModels\Objects\" />
     <Folder Include="wwwroot\images\stanley-cup-captains\" />
   </ItemGroup>
 
