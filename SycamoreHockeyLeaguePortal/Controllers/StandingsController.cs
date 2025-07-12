@@ -4,7 +4,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
 using SycamoreHockeyLeaguePortal.Data;
 using SycamoreHockeyLeaguePortal.Models;
-using SycamoreHockeyLeaguePortal.Models.ConstantClasses;
+using SycamoreHockeyLeaguePortal.Models.ConstantGroups;
 using SycamoreHockeyLeaguePortal.Models.InputForms;
 using SycamoreHockeyLeaguePortal.Models.ViewModels;
 

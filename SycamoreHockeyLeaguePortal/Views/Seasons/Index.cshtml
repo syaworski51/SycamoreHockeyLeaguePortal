@@ -9,6 +9,9 @@
     Dictionary<int, DateTime?> firstDaysOfSeasons = ViewBag.FirstDaysOfSeasons;
     Dictionary<int, bool> doSeasonsHavePlayoffSchedules = ViewBag.DoSeasonsHavePlayoffSchedules;
     bool userIsAdmin = User.IsInRole("Admin");
+
+    string DetermineStandingsView(int season) => 
+        season <= 2025 ? "division" : "conference";
 }
 
 <h1>@ViewBag.Title</h1>
@@ -32,25 +35,28 @@
                 <div class="container">
                     @if (userIsAdmin) 
                     {
-                        if (seasonHasSchedule)
+                        if (!season.IsLive && !season.IsComplete)
                         {
-                            <div class="row">
-                                <div class="col">
-                                    <a class="text-danger"
-                                       asp-controller="Seasons" asp-action="GoLive"
-                                       asp-route-year="@season.Year">Go Live</a>
+                            if (seasonHasSchedule)
+                            {
+                                <div class="row">
+                                    <div class="col">
+                                        <a class="text-danger"
+                                           asp-controller="Seasons" asp-action="GoLive"
+                                           asp-route-year="@season.Year">Go Live</a>
+                                    </div>
                                 </div>
-                            </div>
-                        }
-                        else
-                        {
-                            <div class="row">
-                                <div class="col">
-                                    <a class="text-primary"
-                                       asp-controller="Schedule" asp-action="UploadSchedule"
-                                       asp-route-year="@season.Year">Upload Schedule</a>
+                            }
+                            else
+                            {
+                                <div class="row">
+                                    <div class="col">
+                                        <a class="text-primary"
+                                           asp-controller="Schedule" asp-action="UploadSchedule"
+                                           asp-route-year="@season.Year">Upload Schedule</a>
+                                    </div>
                                 </div>
-                            </div>
+                            }
                         }
                     }
                     @if (seasonHasSchedule)
@@ -68,7 +74,7 @@
                             <a class="text-primary" 
                                asp-controller="Standings" asp-action="Index" 
                                asp-route-season="@season.Year" 
-                               asp-route-viewBy="division">Standings</a>
+                               asp-route-viewBy="@DetermineStandingsView(season.Year)">Standings</a>
                         </div>
                     </div>
                     @if (seasonHasPlayoffSchedule)

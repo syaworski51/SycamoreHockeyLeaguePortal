@@ -9,7 +9,7 @@ using Microsoft.IdentityModel.Tokens;
 using MongoDB.Bson;
 using SycamoreHockeyLeaguePortal.Data;
 using SycamoreHockeyLeaguePortal.Models;
-using SycamoreHockeyLeaguePortal.Models.ConstantClasses;
+using SycamoreHockeyLeaguePortal.Models.ConstantGroups;
 using SycamoreHockeyLeaguePortal.Models.DataTransferModels.Objects;
 using SycamoreHockeyLeaguePortal.Models.DataTransferModels.Packages;
 using SycamoreHockeyLeaguePortal.Models.Exceptions;
@@ -768,7 +768,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                         Team = _champion
                     };
                     _localContext.Champions.Add(champion);
-                    var package = new DTP_NewChampion(champion);
+                    //var package = new DTP_NewChampion(champion);
 
                     var roundsWon = _localContext.PlayoffSeries
                         .Include(s => s.Season)
@@ -795,7 +795,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                             SeriesLength = round.Team1Wins + round.Team2Wins,
                             BestOf = 7
                         };
-                        var roundWonDTO = new DTO_ChampionsRound
+                        /*var roundWonDTO = new DTO_ChampionsRound
                         {
                             Id = roundWon.Id,
                             ChampionId = roundWon.ChampionId,
@@ -803,9 +803,9 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                             OpponentId = roundWon.OpponentId,
                             SeriesLength = roundWon.SeriesLength,
                             BestOf = roundWon.BestOf
-                        };
+                        };*/
                         _localContext.ChampionsRounds.Add(roundWon);
-                        package.Rounds.Add(roundWonDTO);
+                        //package.Rounds.Add(roundWonDTO);
                     }
 
                     series.Season.IsLive = false;

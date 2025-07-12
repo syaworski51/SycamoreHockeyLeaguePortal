@@ -6,20 +6,17 @@
 
     bool userIsAdmin = User.IsInRole("Admin");
 
-    string GetDateString(DateTime date)
-    {
-        return $"{GetDayOfWeek(date)}, {GetMonth(date)} {date.Day}";
-    }
+    string GetDateString(DateTime date) =>
+        $"{GetDayOfWeek(date)}, {GetMonth(date)} {date.Day}";
 
-    string GetDayOfWeek(DateTime date)
-    {
-        return date.ToString("dddd");
-    }
+    string GetDayOfWeek(DateTime date) =>
+        date.ToString("dddd");
 
-    string GetMonth(DateTime date)
-    {
-        return date.ToString("MMMM");
-    }
+    string GetMonth(DateTime date) =>
+        date.ToString("MMMM");
+
+    string IsGameConfirmed(Game game) =>
+        game.IsConfirmed ? "" : "unconfirmed-game";
 }
 
 <h3 class="schedule-game-date">@GetDateString(date)</h3>
@@ -50,7 +47,7 @@
             var awayTeam = game.AwayTeam;
             var homeTeam = game.HomeTeam;
 
-            <tr>
+            <tr class="@IsGameConfirmed(game)">
                 <td class="schedule-team-name" style="text-align: right;">
                     <a asp-controller="Teams" asp-action="Details" asp-route-id="@awayTeam.Code" asp-route-season="@game.Season.Year" asp-route-gameType="playoffs">@awayTeam</a>
                 </td>

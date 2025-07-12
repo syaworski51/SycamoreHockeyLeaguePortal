@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using SycamoreHockeyLeaguePortal.Data;
 using SycamoreHockeyLeaguePortal.Models;
-using SycamoreHockeyLeaguePortal.Models.ConstantClasses;
+using SycamoreHockeyLeaguePortal.Models.ConstantGroups;
 
 namespace SycamoreHockeyLeaguePortal.Controllers
 {

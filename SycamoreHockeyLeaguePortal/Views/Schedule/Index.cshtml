@@ -4,9 +4,8 @@
 @{
     ViewBag.Title = "Schedule";
 
-    string GetDateString(DateTime date, string format) {
-        return date.ToString(format);
-    }
+    string GetDateString(DateTime date, string format) =>
+        date.ToString(format);
 
     string GetDateRangeString() {
         if (Model.WeekOf.Year != Model.EndOfWeek.Year)

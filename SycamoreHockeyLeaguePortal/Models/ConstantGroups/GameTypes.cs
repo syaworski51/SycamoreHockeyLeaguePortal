@@ -1,4 +1,4 @@
-﻿namespace SycamoreHockeyLeaguePortal.Models.ConstantClasses
+﻿namespace SycamoreHockeyLeaguePortal.Models.ConstantGroups
 {
     public class GameTypes
     {

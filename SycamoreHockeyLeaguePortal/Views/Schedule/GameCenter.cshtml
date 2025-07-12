@@ -145,11 +145,12 @@
             date.ToString("MMM d, yyyy");
     }
 
-    string IsCurrentGame(Game game)
-    {
-        return game.Id == Model.Id ? "current-game" : "";
-    }
+    string IsCurrentGame(Game game) =>
+        game.Id == Model.Id ?
+            "current-game" :
+            (game.IsConfirmed ? "" : "unconfirmed-game");
 }
+
 
 <div class="container game">
     <div class="row">

@@ -66,13 +66,13 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             var seasonHasSchedule = schedule.Any();
 
             if (season.IsLive)
-                throw new Exception($"The {year} season is already live.");
+                throw new InvalidOperationException($"The {year} season is already live.");
 
             if (season.IsComplete)
-                throw new Exception($"The {year} season is already complete. It cannot go live again.");
+                throw new InvalidOperationException($"The {year} season is already complete. It cannot go live again.");
 
             if (!seasonHasSchedule)
-                throw new Exception($"The {year} season doesn't have a schedule uploaded. It cannot go live yet.");
+                throw new InvalidOperationException($"The {year} season doesn't have a schedule uploaded. It cannot go live yet.");
 
             season.InTestMode = false;
             season.IsLive = true;
@@ -80,25 +80,6 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             await _localContext.SaveChangesAsync();
 
             return RedirectToAction("Index", "Schedule", new { weekOf = schedule.Min(s => s.Date).ToString("yyyy-MM-dd") });
-        }
-
-        // GET: Seasons/Details/5
-        [AllowAnonymous]
-        public async Task<IActionResult> Details(Guid? id)
-        {
-            if (id == null || _localContext.Seasons == null)
-            {
-                return NotFound();
-            }
-
-            var season = await _localContext.Seasons
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (season == null)
-            {
-                return NotFound();
-            }
-
-            return View(season);
         }
 
         // GET: Seasons/Create
@@ -349,57 +330,6 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // GET: Seasons/Edit/5
-        public async Task<IActionResult> Edit(Guid? id)
-        {
-            if (id == null || _localContext.Seasons == null)
-            {
-                return NotFound();
-            }
-
-            var season = await _localContext.Seasons.FindAsync(id);
-            if (season == null)
-            {
-                return NotFound();
-            }
-            return View(season);
-        }
-
-        // POST: Seasons/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(Guid id, [Bind("Id,Year,GamesPerTeam")] Season season)
-        {
-            if (id != season.Id)
-            {
-                return NotFound();
-            }
-
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    _localContext.Update(season);
-                    await _localContext.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!SeasonExists(season.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
-            }
-            return View(season);
-        }
-
         // GET: Seasons/Delete/5
         public async Task<IActionResult> Delete(Guid? id)
         {
@@ -430,20 +360,25 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             var season = await _localContext.Seasons.FindAsync(id);
             if (season != null)
             {
-                var year = season.Year;
-                
-                await RemoveSchedule(year);
-                await RemoveStandings(year);
-                await RemoveAlignments(year);
-                await RemovePlayoffSeries(year);
-                await RemovePlayoffRounds(year);
-                await RemoveChampionsRounds(year);
-                await RemoveChampion(year);
-                
-                _localContext.Seasons.Remove(season);
+                int year = season.Year;
+
+                if (season.InTestMode)
+                {
+                    await RemoveScheduleAsync(year);
+                    await RemoveStandingsAsync(year);
+                    await RemoveAlignmentsAsync(year);
+                    await RemovePlayoffSeriesAsync(year);
+                    await RemovePlayoffRoundsAsync(year);
+                    await RemoveChampionsRoundsAsync(year);
+                    await RemoveChampionAsync(year);
+                    _localContext.Seasons.Remove(season);
+                    
+                    await _localContext.SaveChangesAsync();
+                }
+                else
+                    throw new InvalidOperationException($"The {year} season cannot be deleted.");
             }
             
-            await _localContext.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
@@ -452,7 +387,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
           return (_localContext.Seasons?.Any(e => e.Id == id)).GetValueOrDefault();
         }
 
-        private async Task RemoveSchedule(int season)
+        private async Task RemoveScheduleAsync(int season)
         {
             var schedule = _localContext.Schedule
                 .Include(s => s.Season)
@@ -467,7 +402,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             await _localContext.SaveChangesAsync();
         }
 
-        private async Task RemoveStandings(int season)
+        private async Task RemoveStandingsAsync(int season)
         {
             var standings = _localContext.Standings
                 .Include(s => s.Season)
@@ -482,7 +417,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             await _localContext.SaveChangesAsync();
         }
 
-        private async Task RemoveAlignments(int season)
+        private async Task RemoveAlignmentsAsync(int season)
         {
             var alignments = _localContext.Alignments
                 .Include(s => s.Season)
@@ -497,7 +432,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             await _localContext.SaveChangesAsync();
         }
 
-        private async Task RemovePlayoffSeries(int season)
+        private async Task RemovePlayoffSeriesAsync(int season)
         {
             var playoffSeries = _localContext.PlayoffSeries
                 .Include(s => s.Season)
@@ -512,7 +447,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             await _localContext.SaveChangesAsync();
         }
 
-        private async Task RemovePlayoffRounds(int season)
+        private async Task RemovePlayoffRoundsAsync(int season)
         {
             var playoffRounds = _localContext.PlayoffRounds
                 .Include(r => r.Season)
@@ -524,7 +459,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             await _localContext.SaveChangesAsync();
         }
 
-        private async Task RemoveChampionsRounds(int season)
+        private async Task RemoveChampionsRoundsAsync(int season)
         {
             var championsRounds = _localContext.ChampionsRounds
                 .Include(r => r.Champion)
@@ -537,7 +472,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             await _localContext.SaveChangesAsync();
         }
 
-        private async Task RemoveChampion(int season)
+        private async Task RemoveChampionAsync(int season)
         {
             var champion = _localContext.Champions
                 .Include(c => c.Season)

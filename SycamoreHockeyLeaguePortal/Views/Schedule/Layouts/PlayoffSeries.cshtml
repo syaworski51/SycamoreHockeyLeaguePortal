@@ -88,7 +88,7 @@
                     <a class="muted-link" asp-action="GameCenter" asp-route-date="@game.Date.ToString("yyyy-MM-dd")" asp-route-awayTeam="@game.AwayTeam.Code" asp-route-homeTeam="@game.HomeTeam.Code">@GetDateString(game.Date)</a>
                 </td>
                 <td class="schedule-team-name" style="text-align: right;">
-                    <a class="@IsTeamWinner(game, game.AwayTeam)" asp-controller="Teams" asp-action="Details" asp-route-id="@awayTeam.Code" asp-route-season="@game.Season.Year" asp-route-gameType="regular-season">@awayTeam</a>
+                    <a class="@IsTeamWinner(game, game.AwayTeam)" asp-controller="Teams" asp-action="Details" asp-route-id="@awayTeam.Code" asp-route-season="@game.Season.Year" asp-route-gameType="playoffs">@awayTeam</a>
                 </td>
                 <td style="width: 30px;">
                     <img class="schedule-team-logo" src="~/@awayTeam.LogoPath" title="@awayTeam" alt="@awayTeam.Code" />
@@ -112,7 +112,7 @@
                     <img class="schedule-team-logo" src="~/@homeTeam.LogoPath" title="@homeTeam" alt="@homeTeam.Code" />
                 </td>
                 <td class="schedule-team-name" style="text-align: left;">
-                    <a class="@IsTeamWinner(game, game.HomeTeam)" asp-controller="Teams" asp-action="Details" asp-route-id="@homeTeam.Code" asp-route-season="@game.Season.Year" asp-route-gameType="regular-season">@homeTeam</a>
+                    <a class="@IsTeamWinner(game, game.HomeTeam)" asp-controller="Teams" asp-action="Details" asp-route-id="@homeTeam.Code" asp-route-season="@game.Season.Year" asp-route-gameType="playoffs">@homeTeam</a>
                 </td>
                 <td style="width: 200px;">
                     <a class="muted-link" asp-controller="Schedule" asp-action="GameCenter"

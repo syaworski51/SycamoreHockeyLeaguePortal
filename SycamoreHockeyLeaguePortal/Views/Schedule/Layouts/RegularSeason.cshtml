@@ -21,6 +21,9 @@
     {
         return date.ToString("MMMM");
     }
+
+    string IsGameConfirmed(Game game) =>
+        game.IsConfirmed ? "" : "unconfirmed-game";
 }
 
 <h3 class="schedule-game-date">@GetDateString(date)</h3>
@@ -48,7 +51,7 @@
             var awayTeam = game.AwayTeam;
             var homeTeam = game.HomeTeam;
 
-            <tr>
+            <tr class="@IsGameConfirmed(game)">
                 <td class="schedule-team-name" style="text-align: right;">
                     <a asp-controller="Teams" asp-action="Details" asp-route-id="@awayTeam.Code" asp-route-season="@game.Season.Year" asp-route-gameType="regular-season">@awayTeam</a>
                 </td>

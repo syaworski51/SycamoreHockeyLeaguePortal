@@ -1,5 +1,6 @@
 ﻿@using Microsoft.AspNetCore.Identity
 @using SycamoreHockeyLeaguePortal.Data
+@using SycamoreHockeyLeaguePortal.Models.ConstantGroups
 @inject ApplicationDbContext _context
 @inject UserManager<ApplicationUser> UserManager
 
@@ -9,6 +10,14 @@
     ViewData["BackgroundImage"] = "detroit-vs-utah.png";
 
     bool userIsAdmin = User.IsInRole("Admin");
+
+    string GetSeriesScoreString(Game game)
+    {
+        if (game.PlayoffSeriesScore!.StartsWith("Game") && !game.IsConfirmed)
+            return game.PlayoffSeriesScore + "*";
+
+        return game.PlayoffSeriesScore;
+    }
 }
 
 <!DOCTYPE html>
@@ -65,13 +74,23 @@
                                 </div>
                             </div>
                             <div class="row-cols-2 status">
-                                <a class="game-status-link" 
-                                    asp-controller="Schedule" 
-                                    asp-action="@(userIsAdmin ? "GameControls" : "GameCenter")" 
-                                    asp-route-date="@currentGame.Date.ToString("yyyy-MM-dd")" 
-                                    asp-route-awayTeam="@currentGame.AwayTeam.Code" 
-                                    asp-route-homeTeam="@currentGame.HomeTeam.Code">@currentGame.Status</a>
+                                <a class="game-status-link" style="font-size: 10pt;"
+                                   asp-controller="Schedule" 
+                                   asp-action="@(userIsAdmin ? "GameControls" : "GameCenter")" 
+                                   asp-route-date="@currentGame.Date.ToString("yyyy-MM-dd")" 
+                                   asp-route-awayTeam="@currentGame.AwayTeam.Code" 
+                                   asp-route-homeTeam="@currentGame.HomeTeam.Code">@currentGame.Status</a>
                             </div>
+                            @if (currentGame.Type == GameTypes.PLAYOFFS)
+                            {
+                                <div class="row-cols-2 status">
+                                    <a class="muted-link" style="font-size: 10pt;"
+                                       asp-controller="Schedule" asp-action="PlayoffSeries"
+                                       asp-route-season="@currentGame.Date.Year"
+                                       asp-route-team1="@currentGame.AwayTeam.Code"
+                                       asp-route-team2="@currentGame.HomeTeam.Code">@GetSeriesScoreString(currentGame)</a>
+                                </div>
+                            }
                         </div>
                     }
                 </div>

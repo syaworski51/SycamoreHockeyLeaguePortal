@@ -10,7 +10,7 @@ using NuGet.ProjectModel;
 using SycamoreHockeyLeaguePortal.Data;
 using SycamoreHockeyLeaguePortal.Data.Migrations;
 using SycamoreHockeyLeaguePortal.Models;
-using SycamoreHockeyLeaguePortal.Models.ConstantClasses;
+using SycamoreHockeyLeaguePortal.Models.ConstantGroups;
 using SycamoreHockeyLeaguePortal.Models.InputForms;
 using SycamoreHockeyLeaguePortal.Services;
 

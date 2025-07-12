@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SycamoreHockeyLeaguePortal.Data;
 using SycamoreHockeyLeaguePortal.Models;
-using SycamoreHockeyLeaguePortal.Models.ConstantClasses;
+using SycamoreHockeyLeaguePortal.Models.ConstantGroups;
 using SycamoreHockeyLeaguePortal.Models.DataTransferModels;
 using SycamoreHockeyLeaguePortal.Models.DataTransferModels.Objects;
 using SycamoreHockeyLeaguePortal.Models.DataTransferModels.Packages;
