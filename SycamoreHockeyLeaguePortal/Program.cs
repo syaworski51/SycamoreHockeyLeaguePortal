@@ -1,11 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using SycamoreHockeyLeaguePortal.Data;
 using SycamoreHockeyLeaguePortal.Models;
-using Azure.Identity;
-using Microsoft.Data.SqlClient;
-using SycamoreHockeyLeaguePortal.Services;
 
 System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12;
 

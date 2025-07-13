@@ -706,13 +706,15 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             var schedule = _localContext.Schedule
                 .Include(s => s.Season)
                 .Include(s => s.PlayoffRound)
+                .Include(s => s.PlayoffSeries)
                 .Include(s => s.AwayTeam)
                 .Include(s => s.HomeTeam)
                 .Where(s => s.Season.Year == season &&
                             s.Type == GameTypes.PLAYOFFS &&
                             ((s.AwayTeam == game.AwayTeam && s.HomeTeam == game.HomeTeam) ||
                              (s.AwayTeam == game.HomeTeam && s.HomeTeam == game.AwayTeam)))
-                .OrderBy(s => s.Date);
+                .OrderBy(s => s.Date)
+                .ToList();
 
             var gamesPlayed = schedule.Where(g => g.IsFinalized);
 
@@ -733,9 +735,10 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             if (remainingGames.Any())
             {
                 var nextGame = remainingGames.First();
+                bool manyGamesRemaining = remainingGames.Count() > 1;
 
-                nextGame.Notes = remainingGames.Count() > 1 ? series.SeriesScoreString : "Game 7";
-                nextGame.PlayoffSeriesScore = series.ShortSeriesScoreString;
+                nextGame.Notes = manyGamesRemaining ? series.SeriesScoreString : "Game 7";
+                nextGame.PlayoffSeriesScore = manyGamesRemaining ? series.ShortSeriesScoreString : "Game 7";
                 _localContext.Schedule.Update(nextGame);
 
                 var nextUnconfirmedGame = schedule.FirstOrDefault(g => !g.IsConfirmed)!;
@@ -816,6 +819,184 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             }
 
             await _localContext.SaveChangesAsync();
+        }
+
+        private async Task CalculateFinalScoreForSeriesAsync(PlayoffSeries series, List<Game> schedule)
+        {
+            if (!series.HasEnded)
+                throw new InvalidOperationException("This series has not ended yet.");
+
+            var details = new RankedPlayoffSeries
+            {
+                Id = Guid.NewGuid(),
+                SeasonId = series.SeasonId,
+                Season = series.Season,
+                RoundId = series.RoundId,
+                Round = series.Round,
+                MatchupId = series.Id,
+                Matchup = series
+            };
+
+            const int TEAM1 = 0, TEAM2 = 1;
+            int LENGTH = schedule.Count;
+            int[] margins = new int[LENGTH];
+            int[] winMargins = new int[2];
+            int[] overtimes = new int[LENGTH];
+            int goalDifferential = 0;
+            int goalTotal = 0;
+            int seriesTies = 0;
+            for (int index = 0; index < LENGTH; index++)
+            {
+                Game game = schedule[index];
+                
+                int goals = game.HomeScore + game.AwayScore;
+                int margin = game.HomeScore - game.AwayScore;
+
+                Team gameWinner = (game.HomeScore > game.AwayScore) ? game.HomeTeam : game.AwayTeam;
+                bool team1IsGameWinner = gameWinner == series.Team1;
+                int winMarginIndex = team1IsGameWinner ? TEAM1 : TEAM2;
+                winMargins[winMarginIndex] += margin;
+
+                margins[index] = Math.Abs(margin);
+                overtimes[index] = game.Period - 3;
+                goalTotal += goals;
+
+                if (game.PlayoffSeriesScore!.StartsWith("Series tied"))
+                    seriesTies++;
+            }
+            goalDifferential = Math.Abs(winMargins[TEAM1] - winMargins[TEAM2]);
+
+            details.SeriesCompetitivenessScore = CalculateSeriesCompetitivenessScore(margins);
+            details.OvertimeImpactScore = CalculateOTImpactScore(overtimes);
+            details.OverallGoalDiffScore = 15 - (15 * ((decimal)goalDifferential / goalTotal));
+            details.SeriesTiesScore = 5 * seriesTies;
+
+
+            _localContext.RankedPlayoffSeries.Add(details);
+            await _localContext.SaveChangesAsync();
+
+            await ReorderPlayoffSeriesRankingsAsync();
+        }
+
+        private async Task ReorderPlayoffSeriesRankingsAsync()
+        {
+            var matchups = _localContext.RankedPlayoffSeries
+                .Include(m => m.Season)
+                .Include(m => m.Round)
+                .Include(m => m.Matchup)
+                .OrderBy(m => m.FinalScore);
+
+            Dictionary<int, int> currentSeasonRankings = new();
+            int ranking = 1;
+            foreach (var matchup in matchups)
+            {
+                int season = matchup.Season.Year;
+                
+                if (!currentSeasonRankings.ContainsKey(season))
+                    currentSeasonRankings.Add(season, 1);
+
+                matchup.SeasonRanking = currentSeasonRankings[season];
+                matchup.OverallRanking = ranking;
+
+                currentSeasonRankings[season]++;
+                ranking++;
+            }
+
+            await _localContext.SaveChangesAsync();
+        }
+
+        private int DetermineBaseScore(int length)
+        {
+            return length switch
+            {
+                4 => 10,
+                5 => 12,
+                6 => 15,
+                7 => 18,
+                _ => 0
+            };
+        }
+
+        private static decimal DetermineBonusOrPenalty(decimal rate)
+        {
+            if (rate > 0.5m)
+                return 5;
+
+            if (rate >= 0.75m)
+                return 8;
+
+            if (rate == 1)
+                return 10;
+
+            return 0;
+        }
+
+        private int DetermineOTWeight(int ot)
+        {
+            if (ot == 0)
+                return 0;
+
+            return 3 + (2 * (ot - 1));
+        }
+
+        private decimal CalculateSeriesCompetitivenessScore(int[] margins)
+        {
+            int LENGTH = margins.Length;
+            decimal score = DetermineBaseScore(LENGTH);
+            int blowouts = 0;
+            int closeGames = 0;
+
+            foreach (var margin in margins)
+            {
+                if (margin == 1)
+                {
+                    score += 3;
+                    closeGames++;
+                }
+                else if (margin == 2)
+                    score += 2;
+                else
+                {
+                    score -= margin - 3;
+                    blowouts++;
+                }
+            }
+
+            decimal blowoutRate = (decimal)blowouts / LENGTH;
+            decimal closeGameRate = (decimal)closeGames / LENGTH;
+
+            if (blowoutRate > 0.5m)
+                score -= DetermineBonusOrPenalty(blowoutRate);
+
+            else if (closeGameRate > 0.5m)
+                score += DetermineBonusOrPenalty(closeGameRate);
+
+            return Math.Min(40, score);
+        }
+
+        private decimal CalculateOTImpactScore(int[] overtimes)
+        {
+            int LENGTH = overtimes.Length;
+            decimal score = DetermineBaseScore(LENGTH);
+            int otPeriods = 0;
+
+            for (int index = 0; index < LENGTH; index++)
+            {
+                int game = index + 1;
+                int ot = overtimes[index];
+                
+                if (ot > 0)
+                {
+                    otPeriods += ot;
+                    int weight = DetermineOTWeight(ot);
+                    score += weight * (game / LENGTH);
+                }
+            }
+
+            if (otPeriods == 0)
+                score /= 2;
+
+            return Math.Min(30, score);
         }
 
         private async Task UpdateStandings(int season, Team awayTeam, Team homeTeam)

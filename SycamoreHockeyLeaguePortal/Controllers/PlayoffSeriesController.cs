@@ -28,17 +28,31 @@ namespace SycamoreHockeyLeaguePortal.Controllers
 
         // GET: PlayoffSeries
         [AllowAnonymous]
-        public async Task<IActionResult> Index(int season)
+        public async Task<IActionResult> Index(int? season, string? team1, string? team2)
         {
-            var series = _context.PlayoffSeries
-                .Include(p => p.Round)
-                .Include(p => p.Season)
-                .Include(p => p.Team1)
-                .Include(p => p.Team2)
-                .Where(p => p.Season.Year == season)
-                .OrderBy(p => p.Index);
+            var matchups = await _context.RankedPlayoffSeries
+                .Include(s => s.Season)
+                .Include(s => s.Round)
+                .Include(s => s.Matchup)
+                .OrderBy(m => m.OverallRanking)
+                .ToListAsync();
 
-            return View(await series.ToListAsync());
+            if (season != null)
+                matchups = matchups
+                    .Where(m => m.Season.Year == season)
+                    .ToList();
+
+            if (team1 != null)
+                matchups = matchups
+                    .Where(m => m.Matchup.Team1!.Code == team1 || m.Matchup.Team2!.Code == team1)
+                    .ToList();
+
+            if (team2 != null)
+                matchups = matchups
+                    .Where(m => m.Matchup.Team1!.Code == team2 || m.Matchup.Team2!.Code == team2)
+                    .ToList();
+
+            return View(matchups);
         }
 
         // GET: PlayoffSeries/Details/5

@@ -62,7 +62,18 @@ namespace SHLAPI.Controllers
                 if (DateTime.Now.Date < game.Date.Date)
                     return BadRequest("This game cannot be started yet.");
 
-                var previousGame = _context.Schedule.FirstOrDefault(s => s.GameIndex == game.GameIndex - 1)!;
+                Schedule? previousGame = _context.Schedule.FirstOrDefault(g => g.GameIndex == game.GameIndex - 1);
+                if (previousGame == null && game.GameIndex > 2)
+                {
+                    for (int index = game.GameIndex - 2; index >= 1; index--)
+                    {
+                        previousGame = _context.Schedule.FirstOrDefault(g => g.GameIndex == index);
+
+                        if (previousGame != null)
+                            break;
+                    }
+                }
+                
                 if (game.GameIndex > 1 && (previousGame == null || !previousGame.IsFinalized))
                     return BadRequest();
 

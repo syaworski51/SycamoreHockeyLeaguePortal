@@ -8,10 +8,10 @@ using SycamoreHockeyLeaguePortal.Data;
 
 #nullable disable
 
-namespace SycamoreHockeyLeaguePortal.Data.Migrations
+namespace SycamoreHockeyLeaguePortal.Migrations
 {
-    [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [DbContext(typeof(LiveDbContext))]
+    partial class LiveDbContextModelSnapshot : ModelSnapshot
     {
         protected override void BuildModel(ModelBuilder modelBuilder)
         {

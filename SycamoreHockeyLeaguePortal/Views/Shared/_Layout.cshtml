@@ -11,6 +11,16 @@
 
     bool userIsAdmin = User.IsInRole("Admin");
 
+    string DetermineActionForScoreCard(Game game)
+    {
+        const string GAME_CENTER = "GameCenter", GAME_CONTROLS = "GameControls";
+
+        if (userIsAdmin && currentDate.Date >= game.Date.Date)
+            return !game.IsFinalized ? GAME_CONTROLS : GAME_CENTER;
+
+        return GAME_CENTER;
+    }
+
     string GetSeriesScoreString(Game game)
     {
         if (game.PlayoffSeriesScore!.StartsWith("Game") && !game.IsConfirmed)
@@ -76,7 +86,7 @@
                             <div class="row-cols-2 status">
                                 <a class="game-status-link" style="font-size: 10pt;"
                                    asp-controller="Schedule" 
-                                   asp-action="@(userIsAdmin ? "GameControls" : "GameCenter")" 
+                                   asp-action="@DetermineActionForScoreCard(currentGame)" 
                                    asp-route-date="@currentGame.Date.ToString("yyyy-MM-dd")" 
                                    asp-route-awayTeam="@currentGame.AwayTeam.Code" 
                                    asp-route-homeTeam="@currentGame.HomeTeam.Code">@currentGame.Status</a>
