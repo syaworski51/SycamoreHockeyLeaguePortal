@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using SycamoreHockeyLeaguePortal.Data;
 using SycamoreHockeyLeaguePortal.Models;
+using SycamoreHockeyLeaguePortal.Models.DataTransferModels;
+using SycamoreHockeyLeaguePortal.Services;
 
 System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12;
 
@@ -36,6 +38,9 @@ builder.Services.AddDbContext<LiveDbContext>(options =>
         options.EnableRetryOnFailure(maxRetryCount: 5);
     });
 });
+
+builder.Services.AddScoped<LiveDbSyncService>();
+builder.Services.AddSingleton<DTOConverter>();
 
 
 //builder.Services.AddDefaultIdentity<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true).AddEntityFrameworkStores<ApplicationDbContext>();

@@ -59,7 +59,7 @@ namespace SHLAPI.Controllers
                 if (game == null)
                     return NotFound();
 
-                if (DateTime.Now.Date < game.Date.Date)
+                if (DateTime.Now.Date < game.Date.Date && game.Season.Year != 2026)
                     return BadRequest("This game cannot be started yet.");
 
                 Schedule? previousGame = _context.Schedule.FirstOrDefault(g => g.GameIndex == game.GameIndex - 1);
@@ -74,7 +74,7 @@ namespace SHLAPI.Controllers
                     }
                 }
                 
-                if (game.GameIndex > 1 && (previousGame == null || !previousGame.IsFinalized))
+                if ((game.GameIndex > 1 && (previousGame == null || !previousGame.IsFinalized)) && game.Season.Year != 2026)
                     return BadRequest();
 
                 if (!game.IsLive && !game.IsFinalized)

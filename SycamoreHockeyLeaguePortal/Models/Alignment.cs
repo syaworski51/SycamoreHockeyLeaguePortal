@@ -1,4 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using SycamoreHockeyLeaguePortal.Interfaces;
+using SycamoreHockeyLeaguePortal.Models.DataTransferModels.Objects;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SycamoreHockeyLeaguePortal.Models

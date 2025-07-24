@@ -19,10 +19,12 @@ namespace SycamoreHockeyLeaguePortal.Controllers
     public class SeasonsController : Controller
     {
         private readonly ApplicationDbContext _localContext;
+        private readonly LiveDbSyncService _syncService;
 
-        public SeasonsController(ApplicationDbContext local)
+        public SeasonsController(ApplicationDbContext local, LiveDbSyncService syncService)
         {
             _localContext = local;
+            _syncService = syncService;
         }
 
         // GET: Seasons
@@ -327,6 +329,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             }
 
             await _localContext.SaveChangesAsync();
+            await _syncService.NewSeasonAsync(package);
             return RedirectToAction(nameof(Index));
         }
 

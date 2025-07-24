@@ -5,6 +5,7 @@
         public Guid Id { get; set; }
         public Guid SeasonId { get; set; }
         public Guid RoundId { get; set; }
+        public DateTime? StartDate { get; set; }
         public Guid? Team1Id { get; set; }
         public int Team1Wins { get; set; }
         public string Team1Placeholder { get; set; }

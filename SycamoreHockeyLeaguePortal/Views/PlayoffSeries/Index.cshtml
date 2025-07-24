@@ -1,65 +1,71 @@
-﻿@model IEnumerable<SycamoreHockeyLeaguePortal.Models.PlayoffSeries>
+﻿@model IEnumerable<RankedPlayoffSeries>
 
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Playoff Series Rankings";
+
+    string GetSeriesScoreString(PlayoffSeries matchup) =>
+        $"{matchup.Team1Wins}-{matchup.Team2Wins}";
 }
 
-<h1>Index</h1>
+<h1>Playoff Series Rankings</h1>
 
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
+<form asp-action="Index" method="get">
+    <div class="container">
+        <div class="row">
+            <div class="col">
+                Season:
+                @Html.DropDownList("season", (IEnumerable<SelectListItem>)ViewBag.Seasons, "All-time", new { onchange = "submit()" })
+            </div>
+            <div class="col">
+                Round:
+                @Html.DropDownList("round", (IEnumerable<SelectListItem>)ViewBag.Rounds, "All rounds", new { onchange = "submit()" })
+            </div>
+            <div class="col">
+                Team #1:
+                @Html.DropDownList("team1", (IEnumerable<SelectListItem>)ViewBag.Team1List, "Team #1", new { onchange = "submit()" })
+            </div>
+            <div class="col">
+                Team #2:
+                @Html.DropDownList("team2", (IEnumerable<SelectListItem>)ViewBag.Team2List, "Team #2", new { onchange = "submit()" })
+            </div>
+        </div>
+    </div>
+</form>
 <table class="table">
     <thead>
         <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.Season)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Round)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Team1)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Team1Wins)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Team2)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Team2Wins)
-            </th>
-            <th></th>
+            <th>#</th>
+            <th>Matchup</th>
+            <th>Final Score</th>
+            <th>Series Competitiveness Score</th>
+            <th>OT Impact Score</th>
+            <th>Overall GD Score</th>
+            <th>Series Ties Score</th>
         </tr>
     </thead>
     <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.Season.Id)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Round.Id)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Team1.Id)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Team1Wins)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Team2.Id)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Team2Wins)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
-            </td>
-        </tr>
-}
+        @foreach (var matchup in Model) {
+            <tr>
+                <th>@matchup.OverallRanking</th>
+                <td class="container">
+                    <div class="row">
+                        <div class="col">
+                            <img class="schedule-team-logo" src="@matchup.Matchup.Team1!.LogoPath" />
+                        </div>
+                        <div class="col">
+                            @GetSeriesScoreString(matchup.Matchup)
+                        </div>
+                        <div class="col">
+                            <img class="schedule-team-logo" src="@matchup.Matchup.Team2!.LogoPath" />
+                        </div>
+                    </div>
+                </td>
+                <td class="col-1">@decimal.Round(matchup.FinalScore, 1)</td>
+                <td class="col-1">@decimal.Round(matchup.SeriesCompetitivenessScore, 1)</td>
+                <td class="col-1">@decimal.Round(matchup.OvertimeImpactScore, 1)</td>
+                <td class="col-1">@decimal.Round(matchup.OverallGoalDiffScore, 1)</td>
+                <td class="col-1">@decimal.Round(matchup.SeriesTiesScore, 1)</td>
+            </tr>
+        }
     </tbody>
 </table>

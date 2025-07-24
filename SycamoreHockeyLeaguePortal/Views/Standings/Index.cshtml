@@ -1,11 +1,16 @@
-﻿@model List<SycamoreHockeyLeaguePortal.Models.Standings>
-@inject SycamoreHockeyLeaguePortal.Data.ApplicationDbContext _context
+﻿@using Microsoft.AspNetCore.Identity
+@using SycamoreHockeyLeaguePortal.Data
+@model List<Standings>
+@inject ApplicationDbContext _context
+@inject UserManager<ApplicationUser> UserManager
 
 @{
     ViewData["Title"] = $"{ViewBag.Season} Standings";
 
     string viewBy = ViewBag.ViewBy;
     int season = ViewBag.Season;
+
+    bool userIsAdmin = User.IsInRole("Admin");
 
     string GetName(Team team)
     {

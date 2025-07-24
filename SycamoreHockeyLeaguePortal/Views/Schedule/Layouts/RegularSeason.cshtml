@@ -83,7 +83,7 @@
                     @game.Status
                 </td>
                 <td>
-                    @if (userIsAdmin && DateTime.Now.Date >= game.Date.Date)
+                    @if (userIsAdmin && (DateTime.Now.Date >= game.Date.Date || game.Season.Year == 2026))
                     {
                         if (!game.IsFinalized)
                         {

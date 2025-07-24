@@ -7,12 +7,16 @@ using SycamoreHockeyLeaguePortal.Models;
 using SycamoreHockeyLeaguePortal.Models.ConstantGroups;
 using SycamoreHockeyLeaguePortal.Models.InputForms;
 using SycamoreHockeyLeaguePortal.Models.ViewModels;
+using SycamoreHockeyLeaguePortal.Services;
+using System.Runtime.CompilerServices;
 
 namespace SycamoreHockeyLeaguePortal.Controllers
 {
     public class StandingsController : Controller
     {
-        private readonly ApplicationDbContext _context;
+        private readonly ApplicationDbContext _localContext;
+        private readonly LiveDbContext _liveContext;
+        private readonly LiveDbSyncService _syncService;
 
         private const string VIEWBY_DIVISION = "division";
         private const string VIEWBY_CONFERENCE = "conference";
@@ -22,9 +26,13 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         private int SEASON;
         const int TEAM1 = 0, TEAM2 = 1;
 
-        public StandingsController(ApplicationDbContext context)
+        public StandingsController(ApplicationDbContext local,
+                                   LiveDbContext live,
+                                   LiveDbSyncService syncService)
         {
-            _context = context;
+            _localContext = local;
+            _liveContext = live;
+            _syncService = syncService;
         }
 
         // GET: Standings
@@ -37,11 +45,11 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             if (season >= 2026 && viewBy == VIEWBY_DIVISION)
                 return RedirectToAction(nameof(Index), new { season = season, viewBy = VIEWBY_CONFERENCE });
 
-            var seasons = _context.Seasons
+            var seasons = _localContext.Seasons
                 .OrderByDescending(s => s.Year);
             ViewBag.Seasons = new SelectList(seasons, "Year", "Year");
 
-            var sortOptions = _context.StandingsSortOptions
+            var sortOptions = _localContext.StandingsSortOptions
                 .Where(s => season >= s.FirstYear && (season <= s.LastYear || s.LastYear == null))
                 .OrderBy(s => s.Index);
             ViewBag.SortOptions = new SelectList(sortOptions, "Parameter", "Name");
@@ -49,7 +57,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             ViewBag.Conferences = GetConferences(season);
             ViewBag.Divisions = GetDivisions(season);
 
-            var teams = _context.Alignments
+            var teams = _localContext.Alignments
                 .Include(a => a.Season)
                 .Include(a => a.Conference)
                 .Include(a => a.Division)
@@ -80,7 +88,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         {
             ViewBag.Season = season;
 
-            var matchups = await _context.PlayoffSeries
+            var matchups = await _localContext.PlayoffSeries
                 .Include(ps => ps.Season)
                 .Include(ps => ps.Round)
                 .Include(ps => ps.Team1)
@@ -272,7 +280,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         [Route("Standings/PlayoffStatus/{season}/{teamCode}")]
         public async Task<IActionResult> PlayoffStatus(int season, string teamCode, string currentStatus, string viewBy)
         {
-            var _team = await _context.Teams.FirstOrDefaultAsync(t => t.Code == teamCode);
+            var _team = await _localContext.Teams.FirstOrDefaultAsync(t => t.Code == teamCode);
 
             var form = new PlayoffStatus_UpdateForm
             {
@@ -289,7 +297,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> PlayoffStatus(PlayoffStatus_UpdateForm form)
         {
-            var statLine = _context.Standings
+            var statLine = _localContext.Standings
                 .Include(s => s.Season)
                 .Include(s => s.Conference)
                 .Include(s => s.Division)
@@ -298,8 +306,8 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             
             statLine.PlayoffStatus = form.Status;
 
-            _context.Standings.Update(statLine);
-            await _context.SaveChangesAsync();
+            _localContext.Standings.Update(statLine);
+            await _localContext.SaveChangesAsync();
 
             return RedirectToAction(nameof(Index), new { season = form.Season, viewBy = form.ViewBy });
         }
@@ -317,11 +325,11 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         [Route("Standings/HeadToHead/{season}/{team1Code}/{team2Code}/")]
         public async Task<IActionResult> HeadToHeadComparison(int season, string? team1Code, string? team2Code)
         {
-            var seasons = _context.Seasons
+            var seasons = _localContext.Seasons
                 .OrderByDescending(s => s.Year);
             ViewData["Seasons"] = new SelectList(seasons, "Year", "Year");
             
-            var team1 = _context.Standings
+            var team1 = _localContext.Standings
                 .Include(s => s.Season)
                 .Include(s => s.Conference)
                 .Include(s => s.Division)
@@ -331,7 +339,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 .FirstOrDefault()!;
             ViewData["Team1"] = team1;
 
-            var team2 = _context.Standings
+            var team2 = _localContext.Standings
                 .Include(s => s.Season)
                 .Include(s => s.Conference)
                 .Include(s => s.Division)
@@ -341,7 +349,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 .FirstOrDefault()!;
             ViewData["Team2"] = team2;
 
-            var teams = _context.Standings
+            var teams = _localContext.Standings
                 .Include(s => s.Season)
                 .Include(s => s.Conference)
                 .Include(s => s.Division)
@@ -368,7 +376,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
 
         private async Task<List<Standings>> GetStandings(int season, string viewBy)
         {
-            IQueryable<Standings> standings = _context.Standings
+            IQueryable<Standings> standings = _localContext.Standings
                 .Include(s => s.Season)
                 .Include(s => s.Conference)
                 .Include(s => s.Division)
@@ -400,12 +408,12 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 team.DivisionRanking = GetDivisionRanking(standings, team);
                 team.ConferenceRanking = GetConferenceRanking(standings, team);
                 team.PlayoffRanking = GetPlayoffRanking(standings, team);
-                _context.Standings.Update(team);
+                _localContext.Standings.Update(team);
 
                 ranking++;
             }
 
-            await _context.SaveChangesAsync();
+            await _localContext.SaveChangesAsync();
             return standings;
         }
 
@@ -617,7 +625,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
 
         private Standings GetTeamStatLine(int season, Team team)
         {
-            return _context.Standings
+            return _localContext.Standings
                 .Include(s => s.Season)
                 .Include(s => s.Conference)
                 .Include(s => s.Division)
@@ -651,7 +659,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
 
         private IQueryable<Game> GetSchedule(int season)
         {
-            return _context.Schedule
+            return _localContext.Schedule
                 .Include(s => s.Season)
                 .Include(s => s.PlayoffRound)
                 .Include(s => s.AwayTeam)
@@ -666,7 +674,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         {
             season ??= SEASON;
 
-            return _context.Alignments
+            return _localContext.Alignments
                 .Include(a => a.Season)
                 .Include(a => a.Conference)
                 .Include(a => a.Division)
@@ -880,7 +888,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
 
         private async Task<bool> GetStandingsUpdateStatus()
         {
-            var updateAvailable = await _context.ProgramFlags
+            var updateAvailable = await _localContext.ProgramFlags
                 .Where(f => f.Description == "New Standings Update Available")
                 .Select(f => f.State)
                 .FirstOrDefaultAsync();
@@ -890,14 +898,14 @@ namespace SycamoreHockeyLeaguePortal.Controllers
 
         private async Task StandingsUpdated()
         {
-            var flag = await _context.ProgramFlags
+            var flag = await _localContext.ProgramFlags
                 .Where(f => f.Description == "New Standings Update Available")
                 .FirstOrDefaultAsync();
 
             flag!.State = false;
 
-            _context.ProgramFlags.Update(flag);
-            await _context.SaveChangesAsync();
+            _localContext.ProgramFlags.Update(flag);
+            await _localContext.SaveChangesAsync();
         }
     }
 }

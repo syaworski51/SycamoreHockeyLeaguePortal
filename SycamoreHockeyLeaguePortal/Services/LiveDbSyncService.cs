@@ -1,4 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.Identity.Client;
 using SycamoreHockeyLeaguePortal.Data;
 using SycamoreHockeyLeaguePortal.Models;
 using SycamoreHockeyLeaguePortal.Models.ConstantGroups;
@@ -65,6 +67,34 @@ namespace SycamoreHockeyLeaguePortal.Services
         }
 
         /// <summary>
+        ///     Upload a schedule to the live database.
+        /// </summary>
+        /// <param name="scheduleDTO">The schedule to upload, in DTO format.</param>
+        /// <returns></returns>
+        public async Task UploadScheduleAsync(List<DTO_Game> scheduleDTO)
+        {
+            var games = scheduleDTO.Select(dto => new Game
+            {
+                Id = dto.Id,
+                SeasonId = dto.SeasonId,
+                Date = dto.Date,
+                GameIndex = dto.GameIndex,
+                Type = dto.Type,
+                PlayoffRoundId = dto.PlayoffRoundId,
+                PlayoffSeriesId = dto.PlayoffSeriesId,
+                PlayoffGameIndex = dto.PlayoffGameIndex,
+                AwayTeamId = dto.AwayTeamId,
+                HomeTeamId = dto.HomeTeamId,
+                IsConfirmed = dto.IsConfirmed,
+                Notes = dto.Notes,
+                PlayoffSeriesScore = dto.PlayoffSeriesScore
+            }).ToList();
+
+            var exception = new InvalidOperationException("There was an error inserting the games into the live database.");
+            await AddRecordsToTableAsync(_liveContext.Schedule, games, exception);
+        }
+
+        /// <summary>
         ///     Creates a new season, along with its accompanying tables.
         /// </summary>
         /// <param name="package">Contains all the information necessary to create a new season.</param>
@@ -97,9 +127,16 @@ namespace SycamoreHockeyLeaguePortal.Services
         /// <returns></returns>
         public async Task NewChampionAsync(DTP_NewChampion package)
         {
+            var champion = new Champion
+            {
+                Id = package.Champion.Id,
+                SeasonId = package.Champion.SeasonId,
+                TeamId = package.Champion.TeamId,
+            };
+
             // Add the new champion to the Champions table
-            var exception = new InvalidOperationException($"The {package.Champion.Season.Year} {package.Champion.Team.FullName} are already in the Champions table.");
-            await AddRecordToTableAsync(_liveContext.Champions, package.Champion, exception);
+            var exception = new InvalidOperationException($"This team is already in the Champions table.");
+            await AddRecordToTableAsync(_liveContext.Champions, champion, exception);
 
             // Add the opponents defeated by the champion to the ChampionsRounds table
             var rounds = package.Rounds
@@ -119,64 +156,53 @@ namespace SycamoreHockeyLeaguePortal.Services
         /// <summary>
         ///     Writes one game result to the Schedule table.
         /// </summary>
-        /// <param name="gameDTO">The game to record the results of.</param>
+        /// <param name="resultDTO">The game to record the results of.</param>
         /// <returns></returns>
-        public async Task WriteOneResultAsync(DTO_Game gameDTO)
+        public async Task WriteOneResultAsync(DTO_Game resultDTO)
         {
-            var game = _liveContext.Schedule.FirstOrDefault(s => s.Id == gameDTO.Id);
-            if (game == null)
+            var game = _liveContext.Schedule.FirstOrDefault(s => s.Id == resultDTO.Id) ??
                 throw new InvalidOperationException("The game could not be found in the live database.");
 
-            game.AwayScore = gameDTO.AwayScore;
-            game.HomeScore = gameDTO.HomeScore;
-            game.Period = gameDTO.Period;
-            game.IsLive = gameDTO.IsLive;
-            game.IsFinalized = gameDTO.IsFinalized;
+            game.AwayScore = resultDTO.AwayScore;
+            game.HomeScore = resultDTO.HomeScore;
+            game.Period = resultDTO.Period;
+            game.IsLive = resultDTO.IsLive;
+            game.IsFinalized = resultDTO.IsFinalized;
+            game.Notes = resultDTO.Notes;
+            game.PlayoffSeriesScore = resultDTO.PlayoffSeriesScore;
             await _liveContext.SaveChangesAsync();
 
 
-            var season = await _liveContext.Seasons
-                .AsNoTracking()
-                .FirstOrDefaultAsync(s => s.Id == game.SeasonId) ??
-            throw new Exception("There was an error restoring the Season property.");
-
-            var round = await _liveContext.PlayoffRounds
-                .AsNoTracking()
-                .FirstOrDefaultAsync(r => r.Id == game.PlayoffRoundId);
-
-            var series = await _liveContext.PlayoffSeries
-                .AsNoTracking()
-                .FirstOrDefaultAsync(s => s.Id == game.PlayoffSeriesId);
-
-            var awayTeam = await _liveContext.Teams
-                .AsNoTracking()
-                .FirstOrDefaultAsync(t => t.Id == game.AwayTeamId) ??
-            throw new Exception("There was an error restoring the AwayTeam property.");
-
-            var homeTeam = await _liveContext.Teams
-                .AsNoTracking()
-                .FirstOrDefaultAsync(t => t.Id == game.HomeTeamId) ??
-            throw new Exception("There was an error restoring the HomeTeam property.");
+            var updatedGame = _liveContext.Schedule
+                    .Include(s => s.Season)
+                    .Include(s => s.PlayoffRound)
+                    .Include(s => s.PlayoffSeries)
+                        .ThenInclude(ps => ps!.Team1)
+                    .Include(s => s.PlayoffSeries)
+                        .ThenInclude(ps => ps!.Team2)
+                    .Include(s => s.AwayTeam)
+                    .Include(s => s.HomeTeam)
+                    .FirstOrDefault(s => s.Id == game.Id)!;
 
             // If it is a playoff game...
             if (game.Type == GameTypes.PLAYOFFS)
             {
-                if (series == null)
-                    throw new Exception("The playoff series could not be found.");
+                if (updatedGame == null || updatedGame.PlayoffSeries == null)
+                    throw new Exception("The playoff game or its series could not be reloaded.");
                 
                 // Update the appropriate playoff series in the live database
-                await UpdatePlayoffMatchupAsync(series);
+                await UpdatePlayoffMatchupAsync(updatedGame);
             }   
             // If it is a regular season game or tiebreaker game...
             else
             {
                 // Get the head-to-head matchup between the two teams
-                var h2hSeries = await GetH2HSeriesDTOAsync(season.Year, awayTeam, homeTeam);
+                var h2hSeries = await GetH2HSeriesDTOAsync(game.Season.Year, game.AwayTeam, game.HomeTeam);
                 await UpdateH2HSeriesAsync(h2hSeries);
 
                 // If it is a regular season game, update the standings
                 if (game.Type == GameTypes.REGULAR_SEASON)
-                    await UpdateStandingsAsync(season.Year);
+                    await UpdateStandingsAsync(game.Season.Year);
             }
         }
 
@@ -192,28 +218,6 @@ namespace SycamoreHockeyLeaguePortal.Services
                 await WriteOneResultAsync(game);
 
             await _liveContext.SaveChangesAsync();
-        }
-
-        /// <summary>
-        ///     Adds one game to the Schedule table.
-        /// </summary>
-        /// <param name="game">The game to add to the Schedule table.</param>
-        /// <returns></returns>
-        public async Task AddOneGameAsync(Game game)
-        {
-            var exception = new InvalidOperationException($"{game.Date:yyyy-MM-dd} - {game.AwayTeam.Code} @ {game.HomeTeam.Code} already exists in the database.");
-            await AddRecordToTableAsync(_liveContext.Schedule, game, exception);
-        }
-
-        /// <summary>
-        ///     Adds many games to the Schedule table.
-        /// </summary>
-        /// <param name="schedule">The games to add to the Schedule table.</param>
-        /// <returns></returns>
-        public async Task AddManyGamesAsync(List<Game> schedule)
-        {
-            var exception = new InvalidOperationException($"This game already exists in the database.");
-            await AddRecordsToTableAsync(_liveContext.Schedule, schedule, exception);
         }
 
         /// <summary>
@@ -337,27 +341,99 @@ namespace SycamoreHockeyLeaguePortal.Services
             await AddRecordsToTableAsync(_liveContext.Standings, standings, exception);
         }
 
-        public async Task UpdatePlayoffMatchupAsync(PlayoffSeries localPlayoffMatchup)
+        public async Task ConfirmPlayoffMatchupAsync(DTO_PlayoffSeries matchupDTO, List<DTO_Game> scheduleDTO)
         {
-            var matchup = new PlayoffSeries
-            {
-                Id = localPlayoffMatchup.Id,
-                SeasonId = localPlayoffMatchup.SeasonId,
-                RoundId = localPlayoffMatchup.RoundId,
-                StartDate = localPlayoffMatchup.StartDate,
-                Index = localPlayoffMatchup.Index,
-                Team1Id = localPlayoffMatchup.Team1Id,
-                Team1Wins = localPlayoffMatchup.Team1Wins,
-                Team1Placeholder = localPlayoffMatchup.Team1Placeholder,
-                Team2Id = localPlayoffMatchup.Team2Id,
-                Team2Wins = localPlayoffMatchup.Team2Wins,
-                Team2Placeholder = localPlayoffMatchup.Team2Placeholder,
-                IsConfirmed = localPlayoffMatchup.IsConfirmed,
-                HasEnded = localPlayoffMatchup.HasEnded,
-                Description = localPlayoffMatchup.Description
-            };
+            var matchup = _liveContext.PlayoffSeries
+                .FirstOrDefault(m => m.SeasonId == matchupDTO.SeasonId &&
+                                     m.Index == matchupDTO.Index)!;
+            
+            matchup.IsConfirmed = true;
+            await _liveContext.SaveChangesAsync();
 
-            _liveContext.PlayoffSeries.Update(matchup);
+            await UploadScheduleAsync(scheduleDTO);
+        }
+
+        public async Task EditPlayoffMatchupAsync(DTO_PlayoffSeries matchupDTO)
+        {
+            var matchup = _liveContext.PlayoffSeries
+                .FirstOrDefault(m => m.SeasonId == matchupDTO.SeasonId &&
+                                     m.Index == matchupDTO.Index)!;
+
+            matchup.StartDate = matchupDTO.StartDate;
+            matchup.Team1Id = matchupDTO.Team1Id;
+            matchup.Team2Id = matchupDTO.Team2Id;
+            await _liveContext.SaveChangesAsync();
+        }
+
+        public async Task UpdatePlayoffMatchupAsync(Game game)
+        {
+            if (game.PlayoffSeries == null)
+                throw new InvalidOperationException("This game does not have a playoff series associated with it.");
+
+            if (!game.IsFinalized)
+                throw new InvalidOperationException("This game has not been finalized yet.");
+
+
+            game.PlayoffSeries.Season = game.Season;
+            game.PlayoffSeries.Round = game.PlayoffRound!;
+            game.PlayoffSeries.Team1 = _liveContext.Teams.Find(game.PlayoffSeries.Team1Id);
+            game.PlayoffSeries.Team2 = _liveContext.Teams.Find(game.PlayoffSeries.Team2Id);
+
+            var schedule = _liveContext.Schedule
+                .Include(s => s.Season)
+                .Include(s => s.PlayoffRound)
+                .Include(s => s.PlayoffSeries)
+                    .ThenInclude(ps => ps!.Team1)
+                .Include(s => s.PlayoffSeries)
+                    .ThenInclude(ps => ps!.Team2)
+                .Include(s => s.AwayTeam)
+                .Include(s => s.HomeTeam)
+                .Where(s => s.PlayoffSeriesId == game.PlayoffSeriesId)
+                .OrderBy(s => s.PlayoffGameIndex);
+
+            var gamesPlayed = schedule.Where(g => g.IsFinalized);
+            game.PlayoffSeries.Team1Wins = gamesPlayed
+                .Count(g => (g.AwayTeam == game.PlayoffSeries.Team1 && g.AwayScore > g.HomeScore) ||
+                            (g.HomeTeam == game.PlayoffSeries.Team1 && g.HomeScore > g.AwayScore));
+            game.PlayoffSeries.Team2Wins = gamesPlayed
+                .Count(g => (g.AwayTeam == game.PlayoffSeries.Team2 && g.AwayScore > g.HomeScore) ||
+                            (g.HomeTeam == game.PlayoffSeries.Team2 && g.HomeScore > g.AwayScore));
+
+            int leadingWinCount = Math.Max(game.PlayoffSeries.Team1Wins, game.PlayoffSeries.Team2Wins);
+            int trailingWinCount = Math.Min(game.PlayoffSeries.Team1Wins, game.PlayoffSeries.Team2Wins);
+            bool seriesOver = leadingWinCount == 4;
+            if (seriesOver)
+            {
+                game.PlayoffSeries.HasEnded = true;
+
+                var remainingGames = schedule.Where(g => !g.IsFinalized);
+                if (remainingGames.Any())
+                {
+                    foreach (var _game in remainingGames)
+                        _liveContext.Schedule.Remove(_game);
+                }
+            }
+            else
+            {
+                var remainingGames = schedule.Where(g => !g.IsFinalized);
+                var nextGame = remainingGames.FirstOrDefault()!;
+                bool manyGamesRemaining = remainingGames.Count() > 1;
+
+                nextGame.Notes = manyGamesRemaining ? 
+                    nextGame.PlayoffSeries!.SeriesScoreString : "Game 7";
+                nextGame.PlayoffSeriesScore = manyGamesRemaining ?
+                    nextGame.PlayoffSeries!.ShortSeriesScoreString : "Game 7";
+                //_liveContext.Schedule.Update(nextGame);
+
+
+                var nextUnconfirmedGame = remainingGames.FirstOrDefault(g => !g.IsConfirmed) ??
+                    throw new InvalidOperationException("The next unconfirmed game in this series could not be found.");
+                int minimumWinsNeeded = (int)nextUnconfirmedGame.PlayoffGameIndex! - 4;
+                nextUnconfirmedGame.IsConfirmed = trailingWinCount == minimumWinsNeeded;
+                //_liveContext.Schedule.Update(nextUnconfirmedGame);
+            }
+
+            //_liveContext.PlayoffSeries.Update(game.PlayoffSeries);
             await _liveContext.SaveChangesAsync();
         }
 
@@ -435,16 +511,16 @@ namespace SycamoreHockeyLeaguePortal.Services
         /// <summary>
         ///     Updates a head-to-head matchup.
         /// </summary>
-        /// <param name="matchupDTO">The matchup to update.</param>
+        /// <param name="dto">The matchup to update. Arrives in DTO format.</param>
         /// <returns></returns>
-        private async Task UpdateH2HSeriesAsync(DTO_HeadToHeadSeries matchupDTO)
+        private async Task UpdateH2HSeriesAsync(DTO_HeadToHeadSeries dto)
         {
-            var matchup = _liveContext.HeadToHeadSeries.FirstOrDefault(m => m.Id == matchupDTO.Id)!;
+            var matchup = _liveContext.HeadToHeadSeries.FirstOrDefault(m => m.Id == dto.Id)!;
 
-            matchup.Team1Wins = matchupDTO.Team1Wins;
-            matchup.Team1GoalsFor = matchupDTO.Team1GoalsFor;
-            matchup.Team2Wins = matchupDTO.Team2Wins;
-            matchup.Team2GoalsFor = matchupDTO.Team2GoalsFor;
+            matchup.Team1Wins = dto.Team1Wins;
+            matchup.Team1GoalsFor = dto.Team1GoalsFor;
+            matchup.Team2Wins = dto.Team2Wins;
+            matchup.Team2GoalsFor = dto.Team2GoalsFor;
             
             await _liveContext.SaveChangesAsync();
         }
@@ -463,10 +539,9 @@ namespace SycamoreHockeyLeaguePortal.Services
                 .Include(m => m.Season)
                 .Include(m => m.Team1)
                 .Include(s => s.Team2)
-                .AsNoTracking()
                 .FirstOrDefaultAsync(m => m.Season.Year == season &&
-                                     ((m.Team1 == team1 && m.Team2 == team2) ||
-                                      (m.Team1 == team2 && m.Team2 == team1))) ??
+                                          ((m.Team1 == team1 && m.Team2 == team2) ||
+                                           (m.Team1 == team2 && m.Team2 == team1))) ??
             throw new InvalidOperationException("Head-to-head series could not be found.");
 
             return new DTO_HeadToHeadSeries
@@ -491,7 +566,6 @@ namespace SycamoreHockeyLeaguePortal.Services
                 .Include(s => s.Team)
                 .Where(s => s.Season.Year == season)
                 .OrderBy(s => s.LeagueRanking)
-                .AsNoTracking()
                 .ToList();
 
             // Clear the changes from the change tracker in the live database
