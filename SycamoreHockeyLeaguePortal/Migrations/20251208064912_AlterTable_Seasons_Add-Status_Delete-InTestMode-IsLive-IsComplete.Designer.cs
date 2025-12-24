@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SycamoreHockeyLeaguePortal.Data;
 
@@ -11,9 +12,11 @@ using SycamoreHockeyLeaguePortal.Data;
 namespace SycamoreHockeyLeaguePortal.Migrations
 {
     [DbContext(typeof(LiveDbContext))]
-    partial class LiveDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251208064912_AlterTable_Seasons_Add-Status_Delete-InTestMode-IsLive-IsComplete")]
+    partial class AlterTable_Seasons_AddStatus_DeleteInTestModeIsLiveIsComplete
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -564,12 +567,6 @@ namespace SycamoreHockeyLeaguePortal.Migrations
 
                     b.Property<Guid>("SeasonId")
                         .HasColumnType("uniqueidentifier");
-
-                    b.Property<int?>("Seed1")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("Seed2")
-                        .HasColumnType("int");
 
                     b.Property<DateTime?>("StartDate")
                         .HasColumnType("datetime2");

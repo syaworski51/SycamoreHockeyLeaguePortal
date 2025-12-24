@@ -6,7 +6,7 @@
 
 @{
     ViewData["Title"] = "Seasons";
-    Dictionary<int, DateTime?> firstDaysOfSeasons = ViewBag.FirstDaysOfSeasons;
+    Dictionary<int, string?> firstDaysOfSeasons = ViewBag.FirstDaysOfSeasons;
     Dictionary<int, bool> doSeasonsHavePlayoffSchedules = ViewBag.DoSeasonsHavePlayoffSchedules;
     bool userIsAdmin = User.IsInRole("Admin");
 
@@ -26,7 +26,7 @@
     <div class="row d-flex justify-content-center">
         @foreach (var season in Model)
         {
-            bool seasonHasSchedule = firstDaysOfSeasons[season.Year] != DateTime.MinValue;
+            bool seasonHasSchedule = firstDaysOfSeasons[season.Year] != null;
             bool seasonHasPlayoffSchedule = doSeasonsHavePlayoffSchedules[season.Year];
 
             <div class="col-2 card text-center align-content-center">

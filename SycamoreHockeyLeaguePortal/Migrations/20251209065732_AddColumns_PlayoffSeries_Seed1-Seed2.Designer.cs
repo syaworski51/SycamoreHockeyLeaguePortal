@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SycamoreHockeyLeaguePortal.Data;
 
@@ -11,9 +12,11 @@ using SycamoreHockeyLeaguePortal.Data;
 namespace SycamoreHockeyLeaguePortal.Migrations
 {
     [DbContext(typeof(LiveDbContext))]
-    partial class LiveDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251209065732_AddColumns_PlayoffSeries_Seed1-Seed2")]
+    partial class AddColumns_PlayoffSeries_Seed1Seed2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

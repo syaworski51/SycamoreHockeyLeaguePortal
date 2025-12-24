@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SycamoreHockeyLeaguePortal.Data;
 
@@ -11,9 +12,11 @@ using SycamoreHockeyLeaguePortal.Data;
 namespace SycamoreHockeyLeaguePortal.Migrations
 {
     [DbContext(typeof(LiveDbContext))]
-    partial class LiveDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251208062025_AddColumn_PlayoffSeeds_DivisionId")]
+    partial class AddColumn_PlayoffSeeds_DivisionId
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -565,12 +568,6 @@ namespace SycamoreHockeyLeaguePortal.Migrations
                     b.Property<Guid>("SeasonId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<int?>("Seed1")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("Seed2")
-                        .HasColumnType("int");
-
                     b.Property<DateTime?>("StartDate")
                         .HasColumnType("datetime2");
 
@@ -712,9 +709,14 @@ namespace SycamoreHockeyLeaguePortal.Migrations
                     b.Property<int>("GamesPerTeam")
                         .HasColumnType("int");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<bool>("InTestMode")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsComplete")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsLive")
+                        .HasColumnType("bit");
 
                     b.Property<int>("Year")
                         .HasColumnType("int");

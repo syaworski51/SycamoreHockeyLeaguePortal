@@ -179,8 +179,6 @@ namespace SycamoreHockeyLeaguePortal.Models.DataTransferModels
             HomeScore = gameDTO.HomeScore,
             Period = gameDTO.Period,
             IsConfirmed = gameDTO.IsConfirmed,
-            IsLive = gameDTO.IsLive,
-            IsFinalized = gameDTO.IsFinalized,
             Notes = gameDTO.Notes
         };
 
@@ -245,8 +243,6 @@ namespace SycamoreHockeyLeaguePortal.Models.DataTransferModels
                 HomeScore = g.HomeScore,
                 Period = g.Period,
                 IsConfirmed = g.IsConfirmed,
-                IsLive = g.IsLive,
-                IsFinalized = g.IsFinalized,
                 Notes = g.Notes
             }).ToList();
 

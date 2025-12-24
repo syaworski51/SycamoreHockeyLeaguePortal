@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using SycamoreHockeyLeaguePortal.Models.ConstantGroups;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SycamoreHockeyLeaguePortal.Models
@@ -68,14 +69,17 @@ namespace SycamoreHockeyLeaguePortal.Models
 
         public bool IsConfirmed { get; set; }
 
-        [Display(Name = "Live?")]
-        public bool IsLive { get; set; }
-
-        [Display(Name = "Finalized?")]
-        public bool IsFinalized { get; set; }
-
         [Display(Name = "Notes")]
         public string? Notes { get; set; }
+
+        [Display(Name = "Live Status")]
+        public string LiveStatus { get; set; }
+
+        [Display(Name = "Live?")]
+        public bool IsLive => LiveStatus == LiveStatuses.LIVE;
+
+        [Display(Name = "Finalized?")]
+        public bool IsFinalized => LiveStatus == LiveStatuses.FINALIZED;
 
         [Display(Name = "Status")]
         public string Status
@@ -189,9 +193,7 @@ namespace SycamoreHockeyLeaguePortal.Models
         /// </summary>
         public void StartGame()
         {
-            IsLive = true;
-            AwayScore = 0;
-            HomeScore = 0;
+            LiveStatus = LiveStatuses.LIVE;
             Period = 1;
         }
 
@@ -200,7 +202,7 @@ namespace SycamoreHockeyLeaguePortal.Models
         /// </summary>
         public void EndGame()
         {
-            IsLive = false;
+            LiveStatus = LiveStatuses.FINALIZED;
         }
         
         /// <summary>
@@ -210,7 +212,7 @@ namespace SycamoreHockeyLeaguePortal.Models
         /// <param name="change">The amount to change the value by.</param>
         private void ChangeValue(int value, int change)
         {
-            if (IsLive)
+            if (LiveStatus == LiveStatuses.LIVE)
                 value += change;
         }
 

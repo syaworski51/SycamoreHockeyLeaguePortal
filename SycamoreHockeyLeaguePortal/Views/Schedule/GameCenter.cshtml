@@ -155,7 +155,7 @@
 <div class="container game">
     <div class="row">
         <div class="col-12" id="game-notes">
-            @(Model.Notes != "" ? Model.Notes : Model.Date.ToLongDateString())
+            @(Model.Notes != "" ? Model.Notes : Model.Date.ToString("MMMM d, yyyy"))
         </div>
     </div>
     <div class="row">

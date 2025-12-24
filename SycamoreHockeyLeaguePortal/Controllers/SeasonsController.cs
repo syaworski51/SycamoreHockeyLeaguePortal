@@ -6,6 +6,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.VisualStudio.Web.CodeGeneration.EntityFrameworkCore;
 using SycamoreHockeyLeaguePortal.Data;
 using SycamoreHockeyLeaguePortal.Models;
+using SycamoreHockeyLeaguePortal.Models.ConstantGroups;
 using SycamoreHockeyLeaguePortal.Models.DataTransferModels.Objects;
 using SycamoreHockeyLeaguePortal.Models.DataTransferModels.Packages;
 using SycamoreHockeyLeaguePortal.Models.InputForms;
@@ -33,7 +34,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         {
             var seasons = _localContext.Seasons.OrderByDescending(s => s.Year);
 
-            Dictionary<int, DateTime?> firstDaysOfSeasons = new();
+            Dictionary<int, string?> firstDaysOfSeasons = new();
             Dictionary<int, bool> doSeasonsHavePlayoffSchedules = new();
             foreach (var season in seasons)
             {
@@ -45,7 +46,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 DateTime firstDay = !schedule.IsNullOrEmpty() ? schedule.FirstOrDefault()!.Date : DateTime.MinValue;
                 bool hasPlayoffSchedule = schedule!.Any(s => s.Type == "Playoffs");
 
-                firstDaysOfSeasons.Add(season.Year, firstDay);
+                firstDaysOfSeasons.Add(season.Year, firstDay.ToString("yyyy-MM-dd"));
                 doSeasonsHavePlayoffSchedules.Add(season.Year, hasPlayoffSchedule);
             }
             ViewBag.FirstDaysOfSeasons = firstDaysOfSeasons;
@@ -76,8 +77,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             if (!seasonHasSchedule)
                 throw new InvalidOperationException($"The {year} season doesn't have a schedule uploaded. It cannot go live yet.");
 
-            season.InTestMode = false;
-            season.IsLive = true;
+            season.Status = SeasonStatuses.LIVE;
             _localContext.Seasons.Update(season);
             await _localContext.SaveChangesAsync();
 
@@ -157,7 +157,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 Id = Guid.NewGuid(),
                 Year = form.Year,
                 GamesPerTeam = form.GamesPerTeam,
-                InTestMode = true
+                Status = SeasonStatuses.TEST_MODE
             };
             _localContext.Seasons.Add(season);
             var package = new DTP_NewSeason(season);

@@ -28,5 +28,6 @@ namespace SycamoreHockeyLeaguePortal.Data
         public DbSet<TeamBrandingHistory> TeamBrandingHistory { get; set; } = default!;
         public DbSet<HeadToHeadSeries> HeadToHeadSeries { get; set; } = default!;
         public DbSet<RankedPlayoffSeries> RankedPlayoffSeries { get; set; } = default!;
+        public DbSet<PlayoffSeed> PlayoffSeeds { get; set; } = default!;
     }
 }

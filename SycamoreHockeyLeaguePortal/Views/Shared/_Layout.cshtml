@@ -5,9 +5,15 @@
 @inject UserManager<ApplicationUser> UserManager
 
 @{
-    DateTime currentDate = DateTime.Now;
-    int currentYear = currentDate.Year;
-    ViewData["BackgroundImage"] = "detroit-vs-utah.png";
+    DateTime date = DateTime.Now;
+    int year = date.Year;
+    ViewData["BackgroundImage"] = "seattle-vs-newjersey.png";
+
+    int round = _context.Seasons
+        .FirstOrDefault(s => s.Year == year)!
+        .CurrentPlayoffRound;
+    if (round <= 0)
+        round = 1;
 
     bool userIsAdmin = User.IsInRole("Admin");
 
@@ -15,8 +21,9 @@
     {
         const string GAME_CENTER = "GameCenter", GAME_CONTROLS = "GameControls";
 
-        if (userIsAdmin && currentDate.Date >= game.Date.Date)
-            return !game.IsFinalized ? GAME_CONTROLS : GAME_CENTER;
+        if (userIsAdmin && date.Date >= game.Date.Date)
+            return game.LiveStatus != LiveStatuses.FINALIZED ? 
+                GAME_CONTROLS : GAME_CENTER;
 
         return GAME_CENTER;
     }
@@ -55,7 +62,7 @@
                         Game currentGame = games[index];
                         var previousGame = (index > 0) ? games[index - 1] : null;
 
-                        if (index == 0 || previousGame.Date.Date.CompareTo(currentGame.Date.Date) != 0)
+                        if (index == 0 || previousGame!.Date.Date.CompareTo(currentGame.Date.Date) != 0)
                         {
                             <div class="game-date">
                                 <div class="date">
@@ -119,20 +126,20 @@
                         <li class="nav-item">
                             <a class="nav-link text-light" 
                                asp-controller="Schedule" asp-action="Index" 
-                               asp-route-season="@currentYear"
-                               asp-route-weekOf="@currentDate.ToString("yyyy-MM-dd")">Schedule</a>
+                               asp-route-season="@year"
+                               asp-route-weekOf="@date.ToString("yyyy-MM-dd")">Schedule</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link text-light" 
                                asp-controller="Standings" asp-action="Index" 
-                               asp-route-season="@currentYear" 
+                               asp-route-season="@year" 
                                asp-route-viewBy="division">Standings</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link text-light" 
                                asp-controller="Schedule" asp-action="Playoffs" 
-                               asp-route-season="@currentYear" 
-                               asp-route-round="1">Playoffs</a>
+                               asp-route-season="@year" 
+                               asp-route-round="@round">Playoffs</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link text-light" 
@@ -160,7 +167,7 @@
 
     <footer class="border-top footer">
         <div class="container">
-            &copy; @currentYear Sycamore Hockey League. All rights reserved.
+            &copy; @year Sycamore Hockey League. All rights reserved.
         </div>
     </footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>

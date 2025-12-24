@@ -1,6 +1,9 @@
 ﻿@inject SycamoreHockeyLeaguePortal.Data.ApplicationDbContext _context
 
 @{
+    const string EAST = "EAST";
+    const string WEST = "WEST";
+
     ViewData["Title"] = "Home Page";
     int season = ViewBag.Season;
     DateTime currentDate = ViewBag.CurrentDate;
@@ -8,13 +11,7 @@
 
     bool userIsAdmin = User.IsInRole("Admin");
 
-    IQueryable<Standings> atlanticStandings = ViewBag.AtlanticStandings;
-    IQueryable<Standings> northeastStandings = ViewBag.NortheastStandings;
-    IQueryable<Standings> southeastStandings = ViewBag.SoutheastStandings;
-
-    IQueryable<Standings> centralStandings = ViewBag.CentralStandings;
-    IQueryable<Standings> northwestStandings = ViewBag.NorthwestStandings;
-    IQueryable<Standings> pacificStandings = ViewBag.PacificStandings;
+    Dictionary<string, List<Standings>> standings = ViewBag.Standings;
 
     string GetName(Team team)
     {
@@ -23,6 +20,13 @@
             return team.AlternateName!;
 
         return team.City;
+    }
+
+    List<Standings> GetStandingsInRange(string conference, int highestRanking, int lowestRanking)
+    {
+        return standings[conference]
+            .Where(s => s.ConferenceRanking >= highestRanking && s.ConferenceRanking <= lowestRanking)
+            .ToList();
     }
 }
 
@@ -122,34 +126,34 @@
                 <div class="tab-pane fade show active" id="east" role="tabpanel" aria-labelledby="east-tab">
                     <ul class="nav nav-pills nav-fill" id="eastern-division-tabs" role="tablist">
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link active" id="atl-tab" title="Atlantic Division" data-bs-toggle="tab" data-bs-target="#atl" type="button" role="tab" aria-controls="atl" aria-selected="true">Atlantic</button>
+                            <button class="nav-link active" id="e1e4-tab" title="Atlantic Division" data-bs-toggle="tab" data-bs-target="#e1-e4" type="button" role="tab" aria-controls="atl" aria-selected="true">1-4</button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="ne-tab" title="Northeast Division" data-bs-toggle="tab" data-bs-target="#ne" type="button" role="tab" aria-controls="ne" aria-selected="false">Northeast</button>
+                            <button class="nav-link" id="e5e8-tab" title="Northeast Division" data-bs-toggle="tab" data-bs-target="#e5-e8" type="button" role="tab" aria-controls="ne" aria-selected="false">5-8</button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="se-tab" title="Southeast Division" data-bs-toggle="tab" data-bs-target="#se" type="button" role="tab" aria-controls="se" aria-selected="false">Southeast</button>
+                            <button class="nav-link" id="e9e12-tab" title="Southeast Division" data-bs-toggle="tab" data-bs-target="#e9-e12" type="button" role="tab" aria-controls="se" aria-selected="false">9-12</button>
                         </li>
                     </ul>
                     <div class="tab-content" id="eastern-division-tab-content">
-                        <div class="tab-pane fade show active" id="atl" role="tabpanel" aria-labelledby="atl-tab">
+                        <div class="tab-pane fade show active" id="e1-e4" role="tabpanel" aria-labelledby="e1e4-tab">
                             @{
-                                ViewBag.DivisionStandings = atlanticStandings;
-                                ViewBag.DivisionName = "Atlantic";
+                                ViewBag.DivisionStandings = GetStandingsInRange(EAST, 1, 4);
+                                ViewBag.DivisionName = "1-4";
                             }
                             <partial name="Widgets/Standings.cshtml" />
                         </div>
-                        <div class="tab-pane fade" id="ne" role="tabpanel" aria-labelledby="ne-tab">
+                        <div class="tab-pane fade" id="e5-e8" role="tabpanel" aria-labelledby="e5e8-tab">
                             @{
-                                ViewBag.DivisionStandings = northeastStandings;
-                                ViewBag.DivisionName = "Northeast";
+                                ViewBag.DivisionStandings = GetStandingsInRange(EAST, 5, 8);
+                                ViewBag.DivisionName = "5-8";
                             }
                             <partial name="Widgets/Standings.cshtml" />
                         </div>
-                        <div class="tab-pane fade" id="se" role="tabpanel" aria-labelledby="se-tab">
+                        <div class="tab-pane fade" id="e9-e12" role="tabpanel" aria-labelledby="e9e12-tab">
                             @{
-                                ViewBag.DivisionStandings = southeastStandings;
-                                ViewBag.DivisionName = "Southeast";
+                                ViewBag.DivisionStandings = GetStandingsInRange(EAST, 9, 12);
+                                ViewBag.DivisionName = "9-12";
                             }
                             <partial name="Widgets/Standings.cshtml" />
                         </div>
@@ -158,34 +162,34 @@
                 <div class="tab-pane fade" id="west" role="tabpanel" aria-labelledby="west-tab">
                     <ul class="nav nav-pills nav-fill" id="western-division-tabs" role="tablist">
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link active" id="cen-tab" title="Central Division" data-bs-toggle="tab" data-bs-target="#cen" type="button" role="tab" aria-controls="cen" aria-selected="true">Central</button>
+                            <button class="nav-link active" id="w1w4-tab" title="Central Division" data-bs-toggle="tab" data-bs-target="#w1-w4" type="button" role="tab" aria-controls="cen" aria-selected="true">1-4</button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="nw-tab" title="Northwest Division" data-bs-toggle="tab" data-bs-target="#nw" type="button" role="tab" aria-controls="nw" aria-selected="false">Northwest</button>
+                            <button class="nav-link" id="w5w8-tab" title="Northwest Division" data-bs-toggle="tab" data-bs-target="#w5-w8" type="button" role="tab" aria-controls="nw" aria-selected="false">5-8</button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="pac-tab" title="Pacific Division" data-bs-toggle="tab" data-bs-target="#pac" type="button" role="tab" aria-controls="pac" aria-selected="false">Pacific</button>
+                            <button class="nav-link" id="w9w12-tab" title="Pacific Division" data-bs-toggle="tab" data-bs-target="#w9-w12" type="button" role="tab" aria-controls="pac" aria-selected="false">9-12</button>
                         </li>
                     </ul>
                     <div class="tab-content" id="western-division-tab-content">
-                        <div class="tab-pane fade show active" id="cen" role="tabpanel" aria-labelledby="cen-tab">
+                        <div class="tab-pane fade show active" id="w1-w4" role="tabpanel" aria-labelledby="w1w4-tab">
                             @{
-                                ViewBag.DivisionStandings = centralStandings;
-                                ViewBag.DivisionName = "Central";
+                                ViewBag.DivisionStandings = GetStandingsInRange(WEST, 1, 4);
+                                ViewBag.DivisionName = "1-4";
                             }
                             <partial name="Widgets/Standings.cshtml" />
                         </div>
-                        <div class="tab-pane fade" id="nw" role="tabpanel" aria-labelledby="nw-tab">
+                        <div class="tab-pane fade" id="w5-w8" role="tabpanel" aria-labelledby="w5w8-tab">
                             @{
-                                ViewBag.DivisionStandings = northwestStandings;
-                                ViewBag.DivisionName = "Northwest";
+                                ViewBag.DivisionStandings = GetStandingsInRange(WEST, 5, 8);
+                                ViewBag.DivisionName = "5-8";
                             }
                             <partial name="Widgets/Standings.cshtml" />
                         </div>
-                        <div class="tab-pane fade" id="pac" role="tabpanel" aria-labelledby="pac-tab">
+                        <div class="tab-pane fade" id="w9-w12" role="tabpanel" aria-labelledby="w9w12-tab">
                             @{
-                                ViewBag.DivisionStandings = pacificStandings;
-                                ViewBag.DivisionName = "Pacific";
+                                ViewBag.DivisionStandings = GetStandingsInRange(WEST, 9, 12);
+                                ViewBag.DivisionName = "9-12";
                             }
                             <partial name="Widgets/Standings.cshtml" />
                         </div>

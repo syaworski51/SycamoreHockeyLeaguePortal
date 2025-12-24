@@ -75,7 +75,103 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             var wildCards = GetWildCards(standings);
             ViewBag.WildCards = wildCards;
 
+            if (season >= 2026)
+                ViewBag.NextGames = await GetNextGamesAsync(season);
+
             return View(standings);
+        }
+
+        private async Task<Dictionary<string, Game?>> GetNextGamesAsync(int season)
+        {
+            var teams = _localContext.Standings
+                .Include(s => s.Team)
+                .Where(s => s.Season.Year == season)
+                .Select(s => s.Team)
+                .OrderBy(s => s.City)
+                .ThenBy(s => s.Name)
+                .ToList();
+            
+            var schedule = _localContext.Schedule
+                .Include(s => s.Season)
+                .Include(s => s.AwayTeam)
+                .Include(s => s.HomeTeam)
+                .Where(s => s.Season.Year == season &&
+                            s.Type == GameTypes.REGULAR_SEASON &&
+                            s.LiveStatus == LiveStatuses.NOT_STARTED)
+                .OrderBy(s => s.Date)
+                .ThenBy(s => s.GameIndex);
+
+            Dictionary<string, Game?> nextGames = new();
+
+            foreach (var team in teams)
+            {
+                Game? nextGame = schedule.FirstOrDefault(s => s.AwayTeam.Code == team.Code || 
+                                                             s.HomeTeam.Code == team.Code)!;
+
+                nextGames.Add(team.Code, nextGame);
+            }
+
+            return nextGames;
+        }
+
+        private async Task SetNextGamesAsync()
+        {
+            var localSeasonOpeners = _localContext.Schedule
+                .Include(s => s.Season)
+                .Include(s => s.AwayTeam)
+                .Include(s => s.HomeTeam)
+                .Where(s => s.Season.Year == 2026)
+                .OrderBy(s => s.Date)
+                .ThenBy(s => s.GameIndex)
+                .Take(12)
+                .ToList();
+
+            var liveSeasonOpeners = _liveContext.Schedule
+                .Include(s => s.Season)
+                .Include(s => s.AwayTeam)
+                .Include(s => s.HomeTeam)
+                .Where(s => s.Season.Year == 2026)
+                .OrderBy(s => s.Date)
+                .ThenBy(s => s.GameIndex)
+                .Take(12)
+                .ToList();
+
+            var localStandings = _localContext.Standings
+                .Include(s => s.Season)
+                .Include(s => s.Conference)
+                .Include(s => s.Division)
+                .Include(s => s.Team)
+                .Where(s => s.Season.Year == 2026)
+                .OrderBy(s => s.LeagueRanking)
+                .ToDictionary(s => s.Team.Code);
+
+            var liveStandings = _liveContext.Standings
+                .Include(s => s.Season)
+                .Include(s => s.Conference)
+                .Include(s => s.Division)
+                .Include(s => s.Team)
+                .Where(s => s.Season.Year == 2026)
+                .OrderBy(s => s.LeagueRanking)
+                .ToDictionary(s => s.Team.Code);
+
+            for (int index = 0; index < 12; index++)
+            {
+                var localGame = localSeasonOpeners[index];
+                var liveGame = liveSeasonOpeners[index];
+
+                localStandings[localGame.AwayTeam.Code].NextGame = localGame;
+                localStandings[localGame.AwayTeam.Code].NextGameId = localGame.Id;
+                liveStandings[liveGame.AwayTeam.Code].NextGame = liveGame;
+                liveStandings[liveGame.AwayTeam.Code].NextGameId = liveGame.Id;
+
+                localStandings[localGame.HomeTeam.Code].NextGame = localGame;
+                localStandings[localGame.HomeTeam.Code].NextGameId = localGame.Id;
+                liveStandings[liveGame.HomeTeam.Code].NextGame = liveGame;
+                liveStandings[liveGame.HomeTeam.Code].NextGameId = liveGame.Id;
+            }
+
+            await _localContext.SaveChangesAsync();
+            await _liveContext.SaveChangesAsync();
         }
 
         public async Task<IActionResult> PlayoffScenarios(int season, string? team)

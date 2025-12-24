@@ -27,7 +27,11 @@ public partial class Schedule
 
     public int Period { get; set; }
 
-    public bool IsLive { get; set; }
+    public string LiveStatus { get; set; }
+
+    public bool IsLive => LiveStatus == "Live";
+
+    public bool IsFinalized => LiveStatus == "Finalized";
 
     public string? Notes { get; set; }
 
@@ -110,8 +114,6 @@ public partial class Schedule
     public Guid? PlayoffRoundId { get; set; }
 
     public Guid? PlayoffSeriesId { get; set; }
-
-    public bool IsFinalized { get; set; }
 
     public virtual Team AwayTeam { get; set; } = null!;
 

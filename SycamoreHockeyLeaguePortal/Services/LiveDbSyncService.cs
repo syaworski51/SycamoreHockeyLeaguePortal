@@ -92,6 +92,10 @@ namespace SycamoreHockeyLeaguePortal.Services
 
             var exception = new InvalidOperationException("There was an error inserting the games into the live database.");
             await AddRecordsToTableAsync(_liveContext.Schedule, games, exception);
+
+            bool allPlayoffGames = games.All(g => g.Type == GameTypes.PLAYOFFS);
+            if (allPlayoffGames)
+                await ReindexPlayoffGames((Guid)games.First().PlayoffRoundId!);
         }
 
         /// <summary>
@@ -166,8 +170,6 @@ namespace SycamoreHockeyLeaguePortal.Services
             game.AwayScore = resultDTO.AwayScore;
             game.HomeScore = resultDTO.HomeScore;
             game.Period = resultDTO.Period;
-            game.IsLive = resultDTO.IsLive;
-            game.IsFinalized = resultDTO.IsFinalized;
             game.Notes = resultDTO.Notes;
             game.PlayoffSeriesScore = resultDTO.PlayoffSeriesScore;
             await _liveContext.SaveChangesAsync();
@@ -251,6 +253,29 @@ namespace SycamoreHockeyLeaguePortal.Services
             // Delete each game one at a time.
             foreach (var game in games)
                 await DeleteOneGameAsync(game);
+
+            await _liveContext.SaveChangesAsync();
+        }
+
+        public async Task ReindexPlayoffGames(Guid roundId)
+        {
+            var games = _liveContext.Schedule
+                .Include(s => s.Season)
+                .Include(s => s.PlayoffRound)
+                .Include(s => s.PlayoffSeries)
+                .Include(s => s.AwayTeam)
+                .Include(s => s.HomeTeam)
+                .Where(s => s.Id == roundId)
+                .OrderBy(s => s.Date)
+                .ThenByDescending(s => s.PlayoffSeries!.StartDate)
+                .ThenBy(s => s.PlayoffSeries!.Index);
+
+            int index = games.Min(g => g.GameIndex);
+            foreach (var game in games)
+            {
+                game.GameIndex = index;
+                index++;
+            }
 
             await _liveContext.SaveChangesAsync();
         }
@@ -423,17 +448,14 @@ namespace SycamoreHockeyLeaguePortal.Services
                     nextGame.PlayoffSeries!.SeriesScoreString : "Game 7";
                 nextGame.PlayoffSeriesScore = manyGamesRemaining ?
                     nextGame.PlayoffSeries!.ShortSeriesScoreString : "Game 7";
-                //_liveContext.Schedule.Update(nextGame);
 
 
                 var nextUnconfirmedGame = remainingGames.FirstOrDefault(g => !g.IsConfirmed) ??
                     throw new InvalidOperationException("The next unconfirmed game in this series could not be found.");
                 int minimumWinsNeeded = (int)nextUnconfirmedGame.PlayoffGameIndex! - 4;
                 nextUnconfirmedGame.IsConfirmed = trailingWinCount == minimumWinsNeeded;
-                //_liveContext.Schedule.Update(nextUnconfirmedGame);
             }
 
-            //_liveContext.PlayoffSeries.Update(game.PlayoffSeries);
             await _liveContext.SaveChangesAsync();
         }
 
@@ -522,6 +544,15 @@ namespace SycamoreHockeyLeaguePortal.Services
             matchup.Team2Wins = dto.Team2Wins;
             matchup.Team2GoalsFor = dto.Team2GoalsFor;
             
+            await _liveContext.SaveChangesAsync();
+        }
+
+        public async Task UpdateCurrentPlayoffRoundAsync(int year, int newRound)
+        {
+            var season = _liveContext.Seasons.FirstOrDefault(s => s.Year == year) ??
+                throw new InvalidOperationException($"The {year} season could not be found in the live database.");
+
+            season.CurrentPlayoffRound = newRound;
             await _liveContext.SaveChangesAsync();
         }
 

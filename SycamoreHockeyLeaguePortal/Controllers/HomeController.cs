@@ -4,18 +4,23 @@ using SycamoreHockeyLeaguePortal.Data;
 using SycamoreHockeyLeaguePortal.Data.Migrations;
 using SycamoreHockeyLeaguePortal.Models;
 using System.Diagnostics;
+using ZstdSharp.Unsafe;
 
 namespace SycamoreHockeyLeaguePortal.Controllers
 {
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
-        private readonly ApplicationDbContext _context;
+        private readonly ApplicationDbContext _localContext;
+        private readonly LiveDbContext _liveContext;
 
-        public HomeController(ILogger<HomeController> logger, ApplicationDbContext context)
+        public HomeController(ILogger<HomeController> logger, 
+                              ApplicationDbContext localContext,
+                              LiveDbContext liveContext)
         {
             _logger = logger;
-            _context = context;
+            _localContext = localContext;
+            _liveContext = liveContext;
         }
 
         public async Task<IActionResult> Index()
@@ -26,7 +31,12 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             var season = currentDate.Year;
             ViewBag.Season = season;
 
-            var dates = _context.Schedule
+            int round = _localContext.Seasons
+                .FirstOrDefault(s => s.Year == season)!
+                .CurrentPlayoffRound;
+            ViewBag.CurrentRound = round;
+
+            var dates = _localContext.Schedule
                 .Include(s => s.Season)
                 .Where(s => s.Season.Year == season)
                 .OrderBy(s => s.Date.Date)
@@ -39,7 +49,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             var rangeStart = seasonHasStarted ? currentDate : firstDayOfSeason;
             var rangeEnd = rangeStart.AddDays(13);
 
-            var upcomingGames = _context.Schedule
+            var upcomingGames = _localContext.Schedule
                 .Include(s => s.Season)
                 .Include(s => s.PlayoffRound)
                 .Include(s => s.AwayTeam)
@@ -53,27 +63,20 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             var todaysGames = upcomingGames.Where(s => s.Date.Date == currentDate.Date);
             ViewBag.TodaysGames = await todaysGames.AsNoTracking().ToListAsync();
 
-            var standings = _context.Standings
+            var standings = _localContext.Standings
                 .Include(s => s.Season)
                 .Include(s => s.Conference)
                 .Include(s => s.Division)
                 .Include(s => s.Team)
                 .Where(s => s.Season.Year == season)
-                .OrderBy(s => s.DivisionRanking);
+                .OrderBy(s => s.ConferenceRanking);
 
-            ViewBag.AtlanticStandings = standings
-                .Where(s => s.Division!.Code == "AT");
-            ViewBag.NortheastStandings = standings
-                .Where(s => s.Division!.Code == "NE");
-            ViewBag.SoutheastStandings = standings
-                .Where(s => s.Division!.Code == "SE");
-
-            ViewBag.CentralStandings = standings
-                .Where(s => s.Division!.Code == "CE");
-            ViewBag.NorthwestStandings = standings
-                .Where(s => s.Division!.Code == "NW");
-            ViewBag.PacificStandings = standings
-                .Where(s => s.Division!.Code == "PA");
+            Dictionary<string, List<Standings>> standingsDict = new()
+            {
+                { "EAST", standings.Where(s => s.Conference!.Code == "EAST").ToList() },
+                { "WEST", standings.Where(s => s.Conference!.Code == "WEST").ToList() }
+            };
+            ViewBag.Standings = standingsDict;
 
             return View();
         }

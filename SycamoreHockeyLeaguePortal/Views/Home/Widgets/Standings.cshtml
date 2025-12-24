@@ -1,7 +1,7 @@
-﻿@model IQueryable<Standings>
+﻿@model List<Standings>
 
 @{
-    IQueryable<Standings> standings = ViewBag.DivisionStandings;
+    List<Standings> standings = ViewBag.DivisionStandings;
     string name = ViewBag.DivisionName;
 }
 
@@ -31,7 +31,7 @@
                     @string.Format("{0:F1}", team.WinPct)
                 </th>
                 <td class="team-stats">
-                    @(team.DivisionGamesBehind > 0 ? team.DivisionGamesBehind : "--")
+                    @(team.ConferenceGamesBehind > 0 ? team.ConferenceGamesBehind : "--")
                 </td>
             </tr>
         }

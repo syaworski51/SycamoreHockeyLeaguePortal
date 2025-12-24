@@ -375,11 +375,9 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
                     b.Property<bool>("IsConfirmed")
                         .HasColumnType("bit");
 
-                    b.Property<bool>("IsFinalized")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsLive")
-                        .HasColumnType("bit");
+                    b.Property<string>("LiveStatus")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Notes")
                         .HasColumnType("nvarchar(max)");
@@ -507,6 +505,40 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
                     b.ToTable("PlayoffRounds");
                 });
 
+            modelBuilder.Entity("SycamoreHockeyLeaguePortal.Models.PlayoffSeed", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ConferenceId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("DivisionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Number")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("SeasonId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("TeamId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ConferenceId");
+
+                    b.HasIndex("DivisionId");
+
+                    b.HasIndex("SeasonId");
+
+                    b.HasIndex("TeamId");
+
+                    b.ToTable("PlayoffSeeds");
+                });
+
             modelBuilder.Entity("SycamoreHockeyLeaguePortal.Models.PlayoffSeries", b =>
                 {
                     b.Property<Guid>("Id")
@@ -532,6 +564,12 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
 
                     b.Property<Guid>("SeasonId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<int?>("Seed1")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("Seed2")
+                        .HasColumnType("int");
 
                     b.Property<DateTime?>("StartDate")
                         .HasColumnType("datetime2");
@@ -674,14 +712,9 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
                     b.Property<int>("GamesPerTeam")
                         .HasColumnType("int");
 
-                    b.Property<bool>("InTestMode")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsComplete")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsLive")
-                        .HasColumnType("bit");
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("Year")
                         .HasColumnType("int");
@@ -1164,6 +1197,39 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Season");
+                });
+
+            modelBuilder.Entity("SycamoreHockeyLeaguePortal.Models.PlayoffSeed", b =>
+                {
+                    b.HasOne("SycamoreHockeyLeaguePortal.Models.Conference", "Conference")
+                        .WithMany()
+                        .HasForeignKey("ConferenceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SycamoreHockeyLeaguePortal.Models.Division", "Division")
+                        .WithMany()
+                        .HasForeignKey("DivisionId");
+
+                    b.HasOne("SycamoreHockeyLeaguePortal.Models.Season", "Season")
+                        .WithMany()
+                        .HasForeignKey("SeasonId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SycamoreHockeyLeaguePortal.Models.Team", "Team")
+                        .WithMany()
+                        .HasForeignKey("TeamId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Conference");
+
+                    b.Navigation("Division");
+
+                    b.Navigation("Season");
+
+                    b.Navigation("Team");
                 });
 
             modelBuilder.Entity("SycamoreHockeyLeaguePortal.Models.PlayoffSeries", b =>

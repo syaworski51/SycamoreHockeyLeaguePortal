@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using SycamoreHockeyLeaguePortal.Models.ConstantGroups;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SycamoreHockeyLeaguePortal.Models
@@ -23,10 +24,12 @@ namespace SycamoreHockeyLeaguePortal.Models
 
         public int CurrentPlayoffRound { get; set; }
 
-        public bool InTestMode { get; set; }
-        
-        public bool IsLive { get; set; }
+        public string Status { get; set; }
 
-        public bool IsComplete { get; set; }
+        public bool InTestMode => Status == SeasonStatuses.TEST_MODE;
+
+        public bool IsLive => Status == SeasonStatuses.LIVE;
+
+        public bool IsComplete => Status == SeasonStatuses.COMPLETE;
     }
 }

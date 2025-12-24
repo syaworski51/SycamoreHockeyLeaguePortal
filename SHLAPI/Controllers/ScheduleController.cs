@@ -77,9 +77,9 @@ namespace SHLAPI.Controllers
                 if ((game.GameIndex > 1 && (previousGame == null || !previousGame.IsFinalized)) && game.Season.Year != 2026)
                     return BadRequest();
 
-                if (!game.IsLive && !game.IsFinalized)
+                if (game.LiveStatus == "Not started" || game.LiveStatus == "Paused")
                 {
-                    game.IsLive = true;
+                    game.LiveStatus = "Live";
 
                     if (game.Period <= 0)
                         game.Period = 1;

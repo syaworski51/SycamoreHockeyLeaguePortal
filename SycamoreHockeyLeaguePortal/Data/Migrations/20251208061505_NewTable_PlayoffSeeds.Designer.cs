@@ -3,17 +3,20 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SycamoreHockeyLeaguePortal.Data;
 
 #nullable disable
 
-namespace SycamoreHockeyLeaguePortal.Migrations
+namespace SycamoreHockeyLeaguePortal.Data.Migrations
 {
-    [DbContext(typeof(LiveDbContext))]
-    partial class LiveDbContextModelSnapshot : ModelSnapshot
+    [DbContext(typeof(ApplicationDbContext))]
+    [Migration("20251208061505_NewTable_PlayoffSeeds")]
+    partial class NewTable_PlayoffSeeds
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -514,9 +517,6 @@ namespace SycamoreHockeyLeaguePortal.Migrations
                     b.Property<Guid>("ConferenceId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("DivisionId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<int>("Number")
                         .HasColumnType("int");
 
@@ -529,8 +529,6 @@ namespace SycamoreHockeyLeaguePortal.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ConferenceId");
-
-                    b.HasIndex("DivisionId");
 
                     b.HasIndex("SeasonId");
 
@@ -564,12 +562,6 @@ namespace SycamoreHockeyLeaguePortal.Migrations
 
                     b.Property<Guid>("SeasonId")
                         .HasColumnType("uniqueidentifier");
-
-                    b.Property<int?>("Seed1")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("Seed2")
-                        .HasColumnType("int");
 
                     b.Property<DateTime?>("StartDate")
                         .HasColumnType("datetime2");
@@ -712,9 +704,14 @@ namespace SycamoreHockeyLeaguePortal.Migrations
                     b.Property<int>("GamesPerTeam")
                         .HasColumnType("int");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<bool>("InTestMode")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsComplete")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsLive")
+                        .HasColumnType("bit");
 
                     b.Property<int>("Year")
                         .HasColumnType("int");
@@ -1207,10 +1204,6 @@ namespace SycamoreHockeyLeaguePortal.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("SycamoreHockeyLeaguePortal.Models.Division", "Division")
-                        .WithMany()
-                        .HasForeignKey("DivisionId");
-
                     b.HasOne("SycamoreHockeyLeaguePortal.Models.Season", "Season")
                         .WithMany()
                         .HasForeignKey("SeasonId")
@@ -1224,8 +1217,6 @@ namespace SycamoreHockeyLeaguePortal.Migrations
                         .IsRequired();
 
                     b.Navigation("Conference");
-
-                    b.Navigation("Division");
 
                     b.Navigation("Season");
 

@@ -27,6 +27,8 @@ namespace SycamoreHockeyLeaguePortal.Models
         [Display(Name = "Index")]
         public string Index { get; set; }
 
+        public int? Seed1 { get; set; }
+
         [ForeignKey(nameof(Team1))]
         public Guid? Team1Id { get; set; }
 
@@ -38,6 +40,8 @@ namespace SycamoreHockeyLeaguePortal.Models
 
         [Display(Name = "Team 1 Placeholder")]
         public string Team1Placeholder { get; set; }
+
+        public int? Seed2 { get; set; }
 
         [ForeignKey(nameof(Team2))]
         public Guid? Team2Id { get; set; }
