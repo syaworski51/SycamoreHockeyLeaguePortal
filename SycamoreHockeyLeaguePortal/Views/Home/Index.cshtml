@@ -1,17 +1,14 @@
-﻿@inject SycamoreHockeyLeaguePortal.Data.ApplicationDbContext _context
+﻿@using SycamoreHockeyLeaguePortal.Models.ViewModels
+@model HomePageViewModel
+@inject SycamoreHockeyLeaguePortal.Data.ApplicationDbContext _context
 
 @{
     const string EAST = "EAST";
     const string WEST = "WEST";
 
     ViewData["Title"] = "Home Page";
-    int season = ViewBag.Season;
-    DateTime currentDate = ViewBag.CurrentDate;
-    List<Game> todaysGames = ViewBag.TodaysGames;
 
     bool userIsAdmin = User.IsInRole("Admin");
-
-    Dictionary<string, List<Standings>> standings = ViewBag.Standings;
 
     string GetName(Team team)
     {
@@ -24,7 +21,7 @@
 
     List<Standings> GetStandingsInRange(string conference, int highestRanking, int lowestRanking)
     {
-        return standings[conference]
+        return Model.Standings[conference]
             .Where(s => s.ConferenceRanking >= highestRanking && s.ConferenceRanking <= lowestRanking)
             .ToList();
     }
@@ -36,7 +33,7 @@
     <div class="row" id="schedule-widget">
         <div class="col-7 card">
             <h4>Today's Games</h4>
-            <h6>@currentDate.ToString("MMMM d, yyyy")</h6>
+            <h6>@Model.Date.ToString("MMMM d, yyyy")</h6>
             <table class="table">
                 <thead>
                     <tr>
@@ -47,13 +44,13 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @if (todaysGames.Any())
+                    @if (Model.TodaysGames!.Any())
                     {
-                        foreach (var game in todaysGames)
+                        foreach (var game in Model.TodaysGames!)
                         {
                             <tr>
                                 <td style="text-align: right; width: 220px;">
-                                    <a asp-controller="Teams" asp-action="Details" asp-route-id="@game.AwayTeam.Code" asp-route-season="@season" asp-route-gameType="regular-season">@GetName(game.AwayTeam)</a>
+                                    <a asp-controller="Teams" asp-action="Details" asp-route-id="@game.AwayTeam.Code" asp-route-season="@Model.Season" asp-route-gameType="regular-season">@GetName(game.AwayTeam)</a>
                                 </td>
                                 <td class="logo">
                                     <img src="~/@game.AwayTeam.LogoPath" />
@@ -77,7 +74,7 @@
                                     <img src="~/@game.HomeTeam.LogoPath" />
                                 </td>
                                 <td style="text-align: left; width: 220px;">
-                                    <a asp-controller="Teams" asp-action="Details" asp-route-id="@game.HomeTeam.Code" asp-route-season="@season" asp-route-gameType="regular-season">@GetName(game.HomeTeam)</a>
+                                    <a asp-controller="Teams" asp-action="Details" asp-route-id="@game.HomeTeam.Code" asp-route-season="@Model.Season" asp-route-gameType="regular-season">@GetName(game.HomeTeam)</a>
                                 </td>
                                 @if (userIsAdmin && !game.IsFinalized)
                                 {

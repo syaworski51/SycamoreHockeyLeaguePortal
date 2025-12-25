@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using SycamoreHockeyLeaguePortal.Data;
 using SycamoreHockeyLeaguePortal.Data.Migrations;
 using SycamoreHockeyLeaguePortal.Models;
+using SycamoreHockeyLeaguePortal.Models.ViewModels;
 using System.Diagnostics;
 using ZstdSharp.Unsafe;
 
@@ -57,11 +58,14 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 .Where(g => g.Date.Date >= rangeStart.Date &&
                             g.Date.Date <= rangeEnd.Date)
                 .OrderBy(g => g.Date.Date)
-                .ThenBy(g => g.GameIndex);
-            ViewBag.UpcomingGames = await upcomingGames.AsNoTracking().ToListAsync();
+                .ThenBy(g => g.GameIndex)
+                .ToList();
+            ViewBag.UpcomingGames = upcomingGames;
 
-            var todaysGames = upcomingGames.Where(s => s.Date.Date == currentDate.Date);
-            ViewBag.TodaysGames = await todaysGames.AsNoTracking().ToListAsync();
+            var todaysGames = upcomingGames
+                .Where(s => s.Date.Date == currentDate.Date)
+                .ToList();
+            ViewBag.TodaysGames = todaysGames;
 
             var standings = _localContext.Standings
                 .Include(s => s.Season)
@@ -78,7 +82,17 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             };
             ViewBag.Standings = standingsDict;
 
-            return View();
+            HomePageViewModel viewModel = new HomePageViewModel()
+            {
+                Date = currentDate,
+                Season = currentDate.Year,
+                Round = round,
+                UpcomingGames = upcomingGames,
+                TodaysGames = todaysGames,
+                Standings = standingsDict
+            };
+
+            return View(viewModel);
         }
 
         public IActionResult Privacy()
