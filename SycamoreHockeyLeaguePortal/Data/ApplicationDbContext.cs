@@ -29,5 +29,8 @@ namespace SycamoreHockeyLeaguePortal.Data
         public DbSet<HeadToHeadSeries> HeadToHeadSeries { get; set; } = default!;
         public DbSet<RankedPlayoffSeries> RankedPlayoffSeries { get; set; } = default!;
         public DbSet<PlayoffSeed> PlayoffSeeds { get; set; } = default!;
+        public DbSet<Standings_NHL> Standings_NHL { get; set; } = default!;
+        public DbSet<Standings_WL> Standings_WL { get; set; } = default!;
+        public DbSet<Standings_3210> Standings_3210 { get; set; } = default!;
     }
 }

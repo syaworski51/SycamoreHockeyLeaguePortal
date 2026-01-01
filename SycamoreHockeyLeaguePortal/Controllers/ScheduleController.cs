@@ -1,12 +1,11 @@
-﻿using AspNetCoreGeneratedDocument;
-using CsvHelper;
+﻿using CsvHelper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Identity.Client;
 using Microsoft.IdentityModel.Tokens;
 using MongoDB.Bson;
+using MongoDB.Driver.Core.Configuration;
 using SycamoreHockeyLeaguePortal.Data;
 using SycamoreHockeyLeaguePortal.Models;
 using SycamoreHockeyLeaguePortal.Models.ConstantGroups;
@@ -18,15 +17,14 @@ using SycamoreHockeyLeaguePortal.Models.InputForms;
 using SycamoreHockeyLeaguePortal.Models.ViewModels;
 using SycamoreHockeyLeaguePortal.Services;
 using System.Globalization;
-using System.Linq;
-using System.Net;
-using System.Runtime.CompilerServices;
 
 namespace SycamoreHockeyLeaguePortal.Controllers
 {
     [Authorize(Roles = "Admin")]
     public class ScheduleController : Controller
     {
+        private readonly LiveStatuses ls = new();
+
         private readonly ApplicationDbContext _localContext;
         private readonly LiveDbContext _liveContext;
         private readonly LiveDbSyncService _syncService;
@@ -312,28 +310,6 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             return RedirectToAction(nameof(UploadSchedule), new { year = form.Season });
         }
 
-        private async Task SetNextGameAsync(int season, Team team)
-        {
-            Standings teamStats = _localContext.Standings
-                .Include(s => s.Season)
-                .Include(s => s.Team)
-                .FirstOrDefault(s => s.Season.Year == season &&
-                                     s.Team.Code == team.Code)!;
-
-            Game? nextGame = _localContext.Schedule
-                .Include(s => s.Season)
-                .Include(s => s.AwayTeam)
-                .Include(s => s.HomeTeam)
-                .OrderBy(s => s.Date)
-                .FirstOrDefault(s => s.Season.Year == season &&
-                                     (s.AwayTeam.Code == team.Code || s.HomeTeam.Code == team.Code) &&
-                                     s.LiveStatus == LiveStatuses.NOT_STARTED);
-
-            teamStats.NextGame = nextGame;
-
-            await _localContext.SaveChangesAsync();
-        }
-
         private bool DoesSeasonExist(int year)
         {
             return _localContext.Seasons.Any(s => s.Year == year);
@@ -476,7 +452,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
 
                 if (teamStats[0].Conference != teamStats[1].Conference)
                     results = results
-                        .Where(r => r.IsFinalized)
+                        .Where(r => r.LiveStatus == LiveStatuses.FINALIZED)
                         .OrderByDescending(r => r.Date)
                         .Take(5);
                 else
@@ -675,8 +651,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                     HomeScore = game.HomeScore,
                     Period = game.Period,
                     IsConfirmed = game.IsConfirmed,
-                    IsLive = game.IsLive,
-                    IsFinalized = game.IsFinalized,
+                    LiveStatus = game.LiveStatus,
                     Notes = game.Notes
                 };
                 await _syncService.WriteOneResultAsync(dto);
@@ -763,12 +738,44 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             bool homeTeamWon = game.HomeScore > game.AwayScore;  // Did the home team win?
             bool team1Won = team1IsHomeTeam == homeTeamWon;  // Did team 1 win this game?
 
-            // If team 1 won this game, increment their win counter by 1
+            // If team 1 won this game, increment their appropriate win counter by 1
             if (team1Won)
-                matchup.Team1Wins++;
-            // If team 2 won this game, increment their win counter by 1
+            {
+                if (game.Period < 5)
+                    matchup.Team1ROWs++;
+
+                if (game.Period > 3)
+                {
+                    matchup.Team1OTWins++;
+
+                    matchup.Team1Points += 2;
+                    matchup.Team2Points += 1;
+                }
+                else
+                {
+                    matchup.Team1Wins++;
+                    matchup.Team1Points += 3;
+                }
+            }
+            // If team 2 won this game, increment their appropriate win counter by 1
             else
-                matchup.Team2Wins++;
+            {
+                if (game.Period < 5)
+                    matchup.Team2ROWs++;
+
+                if (game.Period > 3)
+                {
+                    matchup.Team2OTWins++;
+
+                    matchup.Team2Points += 2;
+                    matchup.Team1Points += 1;
+                }
+                else
+                {
+                    matchup.Team2Wins++;
+                    matchup.Team2Points += 3;
+                }
+            }
 
             // Add the score of the game to each team's goals for counter
             matchup.Team1GoalsFor += team1IsHomeTeam ? game.HomeScore : game.AwayScore;
@@ -1151,48 +1158,134 @@ namespace SycamoreHockeyLeaguePortal.Controllers
 
         private async Task UpdateStandingsAsync(int season, Team awayTeam, Team homeTeam)
         {
-            await UpdateTeamStats(season, awayTeam);
-            await UpdateTeamStats(season, homeTeam);
-            await UpdateRankings(season);
+            await UpdateTeamStatsAsync(season, awayTeam);
+            await UpdateTeamStatsAsync(season, homeTeam);
+            await UpdateRankingsAsync(season);
 
             await StandingsUpdateNowAvailable();
         }
 
-        private async Task UpdateTeamStatsAsync(Game game, Team team)
+        private async Task UpdateTeamStatsAsync(int season, Game game)
         {
-            Standings teamStats = _localContext.Standings
+            if (!game.IsFinalized)
+                throw new Exception("This game has not been finalized.");
+
+            var standings = _localContext.Standings
                 .Include(s => s.Season)
                 .Include(s => s.Conference)
                 .Include(s => s.Team)
-                .FirstOrDefault(s => s.Season.Year == game.Season.Year && s.Team.Code == team.Code)!;
+                .Where(s => s.Season.Year == season)
+                .OrderBy(s => s.LeagueRanking)
+                .ToDictionary(s => s.Team.Code);
 
-            bool isHomeTeam = game.HomeTeam.Code == team.Code;
-            bool isWinner = (isHomeTeam && game.HomeScore > game.AwayScore) ||
-                            (!isHomeTeam && game.AwayScore > game.HomeScore);
+            bool homeTeamWon = game.HomeScore > game.AwayScore;
+            Team winner = homeTeamWon ? game.HomeTeam : game.AwayTeam;
+            Team loser = homeTeamWon ? game.AwayTeam : game.HomeTeam;
 
-            teamStats.GamesPlayed++;
-            teamStats.GoalsFor += isHomeTeam ? game.HomeScore : game.AwayScore;
-            teamStats.GoalsAgainst += isHomeTeam ? game.AwayScore : game.HomeScore;
-            teamStats.GoalDifferential = teamStats.GoalsFor - teamStats.GoalsAgainst;
+            Standings winnerStats = standings[winner.Code];
+            Standings loserStats = standings[loser.Code];
 
-            if (isWinner)
+            winnerStats.GoalsFor += homeTeamWon ? game.HomeScore : game.AwayScore;
+            winnerStats.GoalsAgainst += homeTeamWon ? game.AwayScore : game.HomeScore;
+            winnerStats.GoalDifferential = winnerStats.GoalsFor - winnerStats.GoalsAgainst;
+
+            loserStats.GoalsFor += homeTeamWon ? game.AwayScore : game.HomeScore;
+            loserStats.GoalsAgainst += homeTeamWon ? game.HomeScore : game.AwayScore;
+            loserStats.GoalDifferential = loserStats.GoalsFor - loserStats.GoalsAgainst;
+
+            bool inRegulation = game.Period == 3;
+            int winnerPts = inRegulation ? 3 : 2;
+            int loserPts = inRegulation ? 0 : 1;
+
+            winnerStats.Points += winnerPts;
+            winnerStats.PointsCeiling -= (3 - winnerPts);
+            winnerStats.PointsPct = (decimal)winnerStats.Points / (winnerStats.GamesPlayed * 3);
+
+            loserStats.Points += loserPts;
+            loserStats.PointsCeiling -= (3 - loserPts);
+            loserStats.PointsPct = (decimal)loserStats.Points / (loserStats.GamesPlayed * 3);
+
+            if (game.Period < 5)
+                winnerStats.RegPlusOTWins++;
+
+            if (inRegulation)
             {
-                teamStats.Wins++;
-
-                teamStats.Streak = (teamStats.Streak > 0) ? teamStats.Streak++ : 1;
+                winnerStats.Wins++;
+                loserStats.Losses++;
             }
             else
             {
-                teamStats.Losses++;
-
-                teamStats.Streak = (teamStats.Streak < 0) ? teamStats.Streak-- : -1;
+                winnerStats.OTWins++;
+                loserStats.OTLosses++;
             }
 
+            const int W = 0, OTW = 1, OTL = 2, L = 3;
+            int[] winnerLast10 = await GetRecordInLast10GamesAsync(season, winner);
+            winnerStats.WinsInLast10Games = winnerLast10[W];
+            winnerStats.OTWinsInLast10Games = winnerLast10[OTW];
+            winnerStats.OTLossesInLast10Games = winnerLast10[OTL];
+            winnerStats.LossesInLast10Games = winnerLast10[L];
+            winnerStats.PointsInLast10Games = (3 * winnerLast10[W]) + (2 * winnerLast10[OTW]) + winnerLast10[OTL];
 
-            teamStats.WinPct = 100 * ((decimal)teamStats.Wins / teamStats.GamesPlayed);
+            int[] loserLast10 = await GetRecordInLast10GamesAsync(season, loser);
+            loserStats.WinsInLast10Games = loserLast10[W];
+            loserStats.OTWinsInLast10Games = loserLast10[OTW];
+            loserStats.OTLossesInLast10Games = loserLast10[OTL];
+            loserStats.LossesInLast10Games = loserLast10[L];
+            loserStats.PointsInLast10Games = (3 * loserLast10[W]) + (2 * loserLast10[OTW]) + loserLast10[OTL];
+
+            winnerStats.Streak = await GetStreakAsync(season, winner);
+            loserStats.Streak = await GetStreakAsync(season, loser);
         }
 
-        private async Task UpdateRankings(int season)
+        private async Task CheckForClinchingOrEliminationScenariosAsync(int season)
+        {
+            var standings = _localContext.Standings
+                .Include(s => s.Season)
+                .Include(s => s.Conference)
+                .Include(s => s.Team)
+                .Where(s => s.Season.Year == season)
+                .OrderBy(s => s.LeagueRanking)
+                .ToList();
+
+            await CheckForPlayoffSpotClinchingScenariosAsync(season, standings);
+        }
+
+        private async Task CheckForPlayoffSpotClinchingScenariosAsync(int season, List<Standings> standings)
+        {
+            string[] conferences = { "EAST", "WEST" };
+
+            foreach (var conference in conferences)
+            {
+                var playoffTeams = standings
+                    .Where(s => s.Conference!.Code == conference && 
+                                s.ConferenceRanking <= 8 &&
+                                s.PlayoffStatus == "")
+                    .ToList();
+            }
+        }
+
+        private async Task CheckForTopSeedClinchingScenarios(int season, List<Standings> standings)
+        {
+
+        }
+
+        private async Task CheckForPresidentsTrophyClinchingScenarios(int season, List<Standings> standings)
+        {
+
+        }
+
+        private async Task CheckForEliminationScenarios(int season, List<Standings> standings)
+        {
+
+        }
+
+        private async Task CheckForDemotionScenarios(int season, List<Standings> standings)
+        {
+
+        }
+
+        private async Task UpdateRankingsAsync(int season)
         {
             if (season >= 2025)
             {
@@ -1201,29 +1294,6 @@ namespace SycamoreHockeyLeaguePortal.Controllers
 
                 int ranking = 1;
 
-                if (season == 2025)
-                {
-                    var divisions = standings
-                    .Select(s => s.Division)
-                    .Distinct()
-                    .OrderBy(s => s!.Name);
-                    foreach (var division in divisions)
-                    {
-                        ranking = 1;
-
-                        teams = standings.Where(s => s.Division == division).ToList();
-                        teams = ApplyHeadToHeadTiebreakers(teams, "division");
-
-                        foreach (var team in teams)
-                        {
-                            team.DivisionRanking = ranking;
-                            _localContext.Standings.Update(team);
-
-                            ranking++;
-                        }
-                    }
-                }
-
                 var conferences = standings
                     .Select(s => s.Conference)
                     .Distinct()
@@ -1231,8 +1301,8 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 foreach (var conference in conferences)
                 {
                     ranking = 1;
+                    
                     teams = standings.Where(s => s.Conference == conference).ToList();
-
                     teams = ApplyHeadToHeadTiebreakers(teams, "conference");
                     foreach (var team in teams)
                     {
@@ -1255,6 +1325,19 @@ namespace SycamoreHockeyLeaguePortal.Controllers
 
                 await _localContext.SaveChangesAsync();
             }
+        }
+
+        private List<Standings> ApplyTwoWayGamesPlayedTiebreaker(List<Standings> standings,
+                                                                 int index1, Standings team1,
+                                                                 int index2, Standings team2)
+        {
+            if (team1.GamesPlayed == team2.GamesPlayed)
+                return ApplyTwoWayH2HTiebreaker(standings, index1, team1, index2, team2);
+
+            if (team1.GamesPlayed > team2.GamesPlayed)
+                return SwapTeams(standings, index1, team1, index2, team2);
+
+            return standings;
         }
 
         private int GetDivisionOrConferenceRanking(List<Standings> standings, Standings team, string searchType)
@@ -1318,17 +1401,13 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             else
             {
                 standings = standings
-                    .OrderByDescending(s => s.WinPct)
+                    .OrderByDescending(s => s.Points)
+                    .ThenBy(s => s.GamesPlayed)
                     .ThenByDescending(s => s.Wins)
-                    .ThenBy(s => s.Losses)
-                    .ThenByDescending(s => s.WinPctVsConference)
-                    .ThenByDescending(s => s.WinsVsConference)
-                    .ThenBy(s => s.LossesVsConference)
                     .ThenByDescending(s => s.GoalDifferential)
                     .ThenByDescending(s => s.GoalsFor)
-                    .ThenByDescending(s => s.WinPctInLast10Games)
+                    .ThenByDescending(s => s.PointsInLast10Games)
                     .ThenByDescending(s => s.WinsInLast10Games)
-                    .ThenBy(s => s.LossesInLast10Games)
                     .ThenByDescending(s => s.Streak)
                     .ThenBy(s => s.Team.City)
                     .ThenBy(s => s.Team.Name);
@@ -1351,54 +1430,83 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 .ToList();
         }
 
+        /// <summary>
+        ///     Apply head-to-head tiebreakers to the standings.
+        /// </summary>
+        /// <param name="standings">The standings to apply the head-to-head tiebreakers to.</param>
+        /// <param name="level">Whether to apply them at the conference or league level.</param>
+        /// <returns>The updated standings with the head-to-head tiebreakers applied to them.</returns>
         private List<Standings> ApplyHeadToHeadTiebreakers(List<Standings> standings, string level)
         {
-            List<Standings> tiedTeams = new List<Standings>();
+            // Store any tied teams and their indexes in these lists
+            List<Standings> tiedTeams = new();
             List<int> indexes;
+            
+            // Search for ties in W-L records 2 teams at a time
             for (int index = 0; index < standings.Count - 1; index++)
             {
+                // Store the current 2 teams here
                 Standings currentTeam = standings[index];
                 Standings nextTeam = standings[index + 1];
-
-                if (currentTeam.Wins == nextTeam.Wins &&
-                    currentTeam.Losses == nextTeam.Losses &&
-                    currentTeam.RegulationWins == nextTeam.RegulationWins &&
-                    currentTeam.RegPlusOTWins == nextTeam.RegPlusOTWins)
+                
+                // If the teams are tied in the standings...
+                if (currentTeam.Points == nextTeam.Points &&
+                    currentTeam.GamesPlayed == nextTeam.GamesPlayed &&
+                    currentTeam.Wins == nextTeam.Wins &&
+                    currentTeam.RegPlusOTWins == nextTeam.RegPlusOTWins &&
+                    (currentTeam.Wins + currentTeam.OTWins) == (nextTeam.Wins + nextTeam.OTWins))
                 {
+                    // If the tied teams list is empty, add the current team to it
                     if (tiedTeams.IsNullOrEmpty())
                         tiedTeams.Add(currentTeam);
 
+                    // Add the next team to the tied teams list
                     tiedTeams.Add(nextTeam);
 
+                    // If we are looking at the last 2 teams...
                     if (index == standings.Count - 2)
                     {
-                        if (tiedTeams.Count == standings.Count)
+                        // If all the teams are tied together and no games have been played...
+                        if (tiedTeams.Count == standings.Count && tiedTeams[0].GamesPlayed == 0)
+                            // Return the standings as they are
                             return standings;
 
+                        // Get the indexes of the tied teams
                         indexes = GetIndexesInLeagueStandings(standings, tiedTeams);
 
+                        // If 2 teams are in the list, apply the two-way H2H tiebreakers
+                        // If 3+ teams are in the list, apply the multi-way H2H tiebreakers
                         standings = tiedTeams.Count == 2 ?
                             ApplyTwoWayH2HTiebreaker(standings, indexes[0], tiedTeams[0], indexes[1], tiedTeams[1]) :
                             ApplyMultiWayH2HTiebreaker(standings, indexes, tiedTeams);
                     }
                 }
+                // If the current teams are NOT tied...
                 else
                 {
+                    // If there are any teams in the tied list...
                     if (tiedTeams.Any())
                     {
-                        if (tiedTeams.First().GamesPlayed > 0)
+                        // If those teams have played any games...
+                        if (tiedTeams[0].GamesPlayed > 0)
                         {
+                            // Get the indexes of the teams in the list
                             indexes = GetIndexesInLeagueStandings(standings, tiedTeams);
+                            
+                            // If 2 teams are tied, apply the two-way H2H tiebreakers
+                            // If 3+ teams are tied, apply the multi-way H2H tiebreakers
                             standings = tiedTeams.Count == 2 ?
                                 ApplyTwoWayH2HTiebreaker(standings, indexes[0], tiedTeams[0], indexes[1], tiedTeams[1]) :
                                 ApplyMultiWayH2HTiebreaker(standings, indexes, tiedTeams);
                         }
 
+                        // Clear the tied teams list
                         tiedTeams.Clear();
                     }
                 }
             }
-
+            
+            // Return the updated standings
             return standings;
         }
 
@@ -1438,16 +1546,12 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 if (matchup.Team1Wins == matchup.Team2Wins)
                     return ApplyTwoWayH2HAggregateTiebreaker(standings, matchup, index1, team1, index2, team2);
 
-                if (team1.Team == matchup.Team1)
-                {
-                    if (matchup.Team1Wins < matchup.Team2Wins)
-                        return SwapTeams(standings, index1, team1, index2, team2);
-                }
-                else
-                {
-                    if (matchup.Team1Wins > matchup.Team2Wins)
-                        return SwapTeams(standings, index1, team1, index2, team2);
-                }
+                bool team1IsTeam1 = team1.Team == matchup.Team1;
+                bool team2LeadsSeries = matchup.Team1Wins < matchup.Team2Wins;
+                bool swapNeeded = team1IsTeam1 == team2LeadsSeries;
+
+                if (swapNeeded)
+                    return SwapTeams(standings, index1, team1, index2, team2);
             }
 
             return standings;
@@ -1458,23 +1562,21 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                                                                   int index1, Standings team1,
                                                                   int index2, Standings team2)
         {
-            if (team1.Team == matchup.Team1)
-            {
-                if (matchup.Team1GoalsFor < matchup.Team2GoalsFor)
-                    return SwapTeams(standings, index1, team1, index2, team2);
-            }
-            else
-            {
-                if (matchup.Team1GoalsFor > matchup.Team2GoalsFor)
-                    return SwapTeams(standings, index1, team1, index2, team2);
-            }
+            if (matchup.Team1GoalsFor == matchup.Team2GoalsFor)
+                return standings;
+            
+            bool team1IsTeam1 = team1.Team == matchup.Team1;
+            bool team2LeadsInGF = matchup.Team1GoalsFor < matchup.Team2GoalsFor;
+            bool swapNeeded = team1IsTeam1 == team2LeadsInGF;
 
-            return standings;
+            return swapNeeded ?
+                SwapTeams(standings, index1, team1, index2, team2) :
+                standings;
         }
 
         private List<Standings> ApplyMultiWayH2HTiebreaker(List<Standings> standings, List<int> indexes, List<Standings> tiedTeams)
         {
-            const int GAMES_PLAYED = 0, WINS = 1, LOSSES = 2;
+            const int GP = 0, PTS = 1, RW = 2, ROW = 3, TW = 4;
 
             Dictionary<Team, int[]> records = new();
 
@@ -1502,7 +1604,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                         .Include(s => s.HomeTeam)
                         .Where(s => s.Season.Year == SEASON &&
                                     s.Type == GameTypes.REGULAR_SEASON &&
-                                    !s.IsLive && s.IsFinalized &&
+                                    s.LiveStatus == LiveStatuses.FINALIZED &&
                                     ((s.AwayTeam == nextTeam && s.HomeTeam == currentTeam) ||
                                      (s.AwayTeam == currentTeam && s.HomeTeam == nextTeam)))
                         .OrderBy(s => s.Date);
@@ -1515,16 +1617,16 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 }
             }
 
-            int teamsNotPlayedOthers = records.Count(r => r.Value[GAMES_PLAYED] == 0);
+            int teamsNotPlayedOthers = records.Count(r => r.Value[GP] == 0);
             if (teamsNotPlayedOthers < records.Count)
             {
                 const int TEAM1 = 0, TEAM2 = 1;
                 
                 var tiebreaker = records
-                    .OrderByDescending(r => (r.Value[GAMES_PLAYED] > 0) ?
-                                                (decimal)r.Value[WINS] / r.Value[GAMES_PLAYED] : 0)
-                    .ThenByDescending(r => r.Value[WINS])
-                    .ThenBy(r => r.Value[LOSSES])
+                    .OrderByDescending(r => (r.Value[GP] > 0) ?
+                                                (decimal)r.Value[PTS] / r.Value[GP] : 0)
+                    .ThenByDescending(r => r.Value[PTS])
+                    .ThenBy(r => r.Value[RW])
                     .ToList();
                 var teamStatLines = ExtractStatLines(SEASON, tiebreaker);
                 standings = ReorderTeams(standings, indexes, teamStatLines);
@@ -1535,8 +1637,11 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                     KeyValuePair<Team, int[]> currentTeam = tiebreaker[index];
                     KeyValuePair<Team, int[]> nextTeam = tiebreaker[index + 1];
 
-                    if (currentTeam.Value[WINS] == nextTeam.Value[WINS] &&
-                        currentTeam.Value[LOSSES] == nextTeam.Value[LOSSES])
+                    if (currentTeam.Value[PTS] == nextTeam.Value[PTS] &&
+                        currentTeam.Value[GP] == nextTeam.Value[GP] &&
+                        currentTeam.Value[RW] == nextTeam.Value[RW] &&
+                        currentTeam.Value[ROW] == nextTeam.Value[ROW] &&
+                        currentTeam.Value[TW] == nextTeam.Value[TW])
                     {
                         if (teamsStillTied.IsNullOrEmpty())
                             teamsStillTied.Add(GetTeamStatLine(SEASON, currentTeam.Key));
@@ -1562,7 +1667,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                         if (teamsStillTied.Any())
                         {
                             Team firstTeamInTie = teamsStillTied.First().Team;
-                            int gamesPlayed = records[firstTeamInTie][GAMES_PLAYED];
+                            int gamesPlayed = records[firstTeamInTie][GP];
 
                             if (gamesPlayed > 0)
                             {
@@ -1592,50 +1697,18 @@ namespace SycamoreHockeyLeaguePortal.Controllers
 
         private int[] UpdateMultiWayH2HTeamStats(HeadToHeadSeries matchup, Team team, int[] stats)
         {
-            const int GAMES_PLAYED = 0, WINS = 1, LOSSES = 2;
+            const int GP = 0, PTS = 1, RW = 2, ROW = 3, TW = 4;
             bool isTeam1 = team == matchup.Team1;
-            
-            stats[GAMES_PLAYED] += matchup.Team1Wins + matchup.Team2Wins;
-            stats[WINS] += isTeam1 ? matchup.Team1Wins : matchup.Team2Wins;
-            stats[LOSSES] += isTeam1 ? matchup.Team2Wins : matchup.Team1Wins;
+
+            stats[GP] += matchup.Team1Wins + matchup.Team1OTWins + matchup.Team2OTWins + matchup.Team2Wins;
+            stats[PTS] += isTeam1 ? matchup.Team1Points : matchup.Team2Points;
+            stats[RW] += isTeam1 ? matchup.Team1Wins : matchup.Team2Wins;
+            stats[ROW] += isTeam1 ? matchup.Team1ROWs : matchup.Team2ROWs;
+            stats[TW] += isTeam1 ? 
+                (matchup.Team1Wins + matchup.Team1OTWins) : 
+                (matchup.Team2Wins + matchup.Team2OTWins);
 
             return stats;
-        }
-
-        private List<Standings> SwapRankings(List<Standings> standings, Standings team1, Standings team2, string level)
-        {
-            int hold;
-            
-            if (level == "division")
-            {
-                hold = team1.DivisionRanking;
-                team1.DivisionRanking = team2.DivisionRanking;
-                team2.DivisionRanking = hold;
-            }
-            else if (level == "conference")
-            {
-                hold = team1.ConferenceRanking;
-                team1.ConferenceRanking = team2.ConferenceRanking;
-                team2.ConferenceRanking = hold;
-            }
-            else if (level == "playoffs")
-            {
-                hold = team1.PlayoffRanking;
-                team1.PlayoffRanking = team2.PlayoffRanking;
-                team2.PlayoffRanking = hold;
-            }
-            else
-            {
-                hold = team1.LeagueRanking;
-                team1.LeagueRanking = team2.LeagueRanking;
-                team2.LeagueRanking = hold;
-            }
-
-            _localContext.Standings.Update(team1);
-            _localContext.Standings.Update(team2);
-            _localContext.SaveChanges();
-
-            return standings;
         }
 
         private List<Standings> SwapTeams(List<Standings> standings, 
@@ -1695,7 +1768,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             return teams;
         }
 
-        private async Task UpdateTeamStats(int season, Team team)
+        private async Task UpdateTeamStatsAsync(int season, Team team)
         {
             var teamStats = await _localContext.Standings
                 .Include(s => s.Season)
@@ -1719,7 +1792,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             teamStats.GoalDifferential = teamStats.GoalsFor - teamStats.GoalsAgainst;
 
             int[] winsByType = await GetWinsByType(season, team);
-            teamStats.Streak = await GetStreak(season, team);
+            teamStats.Streak = await GetStreakAsync(season, team);
             teamStats.RegulationWins = winsByType[0];
             teamStats.RegPlusOTWins = winsByType[1];
 
@@ -1744,7 +1817,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 100 * ((decimal)teamStats.InterConfWins / teamStats.InterConfGamesPlayed) :
                 0;
 
-            int[] recordInLast10Games = await GetRecordInLast10Games(season, team);
+            int[] recordInLast10Games = await GetRecordInLast10GamesAsync(season, team);
             teamStats.WinsInLast10Games = recordInLast10Games[0];
             teamStats.LossesInLast10Games = recordInLast10Games[1];
             teamStats.GamesPlayedInLast10Games = teamStats.WinsInLast10Games + teamStats.LossesInLast10Games;
@@ -1761,10 +1834,10 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             await UpdateGamesBehind(season);
         }
 
-        private async Task<int[]> GetRecordInLast10Games(int season, Team team)
+        private async Task<int[]> GetRecordInLast10GamesAsync(int season, Team team)
         {
-            const int WINS = 0, LOSSES = 1;
-            int[] record = { 0, 0 };
+            const int WINS = 0, OT_WINS = 1, OT_LOSSES = 2, LOSSES = 3;
+            int[] record = new int[4];
 
             var last10Games = await _localContext.Schedule
                 .Include(s => s.Season)
@@ -1779,9 +1852,13 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 .Take(10)
                 .ToListAsync();
 
-            record[WINS] = last10Games.Count(g => (g.HomeTeam == team && g.HomeScore > g.AwayScore) ||
-                                                  (g.AwayTeam == team && g.AwayScore > g.HomeScore));
-            record[LOSSES] = last10Games.Count - record[WINS];
+            var wins = last10Games.Where(g => (team == g.HomeTeam) == (g.HomeScore > g.AwayScore));
+            var losses = last10Games.Where(g => (team == g.HomeTeam) == (g.AwayScore > g.HomeScore));
+
+            record[WINS] = wins.Count(w => w.Period == 3);
+            record[OT_WINS] = wins.Count(w => w.Period > 3);
+            record[OT_LOSSES] = losses.Count(l => l.Period > 3);
+            record[LOSSES] = losses.Count(l => l.Period == 3);
 
             return record;
         }
@@ -2019,47 +2096,20 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 return 0;
         }
 
-        private async Task<int> GetStreak(int season, Team team)
+        private async Task<int> GetStreakAsync(int season, Team team)
         {
             var gamesPlayed = await GetGamesPlayed(season, team).ToListAsync();
 
             int streak = 0;
             foreach (var game in gamesPlayed)
             {
-                if (game.HomeTeam == team)
-                {
-                    if (game.HomeScore > game.AwayScore)
-                    {
-                        if (streak >= 0)
-                            streak++;
-                        else
-                            streak = 1;
-                    }
-                    else
-                    {
-                        if (streak <= 0)
-                            streak--;
-                        else
-                            streak = -1;
-                    }
-                }
-                else
-                {
-                    if (game.AwayScore > game.HomeScore)
-                    {
-                        if (streak >= 0)
-                            streak++;
-                        else
-                            streak = 1;
-                    }
-                    else
-                    {
-                        if (streak <= 0)
-                            streak--;
-                        else
-                            streak = -1;
-                    }
-                }
+                bool isHome = team == game.HomeTeam;
+                bool homeTeamWon = game.HomeScore > game.AwayScore;
+                bool teamWon = isHome == homeTeamWon;
+
+                streak = teamWon ?
+                    ((streak > 0) ? ++streak : 1) :
+                    ((streak < 0) ? --streak : -1);
             }
 
             return streak;

@@ -228,23 +228,6 @@
 
         return gamesBehind.ToString();
     }
-
-    string GetNextGameString(Standings team)
-    {
-        Game game = team.NextGame!;
-
-        if (game != null) 
-        {
-            bool isHomeOrAway = game.HomeTeam == team.Team;
-            string date = $"{game.Date.Month.ToString()}/{game.Date.Day.ToString()}";
-            string homeOrAway = isHomeOrAway ? "vs." : "@";
-            string opponent = isHomeOrAway ? game.AwayTeam.Code : game.HomeTeam.Code;
-
-            return $"Next Game: {date} {homeOrAway} {opponent}";
-        }
-
-        return "";
-    }
 }
 
 <table class="table standings">
@@ -290,7 +273,7 @@
                 @Html.DisplayNameFor(model => model.FirstOrDefault()!.RegPlusOTWins)
             </th>
             <th class="record-column" title="Last 10 Games">
-                @Html.DisplayNameFor(model => model.FirstOrDefault()!.RecordInLast10Games)
+                @Html.DisplayNameFor(model => model.FirstOrDefault()!.RecordInLast10Games_2024Format)
             </th>
             <th class="record-column" title="Record vs. division opponents">
                 @Html.DisplayNameFor(model => model.FirstOrDefault()!.RecordVsDivision_2024Format)
@@ -321,38 +304,19 @@
                     <td class="team-logo">
                         <img src="~/@team.Team.LogoPath" width="25" height="25" />
                     </td>
-                    @if (team.NextGame != null)
-                    {
-                        <td class="team-name" title="@GetNextGameString(team)">
-                            <a class="team-link" 
-                               asp-controller="Teams" 
-                               asp-action="Details" 
-                               asp-route-id="@team.Team.Code" 
-                               asp-route-season="@season" 
-                               asp-route-gameType="regular-season">@team.Team</a>
-                            @if (team.PlayoffStatus != "")
-                            {
-                                <span class="badge @GetBadgeClass(season, team.PlayoffStatus!)" 
-                                      title="@GetPlayoffStatusDescription(team.PlayoffStatus!)">@team.PlayoffStatus</span>
-                            }
-                        </td>
-                    }
-                    else
-                    {
-                        <td class="team-name">
-                            <a class="team-link" 
-                               asp-controller="Teams" 
-                               asp-action="Details" 
-                               asp-route-id="@team.Team.Code" 
-                               asp-route-season="@season" 
-                               asp-route-gameType="regular-season">@team.Team</a>
-                            @if (team.PlayoffStatus != "")
-                            {
-                                <span class="badge @GetBadgeClass(season, team.PlayoffStatus!)" 
-                                      title="@GetPlayoffStatusDescription(team.PlayoffStatus!)">@team.PlayoffStatus</span>
-                            }
-                        </td>
-                    }
+                    <td class="team-name">
+                        <a class="team-link"
+                           asp-controller="Teams"
+                           asp-action="Details"
+                           asp-route-id="@team.Team.Code"
+                           asp-route-season="@season"
+                           asp-route-gameType="regular-season">@team.Team</a>
+                        @if (team.PlayoffStatus != "")
+                        {
+                            <span class="badge @GetBadgeClass(season, team.PlayoffStatus!)"
+                                  title="@GetPlayoffStatusDescription(team.PlayoffStatus!)">@team.PlayoffStatus</span>
+                        }
+                    </td>
                     <td class="text-secondary">
                         @Html.DisplayFor(modelItem => team.GamesPlayed)
                     </td>
@@ -363,7 +327,7 @@
                         @Html.DisplayFor(modelItem => team.Losses)
                     </td>
                     <th>
-                        @string.Format("{0:F1}", team.WinPct)
+                        @string.Format("{0:.000}", team.WinPct)
                     </th>
                     <td>
                         @if (viewBy == "division")
@@ -402,7 +366,7 @@
                         @Html.DisplayFor(modelItem => team.RegPlusOTWins)
                     </td>
                     <td>
-                        @Html.DisplayFor(modelItem => team.RecordInLast10Games)
+                        @Html.DisplayFor(modelItem => team.RecordInLast10Games_2024Format)
                     </td>
                     <td>
                         @Html.DisplayFor(modelItem => team.RecordVsDivision_2024Format)

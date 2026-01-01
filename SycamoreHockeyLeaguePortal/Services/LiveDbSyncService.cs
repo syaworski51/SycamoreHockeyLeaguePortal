@@ -326,7 +326,7 @@ namespace SycamoreHockeyLeaguePortal.Services
                 RegulationWins = s.RegulationWins,
                 RegPlusOTWins = s.RegPlusOTWins,
                 Points = s.Points,
-                MaximumPossiblePoints = s.MaximumPossiblePoints,
+                PointsCeiling = s.MaximumPossiblePoints,
                 WinPct = s.WinPct,
                 PointsPct = s.PointsPct,
                 DivisionGamesBehind = s.DivisionGamesBehind,
@@ -358,8 +358,7 @@ namespace SycamoreHockeyLeaguePortal.Services
                 GamesPlayedInLast10Games = s.GamesPlayedInLast10Games,
                 WinsInLast10Games = s.WinsInLast10Games,
                 LossesInLast10Games = s.LossesInLast10Games,
-                WinPctInLast10Games = s.WinPctInLast10Games,
-                NextGameId = s.NextGameId,
+                WinPctInLast10Games = s.WinPctInLast10Games
             }).ToList();
             
             var exception = new InvalidOperationException("The current team already has a standings record for this season.");
@@ -587,6 +586,7 @@ namespace SycamoreHockeyLeaguePortal.Services
                 Team2GoalsFor = matchup.Team2GoalsFor
             };
         }
+
         private async Task UpdateStandingsAsync(int season)
         {
             // Get the updated standings from the local database

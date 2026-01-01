@@ -456,6 +456,15 @@ namespace SycamoreHockeyLeaguePortal.Migrations
                     b.Property<Guid>("Team1Id")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<int>("Team1OTWins")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Team1Points")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Team1ROWs")
+                        .HasColumnType("int");
+
                     b.Property<int>("Team1Wins")
                         .HasColumnType("int");
 
@@ -464,6 +473,15 @@ namespace SycamoreHockeyLeaguePortal.Migrations
 
                     b.Property<Guid>("Team2Id")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Team2OTWins")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Team2Points")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Team2ROWs")
+                        .HasColumnType("int");
 
                     b.Property<int>("Team2Wins")
                         .HasColumnType("int");
@@ -558,6 +576,9 @@ namespace SycamoreHockeyLeaguePortal.Migrations
 
                     b.Property<bool>("IsConfirmed")
                         .HasColumnType("bit");
+
+                    b.Property<string>("NextMatchupIndex")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<Guid>("RoundId")
                         .HasColumnType("uniqueidentifier");
@@ -778,8 +799,14 @@ namespace SycamoreHockeyLeaguePortal.Migrations
                     b.Property<int>("InterConfOTLosses")
                         .HasColumnType("int");
 
+                    b.Property<int>("InterConfOTWins")
+                        .HasColumnType("int");
+
+                    b.Property<int>("InterConfPoints")
+                        .HasColumnType("int");
+
                     b.Property<decimal>("InterConfWinPct")
-                        .HasColumnType("decimal(4,1)");
+                        .HasColumnType("decimal(4,3)");
 
                     b.Property<int>("InterConfWins")
                         .HasColumnType("int");
@@ -802,19 +829,25 @@ namespace SycamoreHockeyLeaguePortal.Migrations
                     b.Property<int>("LossesVsDivision")
                         .HasColumnType("int");
 
-                    b.Property<int>("MaximumPossiblePoints")
+                    b.Property<int>("OTLosses")
                         .HasColumnType("int");
 
-                    b.Property<Guid?>("NextGameId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<int>("OTLosses")
+                    b.Property<int>("OTLossesInLast10Games")
                         .HasColumnType("int");
 
                     b.Property<int>("OTLossesVsConference")
                         .HasColumnType("int");
 
                     b.Property<int>("OTLossesVsDivision")
+                        .HasColumnType("int");
+
+                    b.Property<int>("OTWins")
+                        .HasColumnType("int");
+
+                    b.Property<int>("OTWinsInLast10Games")
+                        .HasColumnType("int");
+
+                    b.Property<int>("OTWinsVsConference")
                         .HasColumnType("int");
 
                     b.Property<int>("PlayoffRanking")
@@ -829,8 +862,17 @@ namespace SycamoreHockeyLeaguePortal.Migrations
                     b.Property<int>("Points")
                         .HasColumnType("int");
 
+                    b.Property<int>("PointsCeiling")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PointsInLast10Games")
+                        .HasColumnType("int");
+
                     b.Property<decimal>("PointsPct")
-                        .HasColumnType("decimal(4,1)");
+                        .HasColumnType("decimal(4,3)");
+
+                    b.Property<int>("PointsVsConference")
+                        .HasColumnType("int");
 
                     b.Property<int>("RegPlusOTWins")
                         .HasColumnType("int");
@@ -857,16 +899,16 @@ namespace SycamoreHockeyLeaguePortal.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<decimal>("WinPct")
-                        .HasColumnType("decimal(4,1)");
+                        .HasColumnType("decimal(4,3)");
 
                     b.Property<decimal>("WinPctInLast10Games")
-                        .HasColumnType("decimal(4,1)");
+                        .HasColumnType("decimal(4,3)");
 
                     b.Property<decimal>("WinPctVsConference")
-                        .HasColumnType("decimal(4,1)");
+                        .HasColumnType("decimal(4,3)");
 
                     b.Property<decimal>("WinPctVsDivision")
-                        .HasColumnType("decimal(4,1)");
+                        .HasColumnType("decimal(4,3)");
 
                     b.Property<int>("Wins")
                         .HasColumnType("int");
@@ -885,8 +927,6 @@ namespace SycamoreHockeyLeaguePortal.Migrations
                     b.HasIndex("ConferenceId");
 
                     b.HasIndex("DivisionId");
-
-                    b.HasIndex("NextGameId");
 
                     b.HasIndex("SeasonId");
 
@@ -921,6 +961,385 @@ namespace SycamoreHockeyLeaguePortal.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("StandingsSortOptions");
+                });
+
+            modelBuilder.Entity("SycamoreHockeyLeaguePortal.Models.Standings_3210", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("ConferenceId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("ConferenceRanking")
+                        .HasColumnType("int");
+
+                    b.Property<int>("GamesPlayed")
+                        .HasColumnType("int");
+
+                    b.Property<int>("GoalDifferential")
+                        .HasColumnType("int");
+
+                    b.Property<int>("GoalsAgainst")
+                        .HasColumnType("int");
+
+                    b.Property<int>("GoalsFor")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Last10GamesPlayed")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Last10Losses")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Last10OTLosses")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Last10OTWins")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Last10Points")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("Last10PointsPct")
+                        .HasColumnType("decimal(4, 3)");
+
+                    b.Property<int>("Last10Wins")
+                        .HasColumnType("int");
+
+                    b.Property<int>("LeagueRanking")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Losses")
+                        .HasColumnType("int");
+
+                    b.Property<int>("OTLosses")
+                        .HasColumnType("int");
+
+                    b.Property<int>("OTWins")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Points")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PointsCeiling")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("PointsPct")
+                        .HasColumnType("decimal(4, 3)");
+
+                    b.Property<int>("RegPlusOTWins")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("SeasonId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Streak")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("TeamId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Wins")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ConferenceId");
+
+                    b.HasIndex("SeasonId");
+
+                    b.HasIndex("TeamId");
+
+                    b.ToTable("Standings_3210");
+                });
+
+            modelBuilder.Entity("SycamoreHockeyLeaguePortal.Models.Standings_NHL", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("ConferenceGamesPlayed")
+                        .HasColumnType("int");
+
+                    b.Property<Guid?>("ConferenceId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("ConferenceLosses")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ConferenceOTLosses")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ConferencePoints")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("ConferencePointsPct")
+                        .HasColumnType("decimal(4, 3)");
+
+                    b.Property<int>("ConferenceRanking")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ConferenceWins")
+                        .HasColumnType("int");
+
+                    b.Property<int>("DivisionGamesPlayed")
+                        .HasColumnType("int");
+
+                    b.Property<Guid?>("DivisionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("DivisionLosses")
+                        .HasColumnType("int");
+
+                    b.Property<int>("DivisionOTLosses")
+                        .HasColumnType("int");
+
+                    b.Property<int>("DivisionPoints")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("DivisionPointsPct")
+                        .HasColumnType("decimal(4, 3)");
+
+                    b.Property<int>("DivisionRanking")
+                        .HasColumnType("int");
+
+                    b.Property<int>("DivisionWins")
+                        .HasColumnType("int");
+
+                    b.Property<int>("GamesPlayed")
+                        .HasColumnType("int");
+
+                    b.Property<int>("GoalDifferential")
+                        .HasColumnType("int");
+
+                    b.Property<int>("GoalsAgainst")
+                        .HasColumnType("int");
+
+                    b.Property<int>("GoalsFor")
+                        .HasColumnType("int");
+
+                    b.Property<int>("InterConfGamesPlayed")
+                        .HasColumnType("int");
+
+                    b.Property<int>("InterConfLosses")
+                        .HasColumnType("int");
+
+                    b.Property<int>("InterConfOTLosses")
+                        .HasColumnType("int");
+
+                    b.Property<int>("InterConfPoints")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("InterConfPointsPct")
+                        .HasColumnType("decimal(4, 3)");
+
+                    b.Property<int>("InterConfWins")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Last10GamesPlayed")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Last10Losses")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Last10OTLosses")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Last10Points")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("Last10PointsPct")
+                        .HasColumnType("decimal(4, 3)");
+
+                    b.Property<int>("Last10Wins")
+                        .HasColumnType("int");
+
+                    b.Property<int>("LeagueRanking")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Losses")
+                        .HasColumnType("int");
+
+                    b.Property<int>("OTLosses")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PlayoffRanking")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Points")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PointsCeiling")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("PointsPct")
+                        .HasColumnType("decimal(4, 3)");
+
+                    b.Property<int>("RegPlusOTWins")
+                        .HasColumnType("int");
+
+                    b.Property<int>("RegulationWins")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("SeasonId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Streak")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("TeamId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Wins")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ConferenceId");
+
+                    b.HasIndex("DivisionId");
+
+                    b.HasIndex("SeasonId");
+
+                    b.HasIndex("TeamId");
+
+                    b.ToTable("Standings_NHL");
+                });
+
+            modelBuilder.Entity("SycamoreHockeyLeaguePortal.Models.Standings_WL", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("ConferenceGamesBehind")
+                        .HasColumnType("decimal(3, 1)");
+
+                    b.Property<int>("ConferenceGamesPlayed")
+                        .HasColumnType("int");
+
+                    b.Property<Guid?>("ConferenceId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("ConferenceLosses")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ConferenceRanking")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("ConferenceWinPct")
+                        .HasColumnType("decimal(4, 3)");
+
+                    b.Property<int>("ConferenceWins")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("DivisionGamesBehind")
+                        .HasColumnType("decimal(3, 1)");
+
+                    b.Property<int>("DivisionGamesPlayed")
+                        .HasColumnType("int");
+
+                    b.Property<Guid?>("DivisionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("DivisionLosses")
+                        .HasColumnType("int");
+
+                    b.Property<int>("DivisionRanking")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("DivisionWinPct")
+                        .HasColumnType("decimal(4, 3)");
+
+                    b.Property<int>("DivisionWins")
+                        .HasColumnType("int");
+
+                    b.Property<int>("GamesPlayed")
+                        .HasColumnType("int");
+
+                    b.Property<int>("GoalDifferential")
+                        .HasColumnType("int");
+
+                    b.Property<int>("GoalsAgainst")
+                        .HasColumnType("int");
+
+                    b.Property<int>("GoalsFor")
+                        .HasColumnType("int");
+
+                    b.Property<int>("InterConfGamesPlayed")
+                        .HasColumnType("int");
+
+                    b.Property<int>("InterConfLosses")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("InterConfWinPct")
+                        .HasColumnType("decimal(4, 3)");
+
+                    b.Property<int>("InterConfWins")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Last10GamesPlayed")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Last10Losses")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("Last10WinPct")
+                        .HasColumnType("decimal(4, 3)");
+
+                    b.Property<int>("Last10Wins")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("LeagueGamesBehind")
+                        .HasColumnType("decimal(3, 1)");
+
+                    b.Property<int>("LeagueRanking")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Losses")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("PlayoffGamesBehind")
+                        .HasColumnType("decimal(3, 1)");
+
+                    b.Property<int>("PlayoffRanking")
+                        .HasColumnType("int");
+
+                    b.Property<int>("RegPlusOTWins")
+                        .HasColumnType("int");
+
+                    b.Property<int>("RegulationWins")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("SeasonId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Streak")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("TeamId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("WinPct")
+                        .HasColumnType("decimal(4, 3)");
+
+                    b.Property<int>("Wins")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ConferenceId");
+
+                    b.HasIndex("DivisionId");
+
+                    b.HasIndex("SeasonId");
+
+                    b.HasIndex("TeamId");
+
+                    b.ToTable("Standings_WL");
                 });
 
             modelBuilder.Entity("SycamoreHockeyLeaguePortal.Models.Team", b =>
@@ -1300,9 +1719,61 @@ namespace SycamoreHockeyLeaguePortal.Migrations
                         .WithMany()
                         .HasForeignKey("DivisionId");
 
-                    b.HasOne("SycamoreHockeyLeaguePortal.Models.Game", "NextGame")
+                    b.HasOne("SycamoreHockeyLeaguePortal.Models.Season", "Season")
                         .WithMany()
-                        .HasForeignKey("NextGameId");
+                        .HasForeignKey("SeasonId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SycamoreHockeyLeaguePortal.Models.Team", "Team")
+                        .WithMany()
+                        .HasForeignKey("TeamId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Conference");
+
+                    b.Navigation("Division");
+
+                    b.Navigation("Season");
+
+                    b.Navigation("Team");
+                });
+
+            modelBuilder.Entity("SycamoreHockeyLeaguePortal.Models.Standings_3210", b =>
+                {
+                    b.HasOne("SycamoreHockeyLeaguePortal.Models.Conference", "Conference")
+                        .WithMany()
+                        .HasForeignKey("ConferenceId");
+
+                    b.HasOne("SycamoreHockeyLeaguePortal.Models.Season", "Season")
+                        .WithMany()
+                        .HasForeignKey("SeasonId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SycamoreHockeyLeaguePortal.Models.Team", "Team")
+                        .WithMany()
+                        .HasForeignKey("TeamId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Conference");
+
+                    b.Navigation("Season");
+
+                    b.Navigation("Team");
+                });
+
+            modelBuilder.Entity("SycamoreHockeyLeaguePortal.Models.Standings_NHL", b =>
+                {
+                    b.HasOne("SycamoreHockeyLeaguePortal.Models.Conference", "Conference")
+                        .WithMany()
+                        .HasForeignKey("ConferenceId");
+
+                    b.HasOne("SycamoreHockeyLeaguePortal.Models.Division", "Division")
+                        .WithMany()
+                        .HasForeignKey("DivisionId");
 
                     b.HasOne("SycamoreHockeyLeaguePortal.Models.Season", "Season")
                         .WithMany()
@@ -1320,7 +1791,36 @@ namespace SycamoreHockeyLeaguePortal.Migrations
 
                     b.Navigation("Division");
 
-                    b.Navigation("NextGame");
+                    b.Navigation("Season");
+
+                    b.Navigation("Team");
+                });
+
+            modelBuilder.Entity("SycamoreHockeyLeaguePortal.Models.Standings_WL", b =>
+                {
+                    b.HasOne("SycamoreHockeyLeaguePortal.Models.Conference", "Conference")
+                        .WithMany()
+                        .HasForeignKey("ConferenceId");
+
+                    b.HasOne("SycamoreHockeyLeaguePortal.Models.Division", "Division")
+                        .WithMany()
+                        .HasForeignKey("DivisionId");
+
+                    b.HasOne("SycamoreHockeyLeaguePortal.Models.Season", "Season")
+                        .WithMany()
+                        .HasForeignKey("SeasonId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SycamoreHockeyLeaguePortal.Models.Team", "Team")
+                        .WithMany()
+                        .HasForeignKey("TeamId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Conference");
+
+                    b.Navigation("Division");
 
                     b.Navigation("Season");
 

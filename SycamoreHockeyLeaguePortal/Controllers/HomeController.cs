@@ -82,7 +82,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             };
             ViewBag.Standings = standingsDict;
 
-            HomePageViewModel viewModel = new HomePageViewModel()
+            HomePageViewModel viewModel = new()
             {
                 Date = currentDate,
                 Season = currentDate.Year,

@@ -50,9 +50,8 @@ namespace SycamoreHockeyLeaguePortal.Models.DataTransferModels
             HomeScore = game.HomeScore,
             Period = game.Period,
             IsConfirmed = game.IsConfirmed,
-            IsLive = game.IsLive,
-            IsFinalized = game.IsFinalized,
-            Notes = game.Notes
+            Notes = game.Notes,
+            LiveStatus = game.LiveStatus
         };
 
         public DTO_HeadToHeadSeries ConvertToDTO(HeadToHeadSeries matchup) => new()
@@ -67,8 +66,8 @@ namespace SycamoreHockeyLeaguePortal.Models.DataTransferModels
             Team2GoalsFor = matchup.Team2GoalsFor
         };
 
-        
-        
+
+
         public List<DTO_Alignment> ConvertBatchToDTO(List<Alignment> alignments) =>
             alignments.Select(g => new DTO_Alignment
             {
@@ -88,7 +87,7 @@ namespace SycamoreHockeyLeaguePortal.Models.DataTransferModels
             }).ToList();
 
         public List<DTO_ChampionsRound> ConvertBatchToDTO(List<ChampionsRound> rounds) =>
-            rounds.Select(r => new DTO_ChampionsRound()
+            rounds.Select(r => new DTO_ChampionsRound
             {
                 Id = r.Id,
                 ChampionId = r.ChampionId,
@@ -116,8 +115,7 @@ namespace SycamoreHockeyLeaguePortal.Models.DataTransferModels
                 HomeScore = g.HomeScore,
                 Period = g.Period,
                 IsConfirmed = g.IsConfirmed,
-                IsLive = g.IsLive,
-                IsFinalized = g.IsFinalized,
+                LiveStatus = g.LiveStatus,
                 Notes = g.Notes
             }).ToList();
 
@@ -179,6 +177,7 @@ namespace SycamoreHockeyLeaguePortal.Models.DataTransferModels
             HomeScore = gameDTO.HomeScore,
             Period = gameDTO.Period,
             IsConfirmed = gameDTO.IsConfirmed,
+            LiveStatus = gameDTO.LiveStatus,
             Notes = gameDTO.Notes
         };
 
@@ -243,6 +242,7 @@ namespace SycamoreHockeyLeaguePortal.Models.DataTransferModels
                 HomeScore = g.HomeScore,
                 Period = g.Period,
                 IsConfirmed = g.IsConfirmed,
+                LiveStatus = g.LiveStatus,
                 Notes = g.Notes
             }).ToList();
 

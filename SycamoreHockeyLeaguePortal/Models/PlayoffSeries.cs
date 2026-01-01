@@ -64,6 +64,9 @@ namespace SycamoreHockeyLeaguePortal.Models
         [Display(Name = "Description")]
         public string Description { get; set; }
 
+        [Display(Name = "Next Matchup Index")]
+        public string? NextMatchupIndex { get; set; }
+
         [Display(Name = "Series Score")]
         public string SeriesScoreString
         {

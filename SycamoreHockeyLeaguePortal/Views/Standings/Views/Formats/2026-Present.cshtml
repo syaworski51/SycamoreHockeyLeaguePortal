@@ -262,17 +262,29 @@
             <th class="fixed-column" title="Games Played">
                 @Html.DisplayNameFor(model => model.FirstOrDefault()!.GamesPlayed)
             </th>
-            <th class="fixed-column" title="Wins">
+            <th class="fixed-column" title="Regulation Wins">
                 @Html.DisplayNameFor(model => model.FirstOrDefault()!.Wins)
             </th>
-            <th class="fixed-column" title="Losses">
+            <th class="fixed-column" title="OT/SO Wins">
+                @Html.DisplayNameFor(model => model.FirstOrDefault()!.OTWins)
+            </th>
+            <th class="fixed-column" title="OT/SO Losses">
+                @Html.DisplayNameFor(model => model.FirstOrDefault()!.OTLosses)
+            </th>
+            <th class="fixed-column" title="Regulation Losses">
                 @Html.DisplayNameFor(model => model.FirstOrDefault()!.Losses)
             </th>
-            <th title="Win Percentage">
-                @Html.DisplayNameFor(model => model.FirstOrDefault()!.WinPct)
+            <th class="fixed-column" title="Points">
+                @Html.DisplayNameFor(model => model.FirstOrDefault()!.Points)
             </th>
-            <th class="fixed-column" title="Games Behind">
-                @Html.DisplayNameFor(model => model.FirstOrDefault()!.DivisionGamesBehind)
+            <th title="Points Percentage">
+                @Html.DisplayNameFor(model => model.FirstOrDefault()!.PointsPct)
+            </th>
+            <th class="fixed-column" title="Points Ceiling">
+                @Html.DisplayNameFor(model => model.FirstOrDefault()!.PointsCeiling)
+            </th>
+            <th class="fixed-column" title="Regulation + Overtime Wins">
+                @Html.DisplayNameFor(model => model.FirstOrDefault()!.RegPlusOTWins)
             </th>
             <th class="fixed-column" title="Goals For">
                 @Html.DisplayNameFor(model => model.FirstOrDefault()!.GoalsFor)
@@ -287,13 +299,7 @@
                 @Html.DisplayNameFor(model => model.FirstOrDefault()!.Streak)
             </th>
             <th class="record-column" title="Last 10 Games">
-                @Html.DisplayNameFor(model => model.FirstOrDefault()!.RecordInLast10Games)
-            </th>
-            <th class="record-column" title="Record vs. conference opponents outside of division">
-                @Html.DisplayNameFor(model => model.FirstOrDefault()!.RecordVsConference_2024Format)
-            </th>
-            <th class="record-column" title="Record vs. other conference">
-                @Html.DisplayNameFor(model => model.FirstOrDefault()!.InterConfRecord_2024Format)
+                @Html.DisplayNameFor(model => model.FirstOrDefault()!.RecordInLast10Games_2026Format)
             </th>
             <th title="Next game">
                 Next Game
@@ -318,38 +324,19 @@
                     <td class="team-logo">
                         <img src="~/@team.Team.LogoPath" width="25" height="25" />
                     </td>
-                    @if (team.NextGame != null)
-                    {
-                        <td class="team-name" title="@GetNextGameString(team)">
-                            <a class="team-link"
-                               asp-controller="Teams"
-                               asp-action="Details"
-                               asp-route-id="@team.Team.Code"
-                               asp-route-season="@season"
-                               asp-route-gameType="regular-season">@team.Team</a>
-                            @if (team.PlayoffStatus != "")
-                            {
-                                <span class="badge @GetBadgeClass(season, team.PlayoffStatus!)"
-                                      title="@GetPlayoffStatusDescription(team.PlayoffStatus!)">@team.PlayoffStatus</span>
-                            }
-                        </td>
-                    }
-                    else
-                    {
-                        <td class="team-name">
-                            <a class="team-link"
-                               asp-controller="Teams"
-                               asp-action="Details"
-                               asp-route-id="@team.Team.Code"
-                               asp-route-season="@season"
-                               asp-route-gameType="regular-season">@team.Team</a>
-                            @if (team.PlayoffStatus != "")
-                            {
-                                <span class="badge @GetBadgeClass(season, team.PlayoffStatus!)"
-                                      title="@GetPlayoffStatusDescription(team.PlayoffStatus!)">@team.PlayoffStatus</span>
-                            }
-                        </td>
-                    }
+                    <td class="team-name">
+                        <a class="team-link"
+                           asp-controller="Teams"
+                           asp-action="Details"
+                           asp-route-id="@team.Team.Code"
+                           asp-route-season="@season"
+                           asp-route-gameType="regular-season">@team.Team</a>
+                        @if (team.PlayoffStatus != "")
+                        {
+                            <span class="badge @GetBadgeClass(season, team.PlayoffStatus!)"
+                                  title="@GetPlayoffStatusDescription(team.PlayoffStatus!)">@team.PlayoffStatus</span>
+                        }
+                    </td>
                     <td class="text-secondary">
                         @Html.DisplayFor(modelItem => team.GamesPlayed)
                     </td>
@@ -357,28 +344,25 @@
                         @Html.DisplayFor(modelItem => team.Wins)
                     </td>
                     <td>
+                        @Html.DisplayFor(modelItem => team.OTWins)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => team.OTLosses)
+                    </td>
+                    <td>
                         @Html.DisplayFor(modelItem => team.Losses)
                     </td>
                     <th>
-                        @string.Format("{0:F1}", team.WinPct)
+                        @Html.DisplayFor(modelItem => team.Points)
                     </th>
                     <td>
-                        @if (viewBy == "division")
-                        {
-                            @GetGamesBehindString(team.DivisionGamesBehind)
-                        }
-                        else if (viewBy == "conference")
-                        {
-                            @GetGamesBehindString(team.ConferenceGamesBehind)
-                        }
-                        else if ((season == 2024 || season == 2025) && viewBy == "playoffs")
-                        {
-                            @GetPlayoffsGamesBehindString(team)
-                        }
-                        else
-                        {
-                            @GetGamesBehindString(team.LeagueGamesBehind)
-                        }
+                        @string.Format("{0:.000}", team.PointsPct)
+                    </td>
+                    <td class="text-muted">
+                        @Html.DisplayFor(modelItem => team.PointsCeiling)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => team.RegPlusOTWins)
                     </td>
                     <td>
                         @Html.DisplayFor(modelItem => team.GoalsFor)
@@ -393,13 +377,7 @@
                         @GetStreak(team)
                     </td>
                     <td>
-                        @Html.DisplayFor(modelItem => team.RecordInLast10Games)
-                    </td>
-                    <td>
-                        @Html.DisplayFor(modelItem => team.RecordVsConference_2024Format)
-                    </td>
-                    <td>
-                        @Html.DisplayFor(modelItem => team.InterConfRecord_2024Format)
+                        @Html.DisplayFor(modelItem => team.RecordInLast10Games_2026Format)
                     </td>
                     <td>
                         @GetNextGameString(team)

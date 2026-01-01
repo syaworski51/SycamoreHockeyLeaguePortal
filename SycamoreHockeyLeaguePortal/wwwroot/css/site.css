@@ -172,7 +172,7 @@ img {
 }
 
 .score-card .score {
-    font-size: 18pt;
+    font-size: 18pt
 }
 
 .score-card .status {
@@ -255,8 +255,12 @@ img {
 }
 
 .game {
+    background-color: #f2f2f2;
+    color: black;
     text-align: center;
     vertical-align: middle;
+    border: 1px solid black;
+    border-radius: 10px;
 }
 
 .game .logo {
@@ -265,8 +269,9 @@ img {
 }
 
 .game .score {
-    font-size: 60pt;
+    font-size: 50pt;
     padding: 0;
+    font-family: "Druk Wide Trial";
 }
 
 .game .away-team {
@@ -551,11 +556,11 @@ img {
 }
 
 .fixed-column {
-    width: 58px;
+    width: 56px;
 }
 
 .record-column {
-    width: 82px;
+    width: 105px;
 }
 
 .game .team-name {
@@ -722,10 +727,12 @@ img {
 
 .game #game-notes {
     font-size: 15pt;
+    font-family: "Druk Wide Trial";
 }
 
 .game .status {
     font-size: 20pt;
+    font-family: "Druk Wide Trial";
 }
 
 .game-number {

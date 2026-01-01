@@ -1,5 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+﻿using SycamoreHockeyLeaguePortal.Models.ConstantGroups;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SycamoreHockeyLeaguePortal.Models.DataTransferModels.Objects
 {
@@ -20,8 +21,7 @@ namespace SycamoreHockeyLeaguePortal.Models.DataTransferModels.Objects
         public int HomeScore { get; set; }
         public int Period { get; set; }
         public bool IsConfirmed { get; set; }
-        public bool IsLive { get; set; }
-        public bool IsFinalized { get; set; }
+        public string LiveStatus { get; set; }
         public string? Notes { get; set; }
     }
 }

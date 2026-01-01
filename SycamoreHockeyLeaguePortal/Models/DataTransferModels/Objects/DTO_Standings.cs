@@ -17,8 +17,9 @@ namespace SycamoreHockeyLeaguePortal.Models.DataTransferModels.Objects
         public string? PlayoffStatus { get; set; }
         public int GamesPlayed { get; set; }
         public int Wins { get; set; }
-        public int Losses { get; set; }
+        public int OTWins { get; set; }
         public int OTLosses { get; set; }
+        public int Losses { get; set; }
         public int RegulationWins { get; set; }
         public int RegPlusOTWins { get; set; }
         public int Points { get; set; }
@@ -43,17 +44,24 @@ namespace SycamoreHockeyLeaguePortal.Models.DataTransferModels.Objects
         public decimal WinPctVsDivision { get; set; }
         public int GamesPlayedVsConference { get; set; }
         public int WinsVsConference { get; set; }
-        public int LossesVsConference { get; set; }
+        public int OTWinsVsConference { get; set; }
         public int OTLossesVsConference { get; set; }
+        public int LossesVsConference { get; set; }
+        public int PointsVsConference { get; set; }
         public decimal WinPctVsConference { get; set; }
         public int InterConfGamesPlayed { get; set; }
         public int InterConfWins { get; set; }
-        public int InterConfLosses { get; set; }
+        public int InterConfOTWins { get; set; }
         public int InterConfOTLosses { get; set; }
+        public int InterConfLosses { get; set; }
+        public int InterConfPoints { get; set; }
         public decimal InterConfWinPct { get; set; }
         public int GamesPlayedInLast10Games { get; set; }
         public int WinsInLast10Games { get; set; }
+        public int OTWinsInLast10Games { get; set; }
+        public int OTLossesInLast10Games { get; set; }
         public int LossesInLast10Games { get; set; }
+        public int PointsInLast10Games { get; set; }
         public decimal WinPctInLast10Games { get; set; }
         public Guid? NextGameId { get; set; }
     }

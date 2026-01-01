@@ -7,9 +7,9 @@
     <thead>
         <tr>
             <th colspan="2">@name</th>
-            <th>W-L</th>
-            <th>W%</th>
-            <th>GB</th>
+            <th>GP</th>
+            <th>Record</th>
+            <th>Pts.</th>
         </tr>
     </thead>
     <tbody>
@@ -23,14 +23,14 @@
                     <a class="team-name" asp-controller="Teams" asp-action="Details" asp-route-id="@team.Team.Code" asp-route-season="@team.Season.Year" asp-route-gameType="regular-season">@team.Team.Code</a>
                 </td>
                 <td class="team-stats">
-                    @team.Record_2024Format
+                    @team.GamesPlayed
+                </td>
+                <td class="team-stats">
+                    @team.Record_2026Format
                 </td>
                 <th class="team-stats">
-                    @string.Format("{0:F1}", team.WinPct)
+                    @team.Points
                 </th>
-                <td class="team-stats">
-                    @(team.ConferenceGamesBehind > 0 ? team.ConferenceGamesBehind : "-")
-                </td>
             </tr>
         }
     </tbody>
