@@ -11,9 +11,14 @@
 
     string GetRecord(HeadToHeadSeries matchup)
     {
+        if (season < 2026)
+            return team == matchup.Team1 ?
+                $"{matchup.Team1Wins}-{matchup.Team2Wins}" :
+                $"{matchup.Team2Wins}-{matchup.Team1Wins}"; 
+        
         return team == matchup.Team1 ?
-            $"{matchup.Team1Wins}-{matchup.Team2Wins}" :
-            $"{matchup.Team2Wins}-{matchup.Team1Wins}";
+            $"{matchup.Team1Wins}-{matchup.Team1OTWins}-{matchup.Team2OTWins}-{matchup.Team2Wins}" :
+            $"{matchup.Team2Wins}-{matchup.Team2OTWins}-{matchup.Team1OTWins}-{matchup.Team1Wins}";
     }
 
     string GetAggregate(HeadToHeadSeries matchup)

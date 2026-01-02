@@ -1,6 +1,11 @@
 ﻿@model Team
 
 @{
+    const string DIVISION = "division";
+    const string CONFERENCE = "conference";
+    const string INTERCONFERENCE = "inter-conference";
+    const string LAST10 = "last-10";
+
     Guid teamId = Model.Id;
     int season = ViewBag.Season;
     Standings teamStats = ViewBag.TeamStats;
@@ -29,39 +34,35 @@
 
     string GetRecordFormat(int season, Standings teamStats, string type = "overall")
     {
-        if (season < 2024)
+        if (season >= 2021 && season <= 2023)
         {
-            switch (type)
+            return type switch
             {
-                case "division":
-                    return teamStats.RecordVsDivision_2021Format;
-
-                case "conference":
-                    return teamStats.RecordVsConference_2021Format;
-
-                case "inter-conference":
-                    return teamStats.InterConfRecord_2021Format;
-
-                default:
-                    return teamStats.Record_2021Format;
-            }
+                DIVISION => teamStats.RecordVsDivision_2021Format,
+                CONFERENCE => teamStats.RecordVsConference_2021Format,
+                INTERCONFERENCE => teamStats.InterConfRecord_2021Format,
+                _ => teamStats.Record_2021Format
+            };
+        }
+        else if (season >= 2024 && season <= 2025)
+        {
+            return type switch
+            {
+                DIVISION => teamStats.RecordVsDivision_2024Format,
+                CONFERENCE => teamStats.RecordVsConference_2024Format,
+                INTERCONFERENCE => teamStats.InterConfRecord_2024Format,
+                _ => teamStats.Record_2024Format
+            };
         }
         else
         {
-            switch (type)
+            return type switch
             {
-                case "division":
-                    return teamStats.RecordVsDivision_2024Format;
-
-                case "conference":
-                    return teamStats.RecordVsConference_2024Format;
-
-                case "inter-conference":
-                    return teamStats.InterConfRecord_2024Format;
-
-                default:
-                    return teamStats.Record_2024Format;
-            }
+                CONFERENCE => teamStats.RecordVsConference_2026Format,
+                INTERCONFERENCE => teamStats.InterConfRecord_2026Format,
+                LAST10 => teamStats.RecordInLast10Games_2026Format,
+                _ => teamStats.Record_2026Format
+            };
         }
     }
 
@@ -86,7 +87,7 @@
             </div>
         </div>
         <div class="col container team-stat">
-            @if (season < 2024)
+            @if (season < 2024 || season > 2025)
             {
                 <div class="row">
                     <div class="col-4">POINTS</div>
@@ -96,8 +97,12 @@
             else
             {
                 <div class="row">
-                    <div class="col-4">WIN %</div>
-                    <div class="col stat">@teamStats.WinPct</div>
+                    <div class="col-4">PTS %</div>
+                    <div class="col stat">
+                        @((season >= 2024 && season <= 2025) ? 
+                            string.Format("{0:.000}", teamStats.WinPct) :
+                            string.Format("{0:.000}", teamStats.PointsPct))
+                    </div>
                 </div>
             }
         </div>
@@ -131,20 +136,14 @@
     <div class="row">
         <div class="col container team-stat">
             <div class="row">
-                <div class="col-4">DIVISION RECORD</div>
-                <div class="col stat">@GetRecordFormat(season, teamStats, "division")</div>
+                <div class="col-4">ROW</div>
+                <div class="col stat">@teamStats.RegPlusOTWins</div>
             </div>
         </div>
         <div class="col container team-stat">
             <div class="row">
-                <div class="col-4">CONF RECORD</div>
-                <div class="col stat">@GetRecordFormat(season, teamStats, "conference")</div>
-            </div>
-        </div>
-        <div class="col container team-stat">
-            <div class="row">
-                <div class="col-4">EC/WC RECORD</div>
-                <div class="col stat">@GetRecordFormat(season, teamStats, "inter-conference")</div>
+                <div class="col-4">LAST 10</div>
+                <div class="col stat">@GetRecordFormat(season, teamStats, LAST10)</div>
             </div>
         </div>
     </div>

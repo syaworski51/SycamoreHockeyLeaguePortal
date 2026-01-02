@@ -624,7 +624,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                     if (game.Type == GameTypes.REGULAR_SEASON)
                     {
                         // Update the standings
-                        await UpdateStandingsAsync(season, game.AwayTeam, game.HomeTeam);
+                        await UpdateStandingsAsync(season, game);
 
                         // After all the games in a day have been completed, take a snapshot of the standings
                         if (IsSnapshotNeeded(date))
@@ -784,6 +784,10 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             // Update the head-to-head series record in the database and save the changes
             _localContext.HeadToHeadSeries.Update(matchup);
             await _localContext.SaveChangesAsync();
+
+            // Convert the series to a DTO and send it to the sync service
+            DTO_HeadToHeadSeries dto = _dtoConverter.ConvertToDTO(matchup);
+            await _syncService.UpdateH2HSeriesAsync(dto);
         }
 
         private bool IsGameLive(Game game)
@@ -1156,19 +1160,10 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             return Math.Min(30, score);
         }
 
-        private async Task UpdateStandingsAsync(int season, Team awayTeam, Team homeTeam)
+        private async Task UpdateStandingsAsync(int season, Game game)
         {
-            await UpdateTeamStatsAsync(season, awayTeam);
-            await UpdateTeamStatsAsync(season, homeTeam);
+            await UpdateTeamStatsAsync(season, game);
             await UpdateRankingsAsync(season);
-
-            await StandingsUpdateNowAvailable();
-        }
-
-        private async Task UpdateTeamStatsAsync(int season, Game game)
-        {
-            if (!game.IsFinalized)
-                throw new Exception("This game has not been finalized.");
 
             var standings = _localContext.Standings
                 .Include(s => s.Season)
@@ -1178,13 +1173,45 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 .OrderBy(s => s.LeagueRanking)
                 .ToDictionary(s => s.Team.Code);
 
+            Standings awayStats = standings[game.AwayTeam.Code];
+            Standings homeStats = standings[game.HomeTeam.Code];
+
+            DTO_Standings awayDTO = _dtoConverter.ConvertToDTO(awayStats);
+            DTO_Standings homeDTO = _dtoConverter.ConvertToDTO(homeStats);
+
+            await _syncService.UpdateTeamStatsAsync(season, awayDTO);
+            await _syncService.UpdateTeamStatsAsync(season, homeDTO);
+
+            await StandingsUpdateNowAvailable();
+        }
+
+        private async Task UpdateTeamStatsAsync(int season, Game game)
+        {
+            // If this game has not been finalized, the team stats cannot be updated
+            if (!game.IsFinalized)
+                throw new Exception("This game has not been finalized.");
+
+            // Get the current standings
+            var standings = _localContext.Standings
+                .Include(s => s.Season)
+                .Include(s => s.Conference)
+                .Include(s => s.Team)
+                .Where(s => s.Season.Year == season)
+                .OrderBy(s => s.LeagueRanking)
+                .ToDictionary(s => s.Team.Code);
+
+            // Did the home team win?
             bool homeTeamWon = game.HomeScore > game.AwayScore;
+
+            // Get the winners and losers of this game
             Team winner = homeTeamWon ? game.HomeTeam : game.AwayTeam;
             Team loser = homeTeamWon ? game.AwayTeam : game.HomeTeam;
 
+            // Get the team stats of the winners and losers
             Standings winnerStats = standings[winner.Code];
             Standings loserStats = standings[loser.Code];
 
+            // Add the score of the game to both teams' GF and GA counters
             winnerStats.GoalsFor += homeTeamWon ? game.HomeScore : game.AwayScore;
             winnerStats.GoalsAgainst += homeTeamWon ? game.AwayScore : game.HomeScore;
             winnerStats.GoalDifferential = winnerStats.GoalsFor - winnerStats.GoalsAgainst;
@@ -1193,10 +1220,12 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             loserStats.GoalsAgainst += homeTeamWon ? game.HomeScore : game.AwayScore;
             loserStats.GoalDifferential = loserStats.GoalsFor - loserStats.GoalsAgainst;
 
+            // Determine how many points to award to the winners and losers
             bool inRegulation = game.Period == 3;
             int winnerPts = inRegulation ? 3 : 2;
             int loserPts = inRegulation ? 0 : 1;
 
+            // Award the points and adjust the point ceilings and points percentages
             winnerStats.Points += winnerPts;
             winnerStats.PointsCeiling -= (3 - winnerPts);
             winnerStats.PointsPct = (decimal)winnerStats.Points / (winnerStats.GamesPlayed * 3);
@@ -1205,20 +1234,24 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             loserStats.PointsCeiling -= (3 - loserPts);
             loserStats.PointsPct = (decimal)loserStats.Points / (loserStats.GamesPlayed * 3);
 
+            // If the game was decided before the shootout, increment the winner's ROW counter
             if (game.Period < 5)
                 winnerStats.RegPlusOTWins++;
 
+            // If decided in regulation, increment the W and L counters
             if (inRegulation)
             {
                 winnerStats.Wins++;
                 loserStats.Losses++;
             }
+            // If decided in overtime or the shootout, increment the OTW and OTL counters
             else
             {
                 winnerStats.OTWins++;
                 loserStats.OTLosses++;
             }
 
+            // Update the teams' records in the last 10 games
             const int W = 0, OTW = 1, OTL = 2, L = 3;
             int[] winnerLast10 = await GetRecordInLast10GamesAsync(season, winner);
             winnerStats.WinsInLast10Games = winnerLast10[W];
@@ -1234,6 +1267,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             loserStats.LossesInLast10Games = loserLast10[L];
             loserStats.PointsInLast10Games = (3 * loserLast10[W]) + (2 * loserLast10[OTW]) + loserLast10[OTL];
 
+            // Update the teams' streaks
             winnerStats.Streak = await GetStreakAsync(season, winner);
             loserStats.Streak = await GetStreakAsync(season, loser);
         }
@@ -2098,18 +2132,25 @@ namespace SycamoreHockeyLeaguePortal.Controllers
 
         private async Task<int> GetStreakAsync(int season, Team team)
         {
-            var gamesPlayed = await GetGamesPlayed(season, team).ToListAsync();
+            var gamesPlayed = await GetGamesPlayed(season, team)
+                .OrderByDescending(g => g.Date)
+                .ToListAsync();
 
+            Game firstGame = gamesPlayed[0];
+            bool isWinningStreak = (team == firstGame.HomeTeam) == (firstGame.HomeScore > firstGame.AwayScore);
             int streak = 0;
+            
             foreach (var game in gamesPlayed)
             {
                 bool isHome = team == game.HomeTeam;
                 bool homeTeamWon = game.HomeScore > game.AwayScore;
                 bool teamWon = isHome == homeTeamWon;
+                bool gameMatchesStreak = teamWon == isWinningStreak;
 
-                streak = teamWon ?
-                    ((streak > 0) ? ++streak : 1) :
-                    ((streak < 0) ? --streak : -1);
+                if (gameMatchesStreak)
+                    streak = isWinningStreak ? ++streak : --streak;
+                else
+                    break;
             }
 
             return streak;

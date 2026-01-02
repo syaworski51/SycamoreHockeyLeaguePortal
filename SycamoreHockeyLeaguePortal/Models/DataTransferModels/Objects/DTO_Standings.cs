@@ -23,7 +23,7 @@ namespace SycamoreHockeyLeaguePortal.Models.DataTransferModels.Objects
         public int RegulationWins { get; set; }
         public int RegPlusOTWins { get; set; }
         public int Points { get; set; }
-        public int MaximumPossiblePoints { get; set; }
+        public int PointsCeiling { get; set; }
         public decimal WinPct { get; set; }
         public decimal PointsPct { get; set; }
         public decimal DivisionGamesBehind { get; set; }
@@ -63,6 +63,5 @@ namespace SycamoreHockeyLeaguePortal.Models.DataTransferModels.Objects
         public int LossesInLast10Games { get; set; }
         public int PointsInLast10Games { get; set; }
         public decimal WinPctInLast10Games { get; set; }
-        public Guid? NextGameId { get; set; }
     }
 }

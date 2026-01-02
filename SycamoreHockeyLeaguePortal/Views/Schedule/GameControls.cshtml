@@ -261,6 +261,8 @@
                         </div>
                     </div>
 
+
+
                     <div class="container head-to-head">
                         <div class="row">
                             <div class="col-8 comparison">
@@ -268,13 +270,11 @@
                                     <thead>
                                         <tr>
                                             <th colspan="2"></th>
-                                            <th>W-L</th>
-                                            <th>Win %</th>
-                                            <th>RW</th>
+                                            <th>Record</th>
+                                            <th>Pts.</th>
                                             <th>ROW</th>
-                                            <th>L10</th>
-                                            <th>Division</th>
-                                            <th>Playoffs</th>
+                                            <th>Last 10</th>
+                                            <th>Conference</th>
                                             <th>League</th>
                                         </tr>
                                     </thead>
@@ -286,13 +286,11 @@
                                                     <img src="~/@team.Team.LogoPath" width="25" height="25" />
                                                 </td>
                                                 <td class="col-3">@team.Team.FullName</td>
-                                                <td class="col-1">@team.Record_2024Format</td>
-                                                <th class="col-1">@team.WinPct</th>
-                                                <td class="col-1">@team.RegulationWins</td>
+                                                <td>@team.Record_2026Format</td>
+                                                <th class="col-1">@team.Points</th>
                                                 <td class="col-1">@team.RegPlusOTWins</td>
-                                                <td class="col-1">@team.RecordInLast10Games_2024Format</td>
-                                                <td class="col-1">@GetDivisionRankingString(team, team.DivisionRanking)</td>
-                                                <td class="col-1">@GetPlayoffRankingString(team, team.PlayoffRanking)</td>
+                                                <td>@team.RecordInLast10Games_2026Format</td>
+                                                <td class="col-1">@GetPlayoffRankingString(team, team.ConferenceRanking)</td>
                                                 <td class="col-1">@GetRankingString(team.LeagueRanking)</td>
                                             </tr>
                                         }
@@ -321,7 +319,6 @@
                                                     @if (game.Period > 0)
                                                     {
                                                         <br />
-
                                                         @game.Status
                                                     }
                                                 </td>

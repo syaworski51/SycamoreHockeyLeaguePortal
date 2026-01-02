@@ -171,41 +171,10 @@ namespace SycamoreHockeyLeaguePortal.Services
             game.HomeScore = resultDTO.HomeScore;
             game.Period = resultDTO.Period;
             game.Notes = resultDTO.Notes;
+            game.LiveStatus = resultDTO.LiveStatus;
             game.PlayoffSeriesScore = resultDTO.PlayoffSeriesScore;
+            
             await _liveContext.SaveChangesAsync();
-
-
-            var updatedGame = _liveContext.Schedule
-                    .Include(s => s.Season)
-                    .Include(s => s.PlayoffRound)
-                    .Include(s => s.PlayoffSeries)
-                        .ThenInclude(ps => ps!.Team1)
-                    .Include(s => s.PlayoffSeries)
-                        .ThenInclude(ps => ps!.Team2)
-                    .Include(s => s.AwayTeam)
-                    .Include(s => s.HomeTeam)
-                    .FirstOrDefault(s => s.Id == game.Id)!;
-
-            // If it is a playoff game...
-            if (game.Type == GameTypes.PLAYOFFS)
-            {
-                if (updatedGame == null || updatedGame.PlayoffSeries == null)
-                    throw new Exception("The playoff game or its series could not be reloaded.");
-                
-                // Update the appropriate playoff series in the live database
-                await UpdatePlayoffMatchupAsync(updatedGame);
-            }   
-            // If it is a regular season game or tiebreaker game...
-            else
-            {
-                // Get the head-to-head matchup between the two teams
-                var h2hSeries = await GetH2HSeriesDTOAsync(game.Season.Year, game.AwayTeam, game.HomeTeam);
-                await UpdateH2HSeriesAsync(h2hSeries);
-
-                // If it is a regular season game, update the standings
-                if (game.Type == GameTypes.REGULAR_SEASON)
-                    await UpdateStandingsAsync(game.Season.Year);
-            }
         }
 
         /// <summary>
@@ -218,6 +187,71 @@ namespace SycamoreHockeyLeaguePortal.Services
             // Write each result to the table one at a time
             foreach (var game in games)
                 await WriteOneResultAsync(game);
+
+            await _liveContext.SaveChangesAsync();
+        }
+
+        public async Task UpdateTeamStatsAsync(int season, DTO_Standings updatedTeamStats)
+        {
+            var teamStats = _liveContext.Standings
+                .Include(s => s.Season)
+                .Include(s => s.Conference)
+                .Include(s => s.Team)
+                .FirstOrDefault(s => s.Season.Year == season && s.TeamId == updatedTeamStats.TeamId);
+
+            teamStats.DivisionRanking = updatedTeamStats.DivisionRanking;
+            teamStats.ConferenceRanking = updatedTeamStats.ConferenceRanking;
+            teamStats.PlayoffRanking = updatedTeamStats.PlayoffRanking;
+            teamStats.LeagueRanking = updatedTeamStats.LeagueRanking;
+            teamStats.PlayoffStatus = updatedTeamStats.PlayoffStatus;
+            teamStats.GamesPlayed = updatedTeamStats.GamesPlayed;
+            teamStats.Wins = updatedTeamStats.Wins;
+            teamStats.OTWins = updatedTeamStats.OTWins;
+            teamStats.OTLosses = updatedTeamStats.OTLosses;
+            teamStats.Losses = updatedTeamStats.Losses;
+            teamStats.RegulationWins = updatedTeamStats.RegulationWins;
+            teamStats.RegPlusOTWins = updatedTeamStats.RegPlusOTWins;
+            teamStats.Points = updatedTeamStats.Points;
+            teamStats.PointsCeiling = updatedTeamStats.PointsCeiling;
+            teamStats.WinPct = updatedTeamStats.WinPct;
+            teamStats.PointsPct = updatedTeamStats.PointsPct;
+            teamStats.DivisionGamesBehind = updatedTeamStats.DivisionGamesBehind;
+            teamStats.ConferenceGamesBehind = updatedTeamStats.ConferenceGamesBehind;
+            teamStats.LeagueGamesBehind = updatedTeamStats.LeagueGamesBehind;
+            teamStats.PlayoffsGamesBehind = updatedTeamStats.PlayoffsGamesBehind;
+            teamStats.GoalsFor = updatedTeamStats.GoalsFor;
+            teamStats.GoalsAgainst = updatedTeamStats.GoalsAgainst;
+            teamStats.GoalDifferential = updatedTeamStats.GoalDifferential;
+            teamStats.Streak = updatedTeamStats.Streak;
+            teamStats.StreakGoalsFor = updatedTeamStats.StreakGoalsFor;
+            teamStats.StreakGoalsAgainst = updatedTeamStats.StreakGoalsAgainst;
+            teamStats.StreakGoalDifferential = updatedTeamStats.StreakGoalDifferential;
+            teamStats.GamesPlayedVsDivision = updatedTeamStats.GamesPlayedVsDivision;
+            teamStats.WinsVsDivision = updatedTeamStats.WinsVsDivision;
+            teamStats.LossesVsDivision = updatedTeamStats.LossesVsDivision;
+            teamStats.OTLossesVsDivision = updatedTeamStats.OTLossesVsDivision;
+            teamStats.WinPctVsDivision = updatedTeamStats.WinPctVsDivision;
+            teamStats.GamesPlayedVsConference = updatedTeamStats.GamesPlayedVsConference;
+            teamStats.WinsVsConference = updatedTeamStats.WinsVsConference;
+            teamStats.OTWinsVsConference = updatedTeamStats.OTWinsVsConference;
+            teamStats.OTLossesVsConference = updatedTeamStats.OTLossesVsConference;
+            teamStats.LossesVsConference = updatedTeamStats.LossesVsConference;
+            teamStats.PointsVsConference = updatedTeamStats.PointsVsConference;
+            teamStats.WinPctVsConference = updatedTeamStats.WinPctVsConference;
+            teamStats.InterConfGamesPlayed = updatedTeamStats.InterConfGamesPlayed;
+            teamStats.InterConfWins = updatedTeamStats.InterConfWins;
+            teamStats.InterConfOTWins = updatedTeamStats.InterConfOTWins;
+            teamStats.InterConfOTLosses = updatedTeamStats.InterConfOTLosses;
+            teamStats.InterConfLosses = updatedTeamStats.InterConfLosses;
+            teamStats.InterConfPoints = updatedTeamStats.InterConfPoints;
+            teamStats.InterConfWinPct = updatedTeamStats.InterConfWinPct;
+            teamStats.GamesPlayedInLast10Games = updatedTeamStats.GamesPlayedInLast10Games;
+            teamStats.WinsInLast10Games = updatedTeamStats.WinsInLast10Games;
+            teamStats.OTWinsInLast10Games = updatedTeamStats.OTWinsInLast10Games;
+            teamStats.OTLossesInLast10Games = updatedTeamStats.OTLossesInLast10Games;
+            teamStats.LossesInLast10Games = updatedTeamStats.LossesInLast10Games;
+            teamStats.PointsInLast10Games = updatedTeamStats.PointsInLast10Games;
+            teamStats.WinPctInLast10Games = updatedTeamStats.WinPctInLast10Games;
 
             await _liveContext.SaveChangesAsync();
         }
@@ -326,7 +360,7 @@ namespace SycamoreHockeyLeaguePortal.Services
                 RegulationWins = s.RegulationWins,
                 RegPlusOTWins = s.RegPlusOTWins,
                 Points = s.Points,
-                PointsCeiling = s.MaximumPossiblePoints,
+                PointsCeiling = s.PointsCeiling,
                 WinPct = s.WinPct,
                 PointsPct = s.PointsPct,
                 DivisionGamesBehind = s.DivisionGamesBehind,
@@ -534,13 +568,19 @@ namespace SycamoreHockeyLeaguePortal.Services
         /// </summary>
         /// <param name="dto">The matchup to update. Arrives in DTO format.</param>
         /// <returns></returns>
-        private async Task UpdateH2HSeriesAsync(DTO_HeadToHeadSeries dto)
+        public async Task UpdateH2HSeriesAsync(DTO_HeadToHeadSeries dto)
         {
             var matchup = _liveContext.HeadToHeadSeries.FirstOrDefault(m => m.Id == dto.Id)!;
 
             matchup.Team1Wins = dto.Team1Wins;
+            matchup.Team1OTWins = dto.Team1OTWins;
+            matchup.Team1Points = dto.Team1Points;
+            matchup.Team1ROWs = dto.Team1ROWs;
             matchup.Team1GoalsFor = dto.Team1GoalsFor;
             matchup.Team2Wins = dto.Team2Wins;
+            matchup.Team2OTWins = dto.Team1OTWins;
+            matchup.Team2Points = dto.Team1Points;
+            matchup.Team2ROWs = dto.Team1ROWs;
             matchup.Team2GoalsFor = dto.Team2GoalsFor;
             
             await _liveContext.SaveChangesAsync();
