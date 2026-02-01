@@ -21,6 +21,18 @@
             $"{matchup.Team2Wins}-{matchup.Team2OTWins}-{matchup.Team1OTWins}-{matchup.Team1Wins}";
     }
 
+    string GetPoints(HeadToHeadSeries matchup)
+    {
+        if (season < 2026)
+            return team == matchup.Team1 ?
+                $"{matchup.Team1Wins}-{matchup.Team2Wins}" :
+                $"{matchup.Team2Wins}-{matchup.Team1Wins}"; 
+        
+        return team == matchup.Team1 ?
+            $"{matchup.Team1Points}-{matchup.Team2Points}" :
+            $"{matchup.Team2Points}-{matchup.Team1Points}";
+    }
+
     string GetAggregate(HeadToHeadSeries matchup)
     {
         return team == matchup.Team1 ?
@@ -33,6 +45,7 @@
     <thead>
         <tr>
             <th colspan="2">Opponent</th>
+            <th>Points</th>
             <th>Record</th>
             <th>Aggregate</th>
         </tr>
@@ -56,6 +69,9 @@
                         src="~/@opponent.LogoPath"
                         title="@opponent"
                         alt="@opponent.Code logo" />
+                </td>
+                <td class="h2h-points">
+                    @GetPoints(matchup)
                 </td>
                 <td class="h2h-record">
                     @GetRecord(matchup)

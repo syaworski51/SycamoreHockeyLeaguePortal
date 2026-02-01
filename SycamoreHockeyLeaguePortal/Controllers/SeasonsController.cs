@@ -80,6 +80,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             season.Status = SeasonStatuses.LIVE;
             _localContext.Seasons.Update(season);
             await _localContext.SaveChangesAsync();
+            await _syncService.GoLiveAsync(year);
 
             return RedirectToAction("Index", "Schedule", new { weekOf = schedule.Min(s => s.Date).ToString("yyyy-MM-dd") });
         }
@@ -178,6 +179,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 .ThenBy(t => t.Name)
                 .ToList();
 
+            int pointsCeiling = 3 * season.GamesPerTeam;
             foreach (var team in teams)
             {
                 var alignment = new Alignment
@@ -208,7 +210,8 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                     ConferenceId = team.ConferenceId,
                     Conference = team.Conference,
                     TeamId = team.Id,
-                    Team = team
+                    Team = team,
+                    PointsCeiling = pointsCeiling
                 };
                 var teamStatsDTO = new DTO_Standings
                 {

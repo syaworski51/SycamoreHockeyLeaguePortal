@@ -66,6 +66,15 @@ namespace SycamoreHockeyLeaguePortal.Services
             await _liveContext.SaveChangesAsync();
         }
 
+        public async Task GoLiveAsync(int year)
+        {
+            var season = _liveContext.Seasons.FirstOrDefault(s => s.Year == year) ?? 
+                throw new Exception($"The {year} season could not be found in the live database.");
+            
+            season.Status = LiveStatuses.LIVE;
+            await _liveContext.SaveChangesAsync();
+        }
+
         /// <summary>
         ///     Upload a schedule to the live database.
         /// </summary>
@@ -191,14 +200,31 @@ namespace SycamoreHockeyLeaguePortal.Services
             await _liveContext.SaveChangesAsync();
         }
 
-        public async Task UpdateTeamStatsAsync(int season, DTO_Standings updatedTeamStats)
+        public async Task UpdateStandingsAsync(int season, List<DTO_Standings> updatedStandingsDTOs)
         {
-            var teamStats = _liveContext.Standings
+            var standings = _liveContext.Standings
                 .Include(s => s.Season)
                 .Include(s => s.Conference)
                 .Include(s => s.Team)
-                .FirstOrDefault(s => s.Season.Year == season && s.TeamId == updatedTeamStats.TeamId);
+                .Where(s => s.Season.Year == season)
+                .OrderBy(s => s.LeagueRanking)
+                .ThenBy(s => s.Team.City)
+                .ThenBy(s => s.Team.Name)
+                .ToList();
 
+            foreach (var dto in updatedStandingsDTOs)
+            {
+                var teamStats = standings.FirstOrDefault(s => s.TeamId == dto.TeamId)!;
+                await UpdateTeamStatsAsync(season, teamStats, dto);
+            }
+
+            await _liveContext.SaveChangesAsync();
+        }
+
+        public async Task UpdateTeamStatsAsync(int season,
+                                               Standings teamStats,
+                                               DTO_Standings updatedTeamStats)
+        {
             teamStats.DivisionRanking = updatedTeamStats.DivisionRanking;
             teamStats.ConferenceRanking = updatedTeamStats.ConferenceRanking;
             teamStats.PlayoffRanking = updatedTeamStats.PlayoffRanking;
@@ -252,8 +278,6 @@ namespace SycamoreHockeyLeaguePortal.Services
             teamStats.LossesInLast10Games = updatedTeamStats.LossesInLast10Games;
             teamStats.PointsInLast10Games = updatedTeamStats.PointsInLast10Games;
             teamStats.WinPctInLast10Games = updatedTeamStats.WinPctInLast10Games;
-
-            await _liveContext.SaveChangesAsync();
         }
 
         /// <summary>
@@ -578,9 +602,9 @@ namespace SycamoreHockeyLeaguePortal.Services
             matchup.Team1ROWs = dto.Team1ROWs;
             matchup.Team1GoalsFor = dto.Team1GoalsFor;
             matchup.Team2Wins = dto.Team2Wins;
-            matchup.Team2OTWins = dto.Team1OTWins;
-            matchup.Team2Points = dto.Team1Points;
-            matchup.Team2ROWs = dto.Team1ROWs;
+            matchup.Team2OTWins = dto.Team2OTWins;
+            matchup.Team2Points = dto.Team2Points;
+            matchup.Team2ROWs = dto.Team2ROWs;
             matchup.Team2GoalsFor = dto.Team2GoalsFor;
             
             await _liveContext.SaveChangesAsync();

@@ -3,7 +3,10 @@ using Microsoft.EntityFrameworkCore;
 using SycamoreHockeyLeaguePortal.Data;
 using SycamoreHockeyLeaguePortal.Data.Migrations;
 using SycamoreHockeyLeaguePortal.Models;
+using SycamoreHockeyLeaguePortal.Models.DataTransferModels;
+using SycamoreHockeyLeaguePortal.Models.DataTransferModels.Objects;
 using SycamoreHockeyLeaguePortal.Models.ViewModels;
+using SycamoreHockeyLeaguePortal.Services;
 using System.Diagnostics;
 using ZstdSharp.Unsafe;
 
@@ -14,14 +17,20 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         private readonly ILogger<HomeController> _logger;
         private readonly ApplicationDbContext _localContext;
         private readonly LiveDbContext _liveContext;
+        private readonly LiveDbSyncService _syncService;
+        private readonly DTOConverter _dtoConverter;
 
-        public HomeController(ILogger<HomeController> logger, 
+        public HomeController(ILogger<HomeController> logger,
                               ApplicationDbContext localContext,
-                              LiveDbContext liveContext)
+                              LiveDbContext liveContext,
+                              LiveDbSyncService syncService,
+                              DTOConverter dtoConverter)
         {
             _logger = logger;
             _localContext = localContext;
             _liveContext = liveContext;
+            _syncService = syncService;
+            _dtoConverter = dtoConverter;
         }
 
         public async Task<IActionResult> Index()
@@ -73,7 +82,37 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 .Include(s => s.Division)
                 .Include(s => s.Team)
                 .Where(s => s.Season.Year == season)
-                .OrderBy(s => s.ConferenceRanking);
+                .OrderBy(s => s.LeagueRanking);
+
+            if (standings.All(s => s.ConferenceRanking == 0 && s.LeagueRanking == 0))
+            {
+                standings = standings
+                    .OrderBy(s => s.Team.City)
+                    .ThenBy(s => s.Team.Name);
+                
+                int east = 1, west = 1, league = 1;
+                foreach (var team in standings)
+                {
+                    team.LeagueRanking = league;
+                    league++;
+
+                    if (team.Conference!.Code == "EAST")
+                    {
+                        team.ConferenceRanking = east;
+                        east++;
+                    }
+                    else
+                    {
+                        team.ConferenceRanking = west;
+                        west++;
+                    }
+                }
+
+                await _localContext.SaveChangesAsync();
+
+                List<DTO_Standings> DTOs = _dtoConverter.ConvertBatchToDTO(standings.ToList());
+                await _syncService.UpdateStandingsAsync(season, DTOs);
+            }
 
             Dictionary<string, List<Standings>> standingsDict = new()
             {

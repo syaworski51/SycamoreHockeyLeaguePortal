@@ -276,9 +276,13 @@
         {
             <partial name="Views/Formats/2021-2023.cshtml" />
         }
-        else
+        else if (season >= 2024 && season <= 2025)
         {
             <partial name="Views/Formats/2024-2025.cshtml" />
+        }
+        else
+        {
+            <partial name="Views/Formats/2026-Present.cshtml" />
         }
     }
 </div>
@@ -307,7 +311,7 @@
     </div>
     <div class="accordion-item" id="calculating-games-behind-section">
         <h2 class="accordion-header" id="calculating-games-behind-header">
-            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#calculating-games-behind-collapse" aria-expanded="false" aria-controls="calculating-games-behind-collapse">Calculating Games Behind</button>
+            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#calculating-games-behind-collapse" aria-expanded="false" aria-controls="calculating-games-behind-collapse">Calculating Games Behind (2024-2025)</button>
         </h2>
         <div class="accordion-collapse collapse" id="calculating-games-behind-collapse" aria-labelledby="calculating-games-behind-header" data-bs-parent="#standings-accordion">
             <div class="accordion-body">

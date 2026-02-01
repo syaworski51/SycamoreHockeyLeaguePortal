@@ -78,50 +78,7 @@
                 };
             }
             else
-            {
-                int gamesPlayed = results.Count(r => r.LiveStatus == LiveStatuses.FINALIZED);
-                bool seriesComplete = gamesPlayed == results.Count;
-
-                string verb;
-                Team? leader;
-                int leadingScore;
-                int trailingScore;
-                if (matchup.Team1Wins == matchup.Team2Wins)
-                {
-                    verb = seriesComplete ? "split" : "is tied";
-                    leader = (matchup.Team1GoalsFor != matchup.Team2GoalsFor) ?
-                        ((matchup.Team1GoalsFor > matchup.Team2GoalsFor) ? matchup.Team1 : matchup.Team2) : null;
-
-                    leadingScore = Math.Max(matchup.Team1GoalsFor, matchup.Team2GoalsFor);
-                    trailingScore = Math.Min(matchup.Team1GoalsFor, matchup.Team2GoalsFor);
-                    string scoreString = $"Season series {verb} {matchup.Team1Wins}-{matchup.Team2Wins}";
-
-                    if (gamesPlayed > 0)
-                    {
-                        scoreString += $" (Agg. {leadingScore}-{trailingScore}";
-
-                        if (leader != null)
-                            scoreString += $" {leader.Code})";
-                        else
-                            scoreString += ")";
-                    }
-
-                    return scoreString;
-                }
-                else
-                {
-                    leader = (matchup.Team1Wins > matchup.Team2Wins) ? matchup.Team1 : matchup.Team2;
-                    if (leader.City == "New York")
-                        verb = seriesComplete ? "win" : "lead";
-                    else
-                        verb = seriesComplete ? "wins" : "leads";
-
-                    leadingScore = Math.Max(matchup.Team1Wins, matchup.Team2Wins);
-                    trailingScore = Math.Min(matchup.Team1Wins, matchup.Team2Wins);
-
-                    return $"{GetTeamString(leader)} {verb} season series {leadingScore}-{trailingScore}";
-                }
-            }
+                return "Season Series";
         }
     }
 

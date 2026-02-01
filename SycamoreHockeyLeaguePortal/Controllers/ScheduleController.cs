@@ -23,8 +23,6 @@ namespace SycamoreHockeyLeaguePortal.Controllers
     [Authorize(Roles = "Admin")]
     public class ScheduleController : Controller
     {
-        private readonly LiveStatuses ls = new();
-
         private readonly ApplicationDbContext _localContext;
         private readonly LiveDbContext _liveContext;
         private readonly LiveDbSyncService _syncService;
@@ -204,7 +202,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 .Include(s => s.PlayoffSeries)
                 .Include(s => s.AwayTeam)
                 .Include(s => s.HomeTeam)
-                .Where(s => s.Type == GameTypes.PLAYOFFS && s.IsFinalized)
+                .Where(s => s.Type == GameTypes.PLAYOFFS && s.LiveStatus == LiveStatuses.FINALIZED)
                 .OrderBy(s => s.Date)
                 .ThenBy(s => s.GameIndex);
 
@@ -538,7 +536,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
 
                 if (teamStats[0].Conference != teamStats[1].Conference)
                     results = results
-                        .Where(r => r.IsFinalized)
+                        .Where(r => r.LiveStatus == LiveStatuses.FINALIZED)
                         .OrderByDescending(r => r.Date)
                         .Take(5);
                 else
@@ -688,7 +686,8 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 .OrderBy(s => s.GameIndex);
 
             // Return True if there are any games on the requested date AND they are all finalized
-            return games.Any() && games.Count(s => s.IsFinalized) == games.Count();
+            return games.Any() && 
+                games.Count(s => s.LiveStatus == LiveStatuses.FINALIZED) == games.Count();
         }
 
         private void TakeSnapshot(DateTime date)
@@ -834,7 +833,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 .OrderBy(s => s.Date)
                 .ToList();
 
-            var gamesPlayed = schedule.Where(g => g.IsFinalized);
+            var gamesPlayed = schedule.Where(g => g.LiveStatus == LiveStatuses.FINALIZED);
 
             series.Team1Wins = gamesPlayed
                 .Count(g => (g.AwayTeam == series.Team1 && g.AwayScore > g.HomeScore) ||
@@ -849,7 +848,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             game.PlayoffSeriesScore = series.ShortSeriesScoreString;
             _localContext.Schedule.Update(game);
 
-            var remainingGames = schedule.Where(g => !g.IsFinalized);
+            var remainingGames = schedule.Where(g => g.LiveStatus != LiveStatuses.FINALIZED);
             if (remainingGames.Any())
             {
                 var nextGame = remainingGames.First();
@@ -1171,17 +1170,11 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 .Include(s => s.Team)
                 .Where(s => s.Season.Year == season)
                 .OrderBy(s => s.LeagueRanking)
-                .ToDictionary(s => s.Team.Code);
+                .ToList();
 
-            Standings awayStats = standings[game.AwayTeam.Code];
-            Standings homeStats = standings[game.HomeTeam.Code];
-
-            DTO_Standings awayDTO = _dtoConverter.ConvertToDTO(awayStats);
-            DTO_Standings homeDTO = _dtoConverter.ConvertToDTO(homeStats);
-
-            await _syncService.UpdateTeamStatsAsync(season, awayDTO);
-            await _syncService.UpdateTeamStatsAsync(season, homeDTO);
-
+            List<DTO_Standings> DTOs = _dtoConverter.ConvertBatchToDTO(standings);
+            await _syncService.UpdateStandingsAsync(season, DTOs);
+            
             await StandingsUpdateNowAvailable();
         }
 
@@ -1211,6 +1204,10 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             Standings winnerStats = standings[winner.Code];
             Standings loserStats = standings[loser.Code];
 
+            // Increment the games played counters for the winners and losers
+            winnerStats.GamesPlayed++;
+            loserStats.GamesPlayed++;
+
             // Add the score of the game to both teams' GF and GA counters
             winnerStats.GoalsFor += homeTeamWon ? game.HomeScore : game.AwayScore;
             winnerStats.GoalsAgainst += homeTeamWon ? game.AwayScore : game.HomeScore;
@@ -1227,11 +1224,11 @@ namespace SycamoreHockeyLeaguePortal.Controllers
 
             // Award the points and adjust the point ceilings and points percentages
             winnerStats.Points += winnerPts;
-            winnerStats.PointsCeiling -= (3 - winnerPts);
+            winnerStats.PointsCeiling = winnerStats.Points + (3 * GetGamesLeft(winnerStats));
             winnerStats.PointsPct = (decimal)winnerStats.Points / (winnerStats.GamesPlayed * 3);
 
             loserStats.Points += loserPts;
-            loserStats.PointsCeiling -= (3 - loserPts);
+            loserStats.PointsCeiling = loserStats.Points + (3 * GetGamesLeft(loserStats));
             loserStats.PointsPct = (decimal)loserStats.Points / (loserStats.GamesPlayed * 3);
 
             // If the game was decided before the shootout, increment the winner's ROW counter
@@ -1270,7 +1267,11 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             // Update the teams' streaks
             winnerStats.Streak = await GetStreakAsync(season, winner);
             loserStats.Streak = await GetStreakAsync(season, loser);
+
+            await _localContext.SaveChangesAsync();
         }
+
+        private int GetGamesLeft(Standings teamStats) => teamStats.Season.GamesPerTeam - teamStats.GamesPlayed;
 
         private async Task CheckForClinchingOrEliminationScenariosAsync(int season)
         {
@@ -1341,8 +1342,6 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                     foreach (var team in teams)
                     {
                         team.ConferenceRanking = ranking;
-                        _localContext.Standings.Update(team);
-
                         ranking++;
                     }
                 }
@@ -1352,8 +1351,6 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 foreach (var team in standings)
                 {
                     team.LeagueRanking = ranking;
-                    _localContext.Standings.Update(team);
-
                     ranking++;
                 }
 
@@ -1366,7 +1363,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                                                                  int index2, Standings team2)
         {
             if (team1.GamesPlayed == team2.GamesPlayed)
-                return ApplyTwoWayH2HTiebreaker(standings, index1, team1, index2, team2);
+                return ApplyTwoWayH2HPointsTiebreaker(standings, index1, team1, index2, team2);
 
             if (team1.GamesPlayed > team2.GamesPlayed)
                 return SwapTeams(standings, index1, team1, index2, team2);
@@ -1438,6 +1435,8 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                     .OrderByDescending(s => s.Points)
                     .ThenBy(s => s.GamesPlayed)
                     .ThenByDescending(s => s.Wins)
+                    .ThenByDescending(s => s.RegPlusOTWins)
+                    .ThenByDescending(s => s.Wins + s.OTWins)
                     .ThenByDescending(s => s.GoalDifferential)
                     .ThenByDescending(s => s.GoalsFor)
                     .ThenByDescending(s => s.PointsInLast10Games)
@@ -1511,7 +1510,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                         // If 2 teams are in the list, apply the two-way H2H tiebreakers
                         // If 3+ teams are in the list, apply the multi-way H2H tiebreakers
                         standings = tiedTeams.Count == 2 ?
-                            ApplyTwoWayH2HTiebreaker(standings, indexes[0], tiedTeams[0], indexes[1], tiedTeams[1]) :
+                            ApplyTwoWayH2HPointsTiebreaker(standings, indexes[0], tiedTeams[0], indexes[1], tiedTeams[1]) :
                             ApplyMultiWayH2HTiebreaker(standings, indexes, tiedTeams);
                     }
                 }
@@ -1530,7 +1529,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                             // If 2 teams are tied, apply the two-way H2H tiebreakers
                             // If 3+ teams are tied, apply the multi-way H2H tiebreakers
                             standings = tiedTeams.Count == 2 ?
-                                ApplyTwoWayH2HTiebreaker(standings, indexes[0], tiedTeams[0], indexes[1], tiedTeams[1]) :
+                                ApplyTwoWayH2HPointsTiebreaker(standings, indexes[0], tiedTeams[0], indexes[1], tiedTeams[1]) :
                                 ApplyMultiWayH2HTiebreaker(standings, indexes, tiedTeams);
                         }
 
@@ -1562,7 +1561,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             return indexes;
         }
 
-        private List<Standings> ApplyTwoWayH2HTiebreaker(List<Standings> standings, 
+        private List<Standings> ApplyTwoWayH2HPointsTiebreaker(List<Standings> standings, 
                                                          int index1, Standings team1, 
                                                          int index2, Standings team2)
         {
@@ -1577,11 +1576,11 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             int gamesPlayed = matchup.Team1Wins + matchup.Team2Wins;
             if (gamesPlayed > 0)
             {
-                if (matchup.Team1Wins == matchup.Team2Wins)
-                    return ApplyTwoWayH2HAggregateTiebreaker(standings, matchup, index1, team1, index2, team2);
+                if (matchup.Team1Points == matchup.Team2Points)
+                    return ApplyTwoWayH2HRegWinsTiebreaker(standings, matchup, index1, team1, index2, team2);
 
                 bool team1IsTeam1 = team1.Team == matchup.Team1;
-                bool team2LeadsSeries = matchup.Team1Wins < matchup.Team2Wins;
+                bool team2LeadsSeries = matchup.Team1Points < matchup.Team2Points;
                 bool swapNeeded = team1IsTeam1 == team2LeadsSeries;
 
                 if (swapNeeded)
@@ -1591,14 +1590,31 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             return standings;
         }
         
-        private List<Standings> ApplyTwoWayH2HAggregateTiebreaker(List<Standings> standings,
-                                                                  HeadToHeadSeries matchup,
-                                                                  int index1, Standings team1,
-                                                                  int index2, Standings team2)
+        private List<Standings> ApplyTwoWayH2HRegWinsTiebreaker(List<Standings> standings,
+                                                                HeadToHeadSeries matchup,
+                                                                int index1, Standings team1,
+                                                                int index2, Standings team2)
+        {
+            if (matchup.Team1Wins == matchup.Team2Wins)
+                return ApplyTwoWayH2HGoalsForTiebreaker(standings, matchup, index1, team1, index2, team2);
+            
+            bool team1IsTeam1 = team1.Team == matchup.Team1;
+            bool team2LeadsInRW = matchup.Team1Wins < matchup.Team2Wins;
+            bool swapNeeded = team1IsTeam1 == team2LeadsInRW;
+
+            return swapNeeded ?
+                SwapTeams(standings, index1, team1, index2, team2) :
+                standings;
+        }
+
+        private List<Standings> ApplyTwoWayH2HGoalsForTiebreaker(List<Standings> standings,
+                                                                 HeadToHeadSeries matchup,
+                                                                 int index1, Standings team1,
+                                                                 int index2, Standings team2)
         {
             if (matchup.Team1GoalsFor == matchup.Team2GoalsFor)
                 return standings;
-            
+
             bool team1IsTeam1 = team1.Team == matchup.Team1;
             bool team2LeadsInGF = matchup.Team1GoalsFor < matchup.Team2GoalsFor;
             bool swapNeeded = team1IsTeam1 == team2LeadsInGF;
@@ -1657,10 +1673,11 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 const int TEAM1 = 0, TEAM2 = 1;
                 
                 var tiebreaker = records
-                    .OrderByDescending(r => (r.Value[GP] > 0) ?
-                                                (decimal)r.Value[PTS] / r.Value[GP] : 0)
-                    .ThenByDescending(r => r.Value[PTS])
-                    .ThenBy(r => r.Value[RW])
+                    .OrderByDescending(r => r.Value[PTS])
+                    .ThenBy(r => r.Value[GP])
+                    .ThenByDescending(r => r.Value[RW])
+                    .ThenByDescending(r => r.Value[ROW])
+                    .ThenByDescending(r => r.Value[TW])
                     .ToList();
                 var teamStatLines = ExtractStatLines(SEASON, tiebreaker);
                 standings = ReorderTeams(standings, indexes, teamStatLines);
@@ -1690,7 +1707,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                             indexes = GetIndexesInLeagueStandings(standings, teamsStillTied);
 
                             standings = teamsStillTied.Count == 2 ?
-                                ApplyTwoWayH2HTiebreaker(standings,
+                                ApplyTwoWayH2HPointsTiebreaker(standings,
                                                          indexes[TEAM1], teamsStillTied[TEAM1],
                                                          indexes[TEAM2], teamsStillTied[TEAM2]) :
                                 ApplyMultiWayH2HTiebreaker(standings, indexes, teamsStillTied);
@@ -1708,7 +1725,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                                 indexes = GetIndexesInLeagueStandings(standings, teamsStillTied);
 
                                 standings = teamsStillTied.Count == 2 ?
-                                    ApplyTwoWayH2HTiebreaker(standings,
+                                    ApplyTwoWayH2HPointsTiebreaker(standings,
                                                              indexes[TEAM1], teamsStillTied[TEAM1],
                                                              indexes[TEAM2], teamsStillTied[TEAM2]) :
                                     ApplyMultiWayH2HTiebreaker(standings, indexes, teamsStillTied);
@@ -1881,7 +1898,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 .Where(s => s.Season.Year == season &&
                             s.Type == GameTypes.REGULAR_SEASON &&
                             (s.AwayTeam == team || s.HomeTeam == team) &&
-                            s.IsFinalized && s.Period >= 3)
+                            s.LiveStatus == LiveStatuses.FINALIZED && s.Period >= 3)
                 .OrderByDescending(s => s.Date.Date)
                 .Take(10)
                 .ToListAsync();
@@ -1943,8 +1960,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 .Where(s => s.Season.Year == season &&
                             s.Type == GameTypes.REGULAR_SEASON &&
                             (s.AwayTeam == team || s.HomeTeam == team) &&
-                            s.IsFinalized &&
-                            s.Period >= 3)
+                            s.LiveStatus == LiveStatuses.FINALIZED && s.Period >= 3)
                 .OrderBy(s => s.Date)
                 .ThenBy(s => s.GameIndex);
         }
@@ -2136,15 +2152,15 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 .OrderByDescending(g => g.Date)
                 .ToListAsync();
 
-            Game firstGame = gamesPlayed[0];
-            bool isWinningStreak = (team == firstGame.HomeTeam) == (firstGame.HomeScore > firstGame.AwayScore);
+            Game previousGame = gamesPlayed[0];
+            bool isWinningStreak = (team == previousGame.HomeTeam) == (previousGame.HomeScore > previousGame.AwayScore);
             int streak = 0;
             
             foreach (var game in gamesPlayed)
             {
-                bool isHome = team == game.HomeTeam;
+                bool isHomeTeam = team == game.HomeTeam;
                 bool homeTeamWon = game.HomeScore > game.AwayScore;
-                bool teamWon = isHome == homeTeamWon;
+                bool teamWon = isHomeTeam == homeTeamWon;
                 bool gameMatchesStreak = teamWon == isWinningStreak;
 
                 if (gameMatchesStreak)

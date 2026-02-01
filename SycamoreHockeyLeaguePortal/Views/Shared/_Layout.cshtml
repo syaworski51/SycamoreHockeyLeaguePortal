@@ -66,12 +66,12 @@
                         {
                             <div class="game-date">
                                 <div class="date">
-                                    <div class="month">@string.Format("{0}", currentGame.Date.ToString("MMM"))</div>
-                                    <div class="day">@string.Format("{0}", currentGame.Date.Day)</div>
-                                    <div class="year">@string.Format("{0}", currentGame.Date.Year)</div>
+                                    <div class="month">@currentGame.Date.ToString("MMM")</div>
+                                    <div class="day">@currentGame.Date.Day</div>
+                                    <div class="year">@currentGame.Date.Year</div>
                                 </div>
                             </div>
-                        }
+                        } 
 
                         <div class="col-sm-1 card container score-card text-dark">
                             <div class="row">

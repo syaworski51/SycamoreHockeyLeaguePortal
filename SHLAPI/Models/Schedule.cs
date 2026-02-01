@@ -29,9 +29,9 @@ public partial class Schedule
 
     public string LiveStatus { get; set; }
 
-    public bool IsLive => LiveStatus == "Live";
+    /*public bool IsLive => LiveStatus == "Live";
 
-    public bool IsFinalized => LiveStatus == "Finalized";
+    public bool IsFinalized => LiveStatus == "Finalized";*/
 
     public string? Notes { get; set; }
 
@@ -42,7 +42,7 @@ public partial class Schedule
             int ot;
             string suffix;
 
-            if (!IsFinalized)
+            if (LiveStatus != "Finalized")
             {
                 if (Period == 0)
                     return "Not started";

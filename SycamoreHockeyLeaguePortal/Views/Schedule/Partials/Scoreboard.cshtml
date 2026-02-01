@@ -14,12 +14,21 @@
         <div class="col-2 team-logo">
             <img class="logo" src="~/@Model.AwayTeam.LogoPath" />
         </div>
-        <div class="col score" id="away-score">
-            @(Model.Period > 0 ? Model.AwayScore : "-")
-        </div>
-        <div class="col score" id="home-score">
-            @(Model.Period > 0 ? Model.HomeScore : "-")
-        </div>
+        @if (Model.Period > 0)
+        {
+            <div class="col score" id="away-score">
+                @Model.AwayScore
+            </div>
+            <div class="col score" id="home-score">
+                @Model.HomeScore
+            </div>
+        }
+        else
+        {
+            <div class="col not-started">
+                @@
+            </div>
+        }
         <div class="col-2 team-logo">
             <img class="logo" src="~/@Model.HomeTeam.LogoPath" />
         </div>

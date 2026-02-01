@@ -8,6 +8,7 @@
     int season = ViewBag.Season;
     string viewBy = ViewBag.ViewBy;
     Dictionary<string, Game?> nextGames = ViewBag.NextGames;
+    bool regularSeasonInProgress = Model.Any(s => s.GamesPlayed < s.Season.GamesPerTeam);
 
     string GetName(Team team)
     {
@@ -280,9 +281,12 @@
             <th title="Points Percentage">
                 @Html.DisplayNameFor(model => model.FirstOrDefault()!.PointsPct)
             </th>
-            <th class="fixed-column" title="Points Ceiling">
-                @Html.DisplayNameFor(model => model.FirstOrDefault()!.PointsCeiling)
-            </th>
+            @if (regularSeasonInProgress)
+            {
+                <th class="fixed-column" title="Points Ceiling">
+                    @Html.DisplayNameFor(model => model.FirstOrDefault()!.PointsCeiling)
+                </th>
+            }
             <th class="fixed-column" title="Regulation + Overtime Wins">
                 @Html.DisplayNameFor(model => model.FirstOrDefault()!.RegPlusOTWins)
             </th>
@@ -358,9 +362,12 @@
                     <td>
                         @string.Format("{0:.000}", team.PointsPct)
                     </td>
-                    <td class="text-muted">
-                        @Html.DisplayFor(modelItem => team.PointsCeiling)
-                    </td>
+                    @if (regularSeasonInProgress)
+                    {
+                        <td class="text-muted">
+                            @Html.DisplayFor(modelItem => team.PointsCeiling)
+                        </td>
+                    }
                     <td>
                         @Html.DisplayFor(modelItem => team.RegPlusOTWins)
                     </td>

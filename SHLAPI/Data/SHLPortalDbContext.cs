@@ -179,9 +179,6 @@ public partial class SHLPortalDbContext : DbContext
             entity.HasIndex(e => e.SeasonId, "IX_Schedule_SeasonId");
 
             entity.Property(e => e.Id).ValueGeneratedNever();
-            entity.Property(e => e.IsFinalized)
-                .IsRequired()
-                .HasDefaultValueSql("(CONVERT([bit],(0)))");
 
             entity.HasOne(d => d.AwayTeam).WithMany(p => p.ScheduleAwayTeams)
                 .HasForeignKey(d => d.AwayTeamId)

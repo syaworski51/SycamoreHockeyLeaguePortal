@@ -74,7 +74,8 @@ namespace SHLAPI.Controllers
                     }
                 }
                 
-                if ((game.GameIndex > 1 && (previousGame == null || !previousGame.IsFinalized)) && game.Season.Year != 2026)
+                if ((game.GameIndex > 1 && (previousGame == null || previousGame.LiveStatus != "Finalized")) && 
+                    game.Season.Year != 2026)
                     return BadRequest();
 
                 if (game.LiveStatus == "Not started" || game.LiveStatus == "Paused")
@@ -92,7 +93,7 @@ namespace SHLAPI.Controllers
             catch (Exception ex)
             {
                 return BadRequest("There was an error starting or resuming the game.\n" +
-                    $"Descrption: {ex.Message}");
+                    $"Description: {ex.Message}");
             }
         }
 
@@ -265,7 +266,7 @@ namespace SHLAPI.Controllers
         /// <returns>True if the above condition is met, otherwise False.</returns>
         private bool IsGameLive(Schedule game)
         {
-            return game.IsLive && !game.IsFinalized;
+            return game.LiveStatus == "Live";
         }
 
         /// <summary>

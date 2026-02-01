@@ -29,7 +29,6 @@
             if (teamStats[0].Conference != teamStats[1].Conference)
             {
                 int gamesPlayed = results.Count;
-
                 return gamesPlayed switch
                 {
                     0 => "First-Ever Meeting!",
@@ -38,50 +37,7 @@
                 };
             }
             else
-            {
-                int gamesPlayed = results.Count(r => r.IsFinalized);
-                bool seriesComplete = gamesPlayed == results.Count;
-
-                string verb;
-                Team? leader;
-                int leadingScore;
-                int trailingScore;
-                if (matchup.Team1Wins == matchup.Team2Wins)
-                {
-                    verb = seriesComplete ? "split" : "is tied";
-                    leader = (matchup.Team1GoalsFor != matchup.Team2GoalsFor) ?
-                        ((matchup.Team1GoalsFor > matchup.Team2GoalsFor) ? matchup.Team1 : matchup.Team2) : null;
-
-                    leadingScore = Math.Max(matchup.Team1GoalsFor, matchup.Team2GoalsFor);
-                    trailingScore = Math.Min(matchup.Team1GoalsFor, matchup.Team2GoalsFor);
-                    string scoreString = $"Season series {verb} {matchup.Team1Wins}-{matchup.Team2Wins}";
-
-                    if (gamesPlayed > 0)
-                    {
-                        scoreString += $" (Agg. {leadingScore}-{trailingScore}";
-
-                        if (leader != null)
-                            scoreString += $" {leader.Code})";
-                        else
-                            scoreString += ")";
-                    }
-
-                    return scoreString;
-                }
-                else
-                {
-                    leader = (matchup.Team1Wins > matchup.Team2Wins) ? matchup.Team1 : matchup.Team2;
-                    if (leader.City == "New York")
-                        verb = seriesComplete ? "win" : "lead";
-                    else
-                        verb = seriesComplete ? "wins" : "leads";
-
-                    leadingScore = Math.Max(matchup.Team1Wins, matchup.Team2Wins);
-                    trailingScore = Math.Min(matchup.Team1Wins, matchup.Team2Wins);
-
-                    return $"{GetTeamString(leader)} {verb} season series {leadingScore}-{trailingScore}";
-                }
-            }
+                return "Season Series";
         }
     }
 
@@ -152,7 +108,9 @@
 }
 
 
-<div class="container game">
+@Html.Partial("Partials/Scoreboard.cshtml", Model)
+
+@* <div class="container game">
     <div class="row">
         <div class="col-12" id="game-notes">
             @(Model.Notes != "" ? Model.Notes : Model.Date.ToString("MMMM d, yyyy"))
@@ -185,7 +143,7 @@
             <div class="status">@Html.DisplayFor(model => model.Status)</div>
         </div>
     </div>
-</div>
+</div> *@
 <div class="text-center" style="margin-top: 30px; margin-bottom: 30px;">
     <div class="col">
         @if (Model.Type == "Regular Season")

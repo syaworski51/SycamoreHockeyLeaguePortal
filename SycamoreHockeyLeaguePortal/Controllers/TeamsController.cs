@@ -159,7 +159,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 .Include(r => r.Team2)
                 .Where(r => r.Season.Year == season &&
                             (r.Team1 == team || r.Team2 == team) &&
-                            (r.Team1Wins + r.Team2Wins) > 0)
+                            (r.Team1Wins + r.Team1OTWins + r.Team2OTWins + r.Team2Wins) > 0)
                 .OrderBy(r => r.Team1.City)
                 .ThenBy(r => r.Team1.Name)
                 .ThenBy(r => r.Team2.City)

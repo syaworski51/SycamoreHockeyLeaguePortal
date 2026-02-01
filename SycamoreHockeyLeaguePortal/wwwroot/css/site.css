@@ -274,6 +274,12 @@ img {
     font-family: "Druk Wide Trial";
 }
 
+.game .not-started {
+    font-size: 50pt;
+    padding: 0;
+    width: 289.2px;
+}
+
 .game .away-team {
     text-align: right;
 }
@@ -799,11 +805,11 @@ img {
     border: 1px dashed blue;
 }
 
-.h2h-record, .h2h-aggregate {
+.h2h-points, .h2h-record, .h2h-aggregate {
     font-size: 16pt;
 }
 
-.h2h-record {
+.h2h-points {
     font-family: "Druk Wide Trial";
 }
 
