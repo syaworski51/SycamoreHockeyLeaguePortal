@@ -210,11 +210,11 @@ namespace SycamoreHockeyLeaguePortal.Services
                 .OrderBy(s => s.LeagueRanking)
                 .ThenBy(s => s.Team.City)
                 .ThenBy(s => s.Team.Name)
-                .ToList();
+                .ToDictionary(s => s.TeamId);
 
             foreach (var dto in updatedStandingsDTOs)
             {
-                var teamStats = standings.FirstOrDefault(s => s.TeamId == dto.TeamId)!;
+                var teamStats = standings[dto.TeamId];
                 await UpdateTeamStatsAsync(season, teamStats, dto);
             }
 

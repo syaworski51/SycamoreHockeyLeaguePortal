@@ -26,6 +26,14 @@ namespace SycamoreHockeyLeaguePortal.Models
 
         public string Status { get; set; }
 
+        public string StandingsFormat { get; set; }
+
+        public int PointsPerRW { get; set; }
+
+        public int PointsPerOTW { get; set; }
+
+        public int PointsPerOTL { get; set; }
+
         public bool InTestMode => Status == SeasonStatuses.TEST_MODE;
 
         public bool IsLive => Status == SeasonStatuses.LIVE;

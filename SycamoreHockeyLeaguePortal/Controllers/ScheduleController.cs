@@ -1178,11 +1178,18 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             await StandingsUpdateNowAvailable();
         }
 
+        /// <summary>
+        ///     Update team stats based on the results of a game.
+        /// </summary>
+        /// <param name="season"></param>
+        /// <param name="game"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
         private async Task UpdateTeamStatsAsync(int season, Game game)
         {
-            // If this game has not been finalized, the team stats cannot be updated
-            if (!game.IsFinalized)
-                throw new Exception("This game has not been finalized.");
+            // If this game has not been finalized or has not reached the 3rd period, the team stats cannot be updated
+            if (!game.IsFinalized || game.Period < 3)
+                throw new Exception("This game has not been finalized, and the team stats cannot be updated yet.");
 
             // Get the current standings
             var standings = _localContext.Standings
@@ -1219,17 +1226,17 @@ namespace SycamoreHockeyLeaguePortal.Controllers
 
             // Determine how many points to award to the winners and losers
             bool inRegulation = game.Period == 3;
-            int winnerPts = inRegulation ? 3 : 2;
-            int loserPts = inRegulation ? 0 : 1;
+            int winnerPts = inRegulation ? game.Season.PointsPerRW : game.Season.PointsPerOTW;
+            int loserPts = inRegulation ? 0 : game.Season.PointsPerOTL;
 
             // Award the points and adjust the point ceilings and points percentages
             winnerStats.Points += winnerPts;
-            winnerStats.PointsCeiling = winnerStats.Points + (3 * GetGamesLeft(winnerStats));
-            winnerStats.PointsPct = (decimal)winnerStats.Points / (winnerStats.GamesPlayed * 3);
+            winnerStats.PointsCeiling = CalculatePointsCeiling(winnerStats);
+            winnerStats.PointsPct = CalculatePointsPct(winnerStats);
 
             loserStats.Points += loserPts;
-            loserStats.PointsCeiling = loserStats.Points + (3 * GetGamesLeft(loserStats));
-            loserStats.PointsPct = (decimal)loserStats.Points / (loserStats.GamesPlayed * 3);
+            loserStats.PointsCeiling = CalculatePointsCeiling(loserStats);
+            loserStats.PointsPct = CalculatePointsPct(loserStats);
 
             // If the game was decided before the shootout, increment the winner's ROW counter
             if (game.Period < 5)
@@ -1255,14 +1262,20 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             winnerStats.OTWinsInLast10Games = winnerLast10[OTW];
             winnerStats.OTLossesInLast10Games = winnerLast10[OTL];
             winnerStats.LossesInLast10Games = winnerLast10[L];
-            winnerStats.PointsInLast10Games = (3 * winnerLast10[W]) + (2 * winnerLast10[OTW]) + winnerLast10[OTL];
+            winnerStats.PointsInLast10Games = 
+                (winnerStats.Season.PointsPerRW * winnerLast10[W]) + 
+                (winnerStats.Season.PointsPerOTW * winnerLast10[OTW]) + 
+                winnerLast10[OTL];
 
             int[] loserLast10 = await GetRecordInLast10GamesAsync(season, loser);
             loserStats.WinsInLast10Games = loserLast10[W];
             loserStats.OTWinsInLast10Games = loserLast10[OTW];
             loserStats.OTLossesInLast10Games = loserLast10[OTL];
             loserStats.LossesInLast10Games = loserLast10[L];
-            loserStats.PointsInLast10Games = (3 * loserLast10[W]) + (2 * loserLast10[OTW]) + loserLast10[OTL];
+            loserStats.PointsInLast10Games = 
+                (loserStats.Season.PointsPerRW * loserLast10[W]) + 
+                (loserStats.Season.PointsPerOTW * loserLast10[OTW]) + 
+                loserLast10[OTL];
 
             // Update the teams' streaks
             winnerStats.Streak = await GetStreakAsync(season, winner);
@@ -1271,7 +1284,14 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             await _localContext.SaveChangesAsync();
         }
 
-        private int GetGamesLeft(Standings teamStats) => teamStats.Season.GamesPerTeam - teamStats.GamesPlayed;
+        private int GetGamesLeft(Standings teamStats) => 
+            teamStats.Season.GamesPerTeam - teamStats.GamesPlayed;
+
+        private int CalculatePointsCeiling(Standings teamStats) =>
+            teamStats.Points + (teamStats.Season.PointsPerRW * GetGamesLeft(teamStats));
+
+        private decimal CalculatePointsPct(Standings teamStats) =>
+            (decimal)teamStats.Points / (teamStats.Season.PointsPerRW * teamStats.GamesPlayed);
 
         private async Task CheckForClinchingOrEliminationScenariosAsync(int season)
         {

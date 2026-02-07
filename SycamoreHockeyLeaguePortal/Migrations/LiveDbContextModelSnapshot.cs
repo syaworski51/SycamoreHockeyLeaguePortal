@@ -733,6 +733,19 @@ namespace SycamoreHockeyLeaguePortal.Migrations
                     b.Property<int>("GamesPerTeam")
                         .HasColumnType("int");
 
+                    b.Property<int>("PointsPerOTL")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PointsPerOTW")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PointsPerRW")
+                        .HasColumnType("int");
+
+                    b.Property<string>("StandingsFormat")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");

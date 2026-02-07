@@ -179,7 +179,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 .ThenBy(t => t.Name)
                 .ToList();
 
-            int pointsCeiling = 3 * season.GamesPerTeam;
+            int pointsCeiling = season.PointsPerRW * season.GamesPerTeam;
             foreach (var team in teams)
             {
                 var alignment = new Alignment
