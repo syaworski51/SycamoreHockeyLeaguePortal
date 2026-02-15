@@ -79,7 +79,7 @@
                                 @if (userIsAdmin && !game.IsFinalized)
                                 {
                                     <td>
-                                        <a asp-controller="Schedule" asp-action="GameControls" 
+                                        <a asp-controller="Games" asp-action="GameControls"
                                            asp-route-date="@game.Date.ToString("yyyy-MM-dd")" 
                                            asp-route-awayTeam="@game.AwayTeam.Code" 
                                            asp-route-homeTeam="@game.HomeTeam.Code">@game.Status</a>
@@ -88,7 +88,7 @@
                                 else
                                 {
                                     <td>
-                                        <a asp-controller="Schedule" asp-action="GameCenter"
+                                        <a asp-controller="Games" asp-action="GameCenter"
                                            asp-route-date="@game.Date.ToString("yyyy-MM-dd")"
                                            asp-route-awayTeam="@game.AwayTeam.Code"
                                            asp-route-homeTeam="@game.HomeTeam.Code">@game.Status</a>

@@ -92,7 +92,7 @@
                             </div>
                             <div class="row-cols-2 status">
                                 <a class="game-status-link" style="font-size: 10pt;"
-                                   asp-controller="Schedule" 
+                                   asp-controller="Games" 
                                    asp-action="@DetermineActionForScoreCard(currentGame)" 
                                    asp-route-date="@currentGame.Date.ToString("yyyy-MM-dd")" 
                                    asp-route-awayTeam="@currentGame.AwayTeam.Code" 
@@ -102,7 +102,7 @@
                             {
                                 <div class="row-cols-2 status">
                                     <a class="muted-link" style="font-size: 10pt;"
-                                       asp-controller="Schedule" asp-action="PlayoffSeries"
+                                       asp-controller="Games" asp-action="PlayoffSeries"
                                        asp-route-season="@currentGame.Date.Year"
                                        asp-route-team1="@currentGame.AwayTeam.Code"
                                        asp-route-team2="@currentGame.HomeTeam.Code">@GetSeriesScoreString(currentGame)</a>
@@ -125,9 +125,8 @@
                     <ul class="navbar-nav flex-grow-1">
                         <li class="nav-item">
                             <a class="nav-link text-light" 
-                               asp-controller="Schedule" asp-action="Index" 
-                               asp-route-season="@year"
-                               asp-route-weekOf="@date.ToString("yyyy-MM-dd")">Schedule</a>
+                               asp-controller="Games" asp-action="Index" 
+                               asp-route-season="@year">Schedule</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link text-light" 
@@ -137,7 +136,7 @@
                         </li>
                         <li class="nav-item">
                             <a class="nav-link text-light" 
-                               asp-controller="Schedule" asp-action="Playoffs" 
+                               asp-controller="Games" asp-action="Playoffs" 
                                asp-route-season="@year" 
                                asp-route-round="@round">Playoffs</a>
                         </li>

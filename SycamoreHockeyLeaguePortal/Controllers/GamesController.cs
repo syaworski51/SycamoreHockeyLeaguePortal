@@ -21,7 +21,7 @@ using System.Globalization;
 namespace SycamoreHockeyLeaguePortal.Controllers
 {
     [Authorize(Roles = "Admin")]
-    public class ScheduleController : Controller
+    public class GamesController : Controller
     {
         private readonly ApplicationDbContext _localContext;
         private readonly LiveDbContext _liveContext;
@@ -38,7 +38,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
 
         private readonly IConfigurationSection _secrets;
 
-        public ScheduleController(ApplicationDbContext local, 
+        public GamesController(ApplicationDbContext local, 
                                   LiveDbContext live, 
                                   LiveDbSyncService syncService,
                                   DTOConverter dtoConverter,
@@ -53,12 +53,14 @@ namespace SycamoreHockeyLeaguePortal.Controllers
 
         // GET: Schedule
         [AllowAnonymous]
-        public async Task<IActionResult> Index(DateTime weekOf, string? team)
+        public async Task<IActionResult> Index(DateTime? weekOf, string? team)
         {
+            DateTime date = weekOf ?? DateTime.Now;
+            
             ViewBag.Team = team;
 
-            ViewBag.WeekOf = weekOf;
-            var endOfWeek = weekOf.AddDays(6);
+            ViewBag.WeekOf = date;
+            var endOfWeek = date.AddDays(6);
             ViewBag.EndOfWeek = endOfWeek;
 
             var seasons = await _localContext.Seasons
@@ -66,7 +68,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 .ToListAsync();
             ViewBag.Seasons = new SelectList(seasons, "Year", "Year");
 
-            var season = weekOf.Year;
+            var season = date.Year;
 
             var teams = await _localContext.Alignments
                 .Include(a => a.Season)
@@ -85,8 +87,8 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 .Include(s => s.AwayTeam)
                 .Include(s => s.HomeTeam)
                 .Where(s => s.Season.Year == season &&
-                            (s.Date.Date.CompareTo(weekOf) >= 0 &&
-                             s.Date.Date.CompareTo(endOfWeek) <= 0))
+                            (s.Date.Date.CompareTo(date.Date) >= 0 &&
+                             s.Date.Date.CompareTo(endOfWeek.Date) <= 0))
                 .OrderBy(s => s.Date.Date)
                 .ThenBy(s => s.GameIndex);
 
@@ -105,7 +107,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             ScheduleViewModel scheduleViewModel = new ScheduleViewModel
             {
                 Season = season,
-                WeekOf = weekOf,
+                WeekOf = date,
                 Teams = teams,
                 Dates = dates,
                 Games = schedule
@@ -219,7 +221,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         public IActionResult ReturnToPlayoffsSchedule(int season, int round, DateTime date)
         {
             string dateSection = "#" + date.ToString("MMMdd");
-            var url = Url.Action("Playoffs", "Schedule", new { season = season, round = round });
+            var url = Url.Action("Playoffs", "Games", new { season = season, round = round });
             return Redirect(url + dateSection);
         }
 
@@ -320,8 +322,9 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 .Any(s => s.Season.Year == year);
         }
 
-        [Route("Schedule/PlayoffSeries/{season}/{team1}/{team2}")]
+        [Route("Games/PlayoffSeries/{season}/{team1}/{team2}")]
         [AllowAnonymous]
+        [HttpGet]
         public async Task<IActionResult> PlayoffSeries(int season, string team1, string team2)
         {
             var playoffSeries = _localContext.PlayoffSeries

@@ -297,7 +297,7 @@
                 {
                     <div class="text-center" style="margin-top: 50px; margin-bottom: 50px;">
                         <h4 class="text-danger">This game cannot be started yet.</h4>
-                        <a asp-controller="Schedule" asp-action="Index" asp-route-weekOf="@Model.Date.ToString("yyyy-MM-dd")">Back to Schedule</a>
+                        <a asp-controller="Games" asp-action="Index" asp-route-weekOf="@Model.Date.ToString("yyyy-MM-dd")">Back to Schedule</a>
                     </div>
                 }
             }
@@ -306,7 +306,7 @@
         {
             <div class="text-center" style="margin-top: 50px; margin-bottom: 50px;">
                 <h4 class="text-danger">This game has been finalized and cannot be manipulated.</h4>
-                <a asp-controller="Schedule" asp-action="Index" asp-route-weekOf="@Model.Date.ToString("yyyy-MM-dd")">Back to Schedule</a>
+                <a asp-controller="Games" asp-action="Index" asp-route-weekOf="@Model.Date.ToString("yyyy-MM-dd")">Back to Schedule</a>
             </div>
         }
     }
@@ -314,7 +314,7 @@
     {
         <div class="text-center" style="margin-top: 50px; margin-bottom: 50px;">
             <h4 class="text-danger">You are not authorized to edit the data for this game.</h4>
-            <a asp-controller="Schedule" asp-action="Index" asp-route-weekOf="@Model.Date.ToString("yyyy-MM-dd")">Back to Schedule</a>
+            <a asp-controller="Games" asp-action="Index" asp-route-weekOf="@Model.Date.ToString("yyyy-MM-dd")">Back to Schedule</a>
         </div>
     }
 </div>

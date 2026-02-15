@@ -52,7 +52,7 @@
                                 <div class="row">
                                     <div class="col">
                                         <a class="text-primary"
-                                           asp-controller="Schedule" asp-action="UploadSchedule"
+                                           asp-controller="Games" asp-action="UploadSchedule"
                                            asp-route-year="@season.Year">Upload Schedule</a>
                                     </div>
                                 </div>
@@ -64,7 +64,7 @@
                         <div class="row">
                             <div class="col">
                                 <a class="text-primary"
-                                   asp-controller="Schedule" asp-action="Index"
+                                   asp-controller="Games" asp-action="Index"
                                    asp-route-weekOf="@firstDaysOfSeasons[season.Year]">Schedule</a>
                             </div>
                         </div>
@@ -81,8 +81,8 @@
                     {
                         <div class="row">
                             <div class="col">
-                                <a class="text-primary" 
-                                   asp-controller="Schedule" asp-action="Playoffs"
+                                <a class="text-primary"
+                                   asp-controller="Games" asp-action="Playoffs"
                                    asp-route-season="@season.Year"
                                    asp-route-round="1">Playoffs</a>
                             </div>

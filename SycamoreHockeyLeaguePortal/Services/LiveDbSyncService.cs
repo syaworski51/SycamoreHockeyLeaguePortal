@@ -285,19 +285,21 @@ namespace SycamoreHockeyLeaguePortal.Services
         ///     been confirmed yet.
         /// </summary>
         /// <param name="game">The game to be deleted.</param>
+        /// <param name="deletingOneGame">Whether the game being deleted is only one (true), or part of a list of games being deleted (false).</param>
         /// <returns></returns>
         /// <exception cref="InvalidOperationException">Thrown if the game to be deleted has been confirmed.</exception>
-        public async Task DeleteOneGameAsync(Game game)
+        public async Task DeleteOneGameAsync(Game game, bool deletingOneGame = true)
         {
-            // If the game has NOT been confirmed, delete it
-            if (!game.IsConfirmed)
-                _liveContext.Schedule.Remove(game);
-
-            // If it HAS been confirmed, throw the exception
-            else
+            // If the game has been confirmed, it CANNOT be deleted
+            if (game.IsConfirmed)
                 throw new InvalidOperationException("This game is confirmed and cannot be deleted.");
 
-            await _liveContext.SaveChangesAsync();
+            // Delete the game and save the changes in the live database
+            _liveContext.Schedule.Remove(game);
+            
+            // If only deleting one game, save the changes
+            if (deletingOneGame)
+                await _liveContext.SaveChangesAsync();
         }
 
         /// <summary>
@@ -310,7 +312,7 @@ namespace SycamoreHockeyLeaguePortal.Services
         {
             // Delete each game one at a time.
             foreach (var game in games)
-                await DeleteOneGameAsync(game);
+                await DeleteOneGameAsync(game, false);
 
             await _liveContext.SaveChangesAsync();
         }

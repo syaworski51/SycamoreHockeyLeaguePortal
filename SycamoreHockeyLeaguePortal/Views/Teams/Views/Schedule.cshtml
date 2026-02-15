@@ -117,10 +117,10 @@
 
             <tr class="@isAwayGame">
                 <td>
-                    <a class="muted-link" asp-controller="Schedule" asp-action="GameCenter" asp-route-date="@game.Date.ToString("yyyy-MM-dd")" asp-route-awayTeam="@game.AwayTeam.Code" asp-route-homeTeam="@game.HomeTeam.Code">@GetDateString(game.Date)</a>
+                    <a class="muted-link" asp-controller="Games" asp-action="GameCenter" asp-route-date="@game.Date.ToString("yyyy-MM-dd")" asp-route-awayTeam="@game.AwayTeam.Code" asp-route-homeTeam="@game.HomeTeam.Code">@GetDateString(game.Date)</a>
                 </td>
                 <td class="opponent-name">
-                    <a class="muted-link" asp-controller="Schedule" asp-action="GameCenter" asp-route-date="@game.Date.ToString("yyyy-MM-dd")" asp-route-awayTeam="@game.AwayTeam.Code" asp-route-homeTeam="@game.HomeTeam.Code">@GetOpponent(game)</a>
+                    <a class="muted-link" asp-controller="Games" asp-action="GameCenter" asp-route-date="@game.Date.ToString("yyyy-MM-dd")" asp-route-awayTeam="@game.AwayTeam.Code" asp-route-homeTeam="@game.HomeTeam.Code">@GetOpponent(game)</a>
                 </td>
                 <td class="opponent-logo">
                     <img class="schedule-team-logo" src="~/@GetOpponentLogoPath(game)" />

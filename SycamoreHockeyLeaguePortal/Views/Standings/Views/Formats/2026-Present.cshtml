@@ -235,19 +235,26 @@
 
     string GetNextGameString(Standings team)
     {
-        Game? game = nextGames[team.Team.Code];
-
-        if (game != null)
+        try
         {
-            bool isHomeOrAway = game.HomeTeam == team.Team;
-            string date = game.Date.ToString("MMM d");
-            string homeOrAway = isHomeOrAway ? "vs." : "@";
-            string opponent = isHomeOrAway ? game.AwayTeam.Code : game.HomeTeam.Code;
+            Game? game = nextGames[team.Team.Code];
 
-            return $"{date} {homeOrAway} {opponent}";
+            if (game != null)
+            {
+                bool isHomeOrAway = game.HomeTeam == team.Team;
+                string date = game.Date.ToString("MMM d");
+                string homeOrAway = isHomeOrAway ? "vs." : "@";
+                string opponent = isHomeOrAway ? game.AwayTeam.Code : game.HomeTeam.Code;
+
+                return $"{date} {homeOrAway} {opponent}";
+            }
+
+            return "-";
         }
-
-        return "-";
+        catch (KeyNotFoundException)
+        {
+            return "-";
+        }
     }
 }
 
@@ -278,7 +285,7 @@
             <th class="fixed-column" title="Points">
                 @Html.DisplayNameFor(model => model.FirstOrDefault()!.Points)
             </th>
-            <th title="Points Percentage">
+            <th class="fixed-column" title="Points Percentage">
                 @Html.DisplayNameFor(model => model.FirstOrDefault()!.PointsPct)
             </th>
             @if (regularSeasonInProgress)
@@ -299,15 +306,18 @@
             <th class="fixed-column" title="Goal Differential">
                 @Html.DisplayNameFor(model => model.FirstOrDefault()!.GoalDifferential)
             </th>
-            <th title="Streak">
+            <th class="fixed-column" title="Streak">
                 @Html.DisplayNameFor(model => model.FirstOrDefault()!.Streak)
             </th>
             <th class="record-column" title="Last 10 Games">
                 @Html.DisplayNameFor(model => model.FirstOrDefault()!.RecordInLast10Games_2026Format)
             </th>
-            <th title="Next game">
-                Next Game
-            </th>
+            @if (regularSeasonInProgress)
+            {
+                <th title="Next game">
+                    Next Game
+                </th>                
+            }
         </tr>
     </thead>
     <tbody>
@@ -386,9 +396,12 @@
                     <td>
                         @Html.DisplayFor(modelItem => team.RecordInLast10Games_2026Format)
                     </td>
-                    <td>
-                        @GetNextGameString(team)
-                    </td>
+                    @if (regularSeasonInProgress)
+                    {
+                        <td>
+                            @GetNextGameString(team)
+                        </td>
+                    }
                 </tr>
 
                 rank++;

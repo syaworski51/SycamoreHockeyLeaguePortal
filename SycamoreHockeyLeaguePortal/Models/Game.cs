@@ -186,6 +186,8 @@ namespace SycamoreHockeyLeaguePortal.Models
             }
         }
 
+        public string CssId => $"{Date:yyyyMMdd}-{AwayTeam.Code}-{HomeTeam.Code}";
+
 
 
         /// <summary>
