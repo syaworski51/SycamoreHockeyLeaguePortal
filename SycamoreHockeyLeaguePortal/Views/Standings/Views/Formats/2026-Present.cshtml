@@ -241,10 +241,10 @@
 
             if (game != null)
             {
-                bool isHomeOrAway = game.HomeTeam == team.Team;
+                bool isHomeGame = game.HomeTeam == team.Team;
                 string date = game.Date.ToString("MMM d");
-                string homeOrAway = isHomeOrAway ? "vs." : "@";
-                string opponent = isHomeOrAway ? game.AwayTeam.Code : game.HomeTeam.Code;
+                string homeOrAway = isHomeGame ? "vs." : "@";
+                string opponent = isHomeGame ? game.AwayTeam.Code : game.HomeTeam.Code;
 
                 return $"{date} {homeOrAway} {opponent}";
             }
