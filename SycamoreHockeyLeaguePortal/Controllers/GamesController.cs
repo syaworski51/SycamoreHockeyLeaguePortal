@@ -113,6 +113,24 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 Games = schedule
             };
 
+            var game = _localContext.Schedule
+                .Include(g => g.Season)
+                .Include(g => g.AwayTeam)
+                .Include(g => g.HomeTeam)
+                .FirstOrDefault(g => g.Season.Year == 2026 &&
+                                     g.AwayTeam.Code == "PHI" && g.HomeTeam.Code == "SEA")!;
+            var gameDTO = _dtoConverter.ConvertToDTO(game);
+            await _syncService.WriteOneResultAsync(gameDTO);
+
+            var h2h = _localContext.HeadToHeadSeries
+                .Include(h => h.Season)
+                .Include(h => h.Team1)
+                .Include(h => h.Team2)
+                .FirstOrDefault(h => h.Season.Year == 2026 &&
+                                     h.Team1.Code == "PHI" && h.Team2.Code == "SEA")!;
+            var h2hDTO = _dtoConverter.ConvertToDTO(h2h);
+            await _syncService.UpdateH2HSeriesAsync(h2hDTO);
+
             return View(scheduleViewModel);
         }
 
@@ -611,6 +629,11 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 // Set its live status to "Finalized"
                 game.LiveStatus = LiveStatuses.FINALIZED;
                 await UpdateGameAsync(game);
+                await _localContext.SaveChangesAsync();
+
+                // Convert the game to DTO format and send it to the sync service
+                var dto = _dtoConverter.ConvertToDTO(game);
+                await _syncService.WriteOneResultAsync(dto);
 
                 // If the game is a playoff game, update the appropriate playoff series
                 if (game.Type == GameTypes.PLAYOFFS)
@@ -633,29 +656,6 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                     }
                 }
                 await _localContext.SaveChangesAsync();
-
-                // Convert the game to DTO format and send it to the sync service
-                var dto = new DTO_Game
-                {
-                    Id = game.Id,
-                    SeasonId = game.SeasonId,
-                    Date = game.Date,
-                    GameIndex = game.GameIndex,
-                    Type = game.Type,
-                    PlayoffRoundId = game.PlayoffRoundId,
-                    PlayoffSeriesId = game.PlayoffSeriesId,
-                    PlayoffGameIndex = game.PlayoffGameIndex,
-                    PlayoffSeriesScore = game.PlayoffSeriesScore,
-                    AwayTeamId = game.AwayTeamId,
-                    AwayScore = game.AwayScore,
-                    HomeTeamId = game.HomeTeamId,
-                    HomeScore = game.HomeScore,
-                    Period = game.Period,
-                    IsConfirmed = game.IsConfirmed,
-                    LiveStatus = game.LiveStatus,
-                    Notes = game.Notes
-                };
-                await _syncService.WriteOneResultAsync(dto);
 
                 return RedirectToAction(nameof(GameCenter), new
                 {
@@ -1462,9 +1462,6 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                     .ThenByDescending(s => s.Wins + s.OTWins)
                     .ThenByDescending(s => s.GoalDifferential)
                     .ThenByDescending(s => s.GoalsFor)
-                    .ThenByDescending(s => s.PointsInLast10Games)
-                    .ThenByDescending(s => s.WinsInLast10Games)
-                    .ThenByDescending(s => s.Streak)
                     .ThenBy(s => s.Team.City)
                     .ThenBy(s => s.Team.Name);
             }
