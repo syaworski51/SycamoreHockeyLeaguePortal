@@ -223,7 +223,7 @@ namespace SycamoreHockeyLeaguePortal.Models
         public string RecordInLast10Games_2024Format => $"{WinsInLast10Games}-{LossesInLast10Games}";
 
         [Display(Name = "Last 10")]
-        public string RecordInLast10Games_2026Format => $"{WinsInLast10Games}-{OTWinsInLast10Games}-{OTLossesInLast10Games}-{LossesInLast10Games} ({PointsInLast10Games})";
+        public string RecordInLast10Games_2026Format => $"{WinsInLast10Games}-{OTWinsInLast10Games}-{OTLossesInLast10Games}-{LossesInLast10Games}";
 
 
 
