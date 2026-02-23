@@ -113,24 +113,6 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 Games = schedule
             };
 
-            var game = _localContext.Schedule
-                .Include(g => g.Season)
-                .Include(g => g.AwayTeam)
-                .Include(g => g.HomeTeam)
-                .FirstOrDefault(g => g.Season.Year == 2026 &&
-                                     g.AwayTeam.Code == "PHI" && g.HomeTeam.Code == "SEA")!;
-            var gameDTO = _dtoConverter.ConvertToDTO(game);
-            await _syncService.WriteOneResultAsync(gameDTO);
-
-            var h2h = _localContext.HeadToHeadSeries
-                .Include(h => h.Season)
-                .Include(h => h.Team1)
-                .Include(h => h.Team2)
-                .FirstOrDefault(h => h.Season.Year == 2026 &&
-                                     h.Team1.Code == "PHI" && h.Team2.Code == "SEA")!;
-            var h2hDTO = _dtoConverter.ConvertToDTO(h2h);
-            await _syncService.UpdateH2HSeriesAsync(h2hDTO);
-
             return View(scheduleViewModel);
         }
 
