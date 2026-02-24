@@ -2,7 +2,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Identity.Client;
 using Microsoft.IdentityModel.Tokens;
 using MongoDB.Bson;
 using MongoDB.Driver.Core.Configuration;
@@ -116,6 +118,145 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             return View(scheduleViewModel);
         }
 
+        private async Task EmergencyUploadResultsAsync(Game localGame)
+        {
+            await CheckLocalAndLiveResultsAsync(localGame);
+
+            if (localGame.Type == GameTypes.PLAYOFFS)
+                await CheckLocalAndLivePlayoffSeriesAsync(localGame);
+            else
+            {
+                await CheckLocalAndLiveHeadToHeadStatsAsync(localGame);
+                
+                if (localGame.Type == GameTypes.REGULAR_SEASON)
+                    await CheckLocalAndLiveStandingsAsync(localGame);
+            }
+        }
+
+        private async Task CheckLocalAndLiveResultsAsync(Game localGame)
+        {
+            var liveGame = _liveContext.Schedule
+                .Include(g => g.Season)
+                .Include(g => g.AwayTeam)
+                .Include(g => g.HomeTeam)
+                .FirstOrDefault(g => g.Id == localGame.Id)!;
+
+            if (!DoLocalAndLiveResultsMatch(localGame, liveGame))
+            {
+                var dto = _dtoConverter.ConvertToDTO(localGame);
+                await _syncService.WriteOneResultAsync(dto);
+            }
+        }
+
+        private async Task CheckLocalAndLivePlayoffSeriesAsync(Game localGame)
+        {
+            int season = localGame.Season.Year;
+            string awayTeam = localGame.AwayTeam.Code;
+            string homeTeam = localGame.HomeTeam.Code;
+            
+            var localPlayoffSeries = _localContext.PlayoffSeries
+                .Include(s => s.Season)
+                .Include(s => s.Round)
+                .Include(s => s.Team1)
+                .Include(s => s.Team2)
+                .FirstOrDefault(s => s.Season.Year == season &&
+                                     ((s.Team1!.Code == awayTeam &&
+                                       s.Team2!.Code == homeTeam) ||
+                                      (s.Team1!.Code == homeTeam &&
+                                       s.Team2!.Code == awayTeam)))!;
+
+            var livePlayoffSeries = _liveContext.PlayoffSeries
+                .Include(s => s.Season)
+                .Include(s => s.Round)
+                .Include(s => s.Team1)
+                .Include(s => s.Team2)
+                .FirstOrDefault(s => s.Id == localPlayoffSeries.Id)!;
+
+            if (!DoLocalAndLivePlayoffSeriesMatch(localPlayoffSeries, livePlayoffSeries))
+                await UpdatePlayoffSeriesAsync(season, localGame);
+        }
+
+        private async Task CheckLocalAndLiveHeadToHeadStatsAsync(Game localGame)
+        {
+            int season = localGame.Season.Year;
+            
+            var localH2HStats = _localContext.HeadToHeadSeries
+                .Include(h => h.Season)
+                .Include(h => h.Team1)
+                .Include(h => h.Team2)
+                .FirstOrDefault(h => h.Season.Year == season &&
+                                      (h.Team1.Code == localGame.HomeTeam.Code &&
+                                     ((h.Team1.Code == localGame.AwayTeam.Code &&
+                                       h.Team2.Code == localGame.HomeTeam.Code) ||
+                                       h.Team2.Code == localGame.AwayTeam.Code)))!;
+
+            var liveH2HStats = _liveContext.HeadToHeadSeries
+                .Include(h => h.Season)
+                .Include(h => h.Team1)
+                .Include(h => h.Team2)
+                .FirstOrDefault(h => h.Season.Year == season &&
+                                     h.Team1.Code == localH2HStats.Team1.Code &&
+                                     h.Team2.Code == localH2HStats.Team2.Code)!;
+
+            if (!DoLocalAndLiveHeadToHeadStatsMatch(localH2HStats, liveH2HStats))
+                await UpdateH2HSeriesAsync(localGame);
+        }
+
+        private async Task CheckLocalAndLiveStandingsAsync(Game localGame)
+        {
+            int season = localGame.Season.Year;
+            string awayTeam = localGame.AwayTeam.Code;
+            string homeTeam = localGame.HomeTeam.Code;
+            
+            var localTeamStats = _localContext.Standings
+                .Include(s => s.Season)
+                .Include(s => s.Conference)
+                .Include(s => s.Team)
+                .Where(s => s.Season.Year == season &&
+                            (s.Team.Code == awayTeam ||
+                             s.Team.Code == homeTeam))
+                .OrderBy(s => s.LeagueRanking)
+                .ToDictionary(s => s.Team.Code);
+
+            var liveTeamStats = _liveContext.Standings
+                .Include(s => s.Season)
+                .Include(s => s.Conference)
+                .Include(s => s.Team)
+                .Where(s => s.Season.Year == season &&
+                            (s.Team.Code == awayTeam ||
+                             s.Team.Code == homeTeam))
+                .OrderBy(s => s.LeagueRanking)
+                .ToDictionary(s => s.Team.Code);
+
+            if (!DoLocalAndLiveTeamStatsMatch(localTeamStats[awayTeam], localTeamStats[homeTeam],
+                                              liveTeamStats[awayTeam], liveTeamStats[homeTeam]))
+                await UpdateStandingsAsync(season, localGame);
+        }
+
+        private bool DoLocalAndLiveResultsMatch(Game localGame, Game liveGame) =>
+            localGame.LiveStatus == liveGame.LiveStatus &&
+            localGame.AwayScore == liveGame.AwayScore &&
+            localGame.HomeScore == liveGame.HomeScore &&
+            localGame.Period == liveGame.Period;
+
+        private bool DoLocalAndLivePlayoffSeriesMatch(PlayoffSeries localPlayoffSeries,
+                                                      PlayoffSeries livePlayoffSeries) =>
+            localPlayoffSeries.Id == livePlayoffSeries.Id &&
+            localPlayoffSeries.Team1Wins == livePlayoffSeries.Team1Wins &&
+            localPlayoffSeries.Team2Wins == livePlayoffSeries.Team2Wins;
+
+        private bool DoLocalAndLiveHeadToHeadStatsMatch(HeadToHeadSeries localH2HStats,
+                                                        HeadToHeadSeries liveH2HStats) =>
+            localH2HStats.Team1Points == liveH2HStats.Team1Points &&
+            localH2HStats.Team2Points == liveH2HStats.Team2Points;
+
+        private bool DoLocalAndLiveTeamStatsMatch(Standings localTeam1Stats, Standings localTeam2Stats,
+                                                  Standings liveTeam1Stats, Standings liveTeam2Stats) =>
+            localTeam1Stats.Points == liveTeam1Stats.Points &&
+            localTeam1Stats.GamesPlayed == liveTeam1Stats.GamesPlayed &&
+            localTeam2Stats.Points == liveTeam2Stats.Points &&
+            localTeam2Stats.GamesPlayed == liveTeam2Stats.GamesPlayed;
+
         [AllowAnonymous]
         public async Task<IActionResult> Playoffs(int season, int round, string? team)
         {
@@ -125,7 +266,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             if (round < 1)
                 return ErrorMessage("Invalid request. Round indexes cannot be less than 1.");
             
-            if (season == 2021 && round >= 4)
+            if (season == 2021 && round > 3)
                 return RedirectToAction(nameof(Playoffs), new { season = season, round = 3, team = team });
 
             if (season >= 2022 && round > 4)
@@ -601,50 +742,57 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             // Get the game by its ID
             var game = await GetGameByIdAsync(id);
 
-            // Get the season and date of this game
-            int season = game.Season.Year;
-            DateTime date = game.Date;
-
-            // If the game is currently live, in the 3rd period or later, and the score is NOT tied
-            if (IsGameLive(game) && game.Period >= 3 && game.AwayScore != game.HomeScore)
+            try
             {
-                // Set its live status to "Finalized"
-                game.LiveStatus = LiveStatuses.FINALIZED;
-                await UpdateGameAsync(game);
-                await _localContext.SaveChangesAsync();
+                // Get the season and date of this game
+                int season = game.Season.Year;
+                DateTime date = game.Date;
 
-                // Convert the game to DTO format and send it to the sync service
-                var dto = _dtoConverter.ConvertToDTO(game);
-                await _syncService.WriteOneResultAsync(dto);
-
-                // If the game is a playoff game, update the appropriate playoff series
-                if (game.Type == GameTypes.PLAYOFFS)
-                    await UpdatePlayoffSeriesAsync(season, game);
-                // If it is not a playoff game...
-                else
+                // If the game is currently live, in the 3rd period or later, and the score is NOT tied
+                if (IsGameLive(game) && game.Period >= 3 && game.AwayScore != game.HomeScore)
                 {
-                    // Update the head-to-head matchup between the teams of this game
-                    await UpdateH2HSeriesAsync(game);
+                    // Set its live status to "Finalized"
+                    game.LiveStatus = LiveStatuses.FINALIZED;
+                    await UpdateGameAsync(game);
+                    await _localContext.SaveChangesAsync();
 
-                    // If the game is a regular season game...
-                    if (game.Type == GameTypes.REGULAR_SEASON)
+                    // Convert the game to DTO format and send it to the sync service
+                    var dto = _dtoConverter.ConvertToDTO(game);
+                    await _syncService.WriteOneResultAsync(dto);
+
+                    // If the game is a playoff game, update the appropriate playoff series
+                    if (game.Type == GameTypes.PLAYOFFS)
+                        await UpdatePlayoffSeriesAsync(season, game);
+                    // If it is not a playoff game...
+                    else
                     {
-                        // Update the standings
-                        await UpdateStandingsAsync(season, game);
+                        // Update the head-to-head matchup between the teams of this game
+                        await UpdateH2HSeriesAsync(game);
 
-                        // After all the games in a day have been completed, take a snapshot of the standings
-                        if (IsSnapshotNeeded(date))
-                            TakeSnapshot(date);
+                        // If the game is a regular season game...
+                        if (game.Type == GameTypes.REGULAR_SEASON)
+                        {
+                            // Update the standings
+                            await UpdateStandingsAsync(season, game);
+
+                            // After all the games in a day have been completed, take a snapshot of the standings
+                            if (IsSnapshotNeeded(date))
+                                TakeSnapshot(date);
+                        }
                     }
-                }
-                await _localContext.SaveChangesAsync();
+                    await _localContext.SaveChangesAsync();
 
-                return RedirectToAction(nameof(GameCenter), new
-                {
-                    date = date.ToString("yyyy-MM-dd"),
-                    awayTeam = game.AwayTeam.Code,
-                    homeTeam = game.HomeTeam.Code
-                });
+                    return RedirectToAction(nameof(GameCenter), new
+                    {
+                        date = date.ToString("yyyy-MM-dd"),
+                        awayTeam = game.AwayTeam.Code,
+                        homeTeam = game.HomeTeam.Code
+                    });
+                }
+            }
+            catch (TaskCanceledException)
+            {
+                await EmergencyUploadResultsAsync(game);
             }
 
             return RedirectToAction(nameof(GameControls), new
@@ -671,8 +819,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 .OrderBy(s => s.GameIndex);
 
             // Return True if there are any games on the requested date AND they are all finalized
-            return games.Any() && 
-                games.Count(s => s.LiveStatus == LiveStatuses.FINALIZED) == games.Count();
+            return games.Any() && games.All(s => s.LiveStatus == LiveStatuses.FINALIZED);
         }
 
         private void TakeSnapshot(DateTime date)
@@ -709,6 +856,10 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         /// <returns></returns>
         private async Task UpdateH2HSeriesAsync(Game game)
         {
+            // If the game has not been finalized, throw an exception
+            if (game.LiveStatus != LiveStatuses.FINALIZED)
+                throw new Exception("This game has not been finalized yet.");
+            
             // Pull the head-to-head series record from the database
             var matchup = await _localContext.HeadToHeadSeries
                 .Include(s => s.Season)
