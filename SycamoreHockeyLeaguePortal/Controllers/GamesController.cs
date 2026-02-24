@@ -19,6 +19,7 @@ using SycamoreHockeyLeaguePortal.Models.InputForms;
 using SycamoreHockeyLeaguePortal.Models.ViewModels;
 using SycamoreHockeyLeaguePortal.Services;
 using System.Globalization;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace SycamoreHockeyLeaguePortal.Controllers
 {
@@ -781,21 +782,21 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                         }
                     }
                     await _localContext.SaveChangesAsync();
-
-                    return RedirectToAction(nameof(GameCenter), new
+                }
+                else
+                    return RedirectToAction(nameof(GameControls), new
                     {
-                        date = date.ToString("yyyy-MM-dd"),
+                        date = game.Date.ToString("yyyy-MM-dd"),
                         awayTeam = game.AwayTeam.Code,
                         homeTeam = game.HomeTeam.Code
                     });
-                }
             }
             catch (TaskCanceledException)
             {
                 await EmergencyUploadResultsAsync(game);
             }
 
-            return RedirectToAction(nameof(GameControls), new
+            return RedirectToAction(nameof(GameCenter), new
             {
                 date = game.Date.ToString("yyyy-MM-dd"),
                 awayTeam = game.AwayTeam.Code,
