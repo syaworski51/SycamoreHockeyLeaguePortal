@@ -1483,7 +1483,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                         if (!teamCanCatchUp)
                             await UpdatePlayoffStatusAsync(team, "e");
                     }
-                    else if (team.PointsCeiling < lowestSeed.Points)
+                    else
                         await UpdatePlayoffStatusAsync(team, "e");
                 }
             }
