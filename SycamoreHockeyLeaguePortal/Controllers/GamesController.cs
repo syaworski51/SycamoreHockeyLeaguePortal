@@ -1315,8 +1315,8 @@ namespace SycamoreHockeyLeaguePortal.Controllers
 
             List<DTO_Standings> DTOs = _dtoConverter.ConvertBatchToDTO(standings);
             await _syncService.UpdateStandingsAsync(season, DTOs);
-            
-            await StandingsUpdateNowAvailable();
+
+            await UpdatePlayoffStatusesAsync(standings);
         }
 
         private async Task UpdatePlayoffStatusesAsync(List<Standings> standings)
