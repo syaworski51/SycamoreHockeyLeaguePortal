@@ -3,17 +3,20 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SycamoreHockeyLeaguePortal.Data;
 
 #nullable disable
 
-namespace SycamoreHockeyLeaguePortal.Migrations
+namespace SycamoreHockeyLeaguePortal.Data.Migrations
 {
-    [DbContext(typeof(LiveDbContext))]
-    partial class LiveDbContextModelSnapshot : ModelSnapshot
+    [DbContext(typeof(ApplicationDbContext))]
+    [Migration("20260315220525_AlterColumn_Standings_PlayoffStatus_NotNullable")]
+    partial class AlterColumn_Standings_PlayoffStatus_NotNullable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -732,13 +735,6 @@ namespace SycamoreHockeyLeaguePortal.Migrations
 
                     b.Property<int>("GamesPerTeam")
                         .HasColumnType("int");
-
-                    b.Property<int>("PlayoffCutoff")
-                        .HasColumnType("int");
-
-                    b.Property<string>("PlayoffFormat")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("PointsPerOTL")
                         .HasColumnType("int");

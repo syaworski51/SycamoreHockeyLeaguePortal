@@ -221,6 +221,18 @@ namespace SycamoreHockeyLeaguePortal.Services
             await _liveContext.SaveChangesAsync();
         }
 
+        public async Task UpdatePlayoffStatusAsync(int season, Guid teamId, string newStatus)
+        {
+            var teamStats = _liveContext.Standings
+                .Include(s => s.Season)
+                .Include(s => s.Conference)
+                .Include(s => s.Team)
+                .FirstOrDefault(s => s.Season.Year == season && s.TeamId == teamId)!;
+
+            teamStats.PlayoffStatus = newStatus;
+            await _liveContext.SaveChangesAsync();
+        }
+
         public async Task UpdateTeamStatsAsync(int season,
                                                Standings teamStats,
                                                DTO_Standings updatedTeamStats)

@@ -733,6 +733,13 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
                     b.Property<int>("GamesPerTeam")
                         .HasColumnType("int");
 
+                    b.Property<int>("PlayoffCutoff")
+                        .HasColumnType("int");
+
+                    b.Property<string>("PlayoffFormat")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int>("PointsPerOTL")
                         .HasColumnType("int");
 
@@ -867,6 +874,7 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("PlayoffStatus")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<decimal>("PlayoffsGamesBehind")

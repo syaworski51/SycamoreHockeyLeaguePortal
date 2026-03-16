@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.Build.Framework;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Identity.Client;
@@ -35,6 +36,8 @@ namespace SycamoreHockeyLeaguePortal.Controllers
         private const string DIVISION = "division";
         private const string CONFERENCE = "conference";
         private const string INTER_CONFERENCE = "inter-conference";
+
+        private readonly string[] CONFERENCES = { "EAST", "WEST" };
 
         private int SEASON;
         private const int TEAM1 = 0, TEAM2 = 1;
@@ -783,6 +786,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                     }
                     await _localContext.SaveChangesAsync();
                 }
+                // If the game cannot be finalized yet, go back to the GameControls page for this game
                 else
                     return RedirectToAction(nameof(GameControls), new
                     {
@@ -1313,6 +1317,278 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             await _syncService.UpdateStandingsAsync(season, DTOs);
             
             await StandingsUpdateNowAvailable();
+        }
+
+        private async Task UpdatePlayoffStatusesAsync(List<Standings> standings)
+        {
+            await CheckForClinchedPlayoffSpotsAsync(standings);
+            await CheckForClinchedHomeIceAsync(standings);
+            await CheckForClinchedTopSeedsAsync(standings);
+            await CheckForClinchedPresidentsTrophyAsync(standings);
+
+            await CheckForEliminatedTeamsAsync(standings);
+            await CheckForDemotedTeamsAsync(standings);
+        }
+
+        private async Task UpdatePlayoffStatusAsync(Standings teamStats, string newStatus)
+        {
+            teamStats.PlayoffStatus = newStatus;
+            await _syncService.UpdatePlayoffStatusAsync(teamStats.Season.Year, teamStats.TeamId, newStatus);
+        }
+
+        private async Task CheckForClinchedPlayoffSpotsAsync(List<Standings> standings)
+        {
+            foreach (var conference in CONFERENCES)
+            {
+                var confStandings = standings.Where(s => s.Conference!.Code == conference);
+                var nonPlayoffTeams = standings.Where(s => s.ConferenceRanking > s.Season.PlayoffCutoff);
+
+                int highestNonPlayoffPC = nonPlayoffTeams
+                    .Select(n => n.PointsCeiling)
+                    .Max();
+
+                var nonPlayoffTeamHighestPC = nonPlayoffTeams
+                    .FirstOrDefault(n => n.PointsCeiling == highestNonPlayoffPC)!;
+
+                var playoffTeamsNearClinching = standings
+                    .Where(s => s.ConferenceRanking <= s.Season.PlayoffCutoff &&
+                                s.PlayoffStatus == "" &&
+                                s.Points >= highestNonPlayoffPC);
+
+                foreach (var team in playoffTeamsNearClinching)
+                {
+                    if (team.Points == highestNonPlayoffPC)
+                    {
+                        bool nonPlayoffTeamCanCatchUp = CanTrailingTeamCatchUpInRWs(team, nonPlayoffTeamHighestPC);
+
+                        if (!nonPlayoffTeamCanCatchUp)
+                            await UpdatePlayoffStatusAsync(team, "x");
+                    }
+                    else
+                        await UpdatePlayoffStatusAsync(team, "x");
+                }
+            }
+        }
+
+        private async Task CheckForClinchedHomeIceAsync(List<Standings> standings)
+        {
+            int homeIceCutoff = standings[0].Season.PlayoffCutoff / 2;
+            
+            foreach (var conference in CONFERENCES)
+            {
+                var confStandings = standings.Where(s => s.Conference!.Code == conference);
+                var higherSeeds = confStandings.Where(h => h.ConferenceRanking <= homeIceCutoff);
+                var lowerSeeds = confStandings.Where(l => l.ConferenceRanking >= (homeIceCutoff + 1) && 
+                                                          l.ConferenceRanking <= l.Season.PlayoffCutoff);
+
+                int highestLowerSeedPC = lowerSeeds
+                    .Select(l => l.PointsCeiling)
+                    .Max();
+
+                var lowerSeedHighestPC = lowerSeeds.FirstOrDefault(l => l.PointsCeiling == highestLowerSeedPC)!;
+
+                var higherSeedsNearClinchingHomeIce = higherSeeds
+                    .Where(h => (h.PlayoffStatus == "" || h.PlayoffStatus == "x") &&
+                                h.Points >= highestLowerSeedPC);
+
+                foreach (var team in higherSeedsNearClinchingHomeIce)
+                {
+                    if (team.Points == highestLowerSeedPC)
+                    {
+                        bool lowerSeedCanCatchUp = CanTrailingTeamCatchUpInRWs(team, lowerSeedHighestPC);
+
+                        if (!lowerSeedCanCatchUp)
+                            await UpdatePlayoffStatusAsync(team, "X");
+                    }
+                    else
+                        await UpdatePlayoffStatusAsync(team, "X");
+                }
+            }
+        }
+
+        private async Task CheckForClinchedTopSeedsAsync(List<Standings> standings)
+        {
+            foreach (var conference in CONFERENCES)
+            {
+                var confStandings = standings.Where(s => s.Conference!.Code == conference);
+                var leader = confStandings.FirstOrDefault(s => s.ConferenceRanking == 1)!;
+
+                int highestTrailingPC = confStandings
+                    .Where(s => s.ConferenceRanking > 1)
+                    .Select(s => s.PointsCeiling)
+                    .Max();
+
+                var trailingTeamHighestPC = confStandings
+                    .FirstOrDefault(s => s.PointsCeiling == highestTrailingPC)!;
+
+                if (leader.PlayoffStatus != "Y" && leader.PlayoffStatus != "Z" &&
+                    leader.Points >= highestTrailingPC)
+                {
+                    if (leader.Points == highestTrailingPC)
+                    {
+                        bool trailingTeamCanCatchUp = CanTrailingTeamCatchUpInRWs(leader, trailingTeamHighestPC);
+
+                        if (!trailingTeamCanCatchUp)
+                            await UpdatePlayoffStatusAsync(leader, "Y");
+                    }
+                    else
+                        await UpdatePlayoffStatusAsync(leader, "Y");
+                }
+            }
+        }
+
+        private async Task CheckForClinchedPresidentsTrophyAsync(List<Standings> standings)
+        {
+            var leader = standings.FirstOrDefault(s => s.LeagueRanking == 1)!;
+
+            int highestTrailingPC = standings
+                .Where(s => s.LeagueRanking > 1)
+                .Select(s => s.PointsCeiling)
+                .Max();
+
+            var trailingTeamHighestPC = standings.FirstOrDefault(s => s.PointsCeiling == highestTrailingPC)!;
+
+            if (leader.PlayoffStatus != "Z" && leader.Points >= highestTrailingPC)
+            {
+                if (leader.Points == highestTrailingPC)
+                {
+                    bool trailingTeamCanCatchUp = CanTrailingTeamCatchUpInRWs(leader, trailingTeamHighestPC);
+
+                    if (!trailingTeamCanCatchUp)
+                        await UpdatePlayoffStatusAsync(leader, "Z");
+                }
+                else
+                    await UpdatePlayoffStatusAsync(leader, "Z");
+            }
+        }
+
+        private async Task CheckForEliminatedTeamsAsync(List<Standings> standings)
+        {
+            foreach (var conference in CONFERENCES)
+            {
+                var confStandings = standings.Where(s => s.Conference!.Code == conference);
+                var lowestSeed = confStandings.FirstOrDefault(s => s.ConferenceRanking == s.Season.PlayoffCutoff)!;
+                var nonPlayoffTeamsNearElimination = confStandings
+                    .Where(s => s.ConferenceRanking > s.Season.PlayoffCutoff && 
+                                s.PlayoffStatus == "" &&
+                                s.PointsCeiling <= lowestSeed.Points)
+                    .OrderByDescending(s => s.ConferenceRanking);
+
+                foreach (var team in nonPlayoffTeamsNearElimination)
+                {
+                    if (team.PointsCeiling == lowestSeed.Points)
+                    {
+                        bool teamCanCatchUp = CanTrailingTeamCatchUpInRWs(lowestSeed, team);
+
+                        if (!teamCanCatchUp)
+                            await UpdatePlayoffStatusAsync(team, "e");
+                    }
+                    else if (team.PointsCeiling < lowestSeed.Points)
+                        await UpdatePlayoffStatusAsync(team, "e");
+                }
+            }
+        }
+
+        private async Task CheckForDemotedTeamsAsync(List<Standings> standings)
+        {
+            foreach (var conference in CONFERENCES)
+            {
+                var confStandings = standings.Where(s => s.Conference!.Code == conference);
+                int lowestRanking = confStandings
+                    .Select(s => s.ConferenceRanking)
+                    .Max();
+                
+                var lastPlace = confStandings.FirstOrDefault(s => s.ConferenceRanking == lowestRanking)!;
+                var secondLastPlace = confStandings.FirstOrDefault(s => s.ConferenceRanking == lowestRanking - 1)!;
+
+                if (lastPlace.PlayoffStatus != "d" && lastPlace.PointsCeiling <= secondLastPlace.Points)
+                {
+                    if (lastPlace.PointsCeiling == secondLastPlace.Points)
+                    {
+                        bool lastPlaceCanCatchUp = CanTrailingTeamCatchUpInRWs(secondLastPlace, lastPlace);
+
+                        if (!lastPlaceCanCatchUp)
+                            await UpdatePlayoffStatusAsync(lastPlace, "d");
+                    }
+                    else
+                        await UpdatePlayoffStatusAsync(lastPlace, "d");
+                }
+            }
+        }
+
+        private bool CanTrailingTeamCatchUpInRWs(Standings leadingTeam, Standings trailingTeam)
+        {
+            int maxTrailingRWs = trailingTeam.RegulationWins + trailingTeam.GamesRemaining;
+
+            if (maxTrailingRWs == leadingTeam.RegulationWins)
+                return CanTrailingTeamCatchUpInROWs(leadingTeam, trailingTeam);
+
+            return maxTrailingRWs > leadingTeam.RegulationWins;
+        }
+
+        private bool CanTrailingTeamCatchUpInROWs(Standings leadingTeam, Standings trailingTeam)
+        {
+            int maxTrailingROWs = trailingTeam.RegPlusOTWins + trailingTeam.GamesRemaining;
+
+            if (maxTrailingROWs == leadingTeam.RegPlusOTWins)
+                return CanTrailingTeamCatchUpInTotalWins(leadingTeam, trailingTeam);
+
+            return maxTrailingROWs > leadingTeam.RegPlusOTWins;
+        }
+
+        private bool CanTrailingTeamCatchUpInTotalWins(Standings leadingTeam, Standings trailingTeam)
+        {
+            int maxTotalWins = trailingTeam.TotalWins + trailingTeam.GamesRemaining;
+
+            if (maxTotalWins == leadingTeam.TotalWins)
+                return CanTrailingTeamCatchUpInH2HPoints(trailingTeam.Season.Year, leadingTeam.Team, trailingTeam.Team);
+
+            return maxTotalWins > leadingTeam.TotalWins;
+        }
+
+        private bool CanTrailingTeamCatchUpInH2HPoints(int season, Team leadingTeam, Team trailingTeam)
+        {
+            var matchup = _localContext.HeadToHeadSeries
+                .Include(m => m.Season)
+                .Include(m => m.Team1)
+                .Include(m => m.Team2)
+                .FirstOrDefault(m => m.Season.Year == season &&
+                                     ((m.Team1.Code == leadingTeam.Code && m.Team2.Code == trailingTeam.Code) ||
+                                      (m.Team1.Code == trailingTeam.Code && m.Team2.Code == leadingTeam.Code)))!;
+
+            int h2hGamesRemaining = _localContext.Schedule
+                .Include(s => s.Season)
+                .Include(s => s.AwayTeam)
+                .Include(s => s.HomeTeam)
+                .Count(s => s.Season.Year == season &&
+                            s.LiveStatus == LiveStatuses.NOT_STARTED &&
+                            ((s.AwayTeam.Code == leadingTeam.Code && s.HomeTeam.Code == trailingTeam.Code) ||
+                             (s.AwayTeam.Code == trailingTeam.Code && s.HomeTeam.Code == leadingTeam.Code)));
+
+            int h2hPtsRemaining = matchup.Season.PointsPerRW * h2hGamesRemaining;
+            
+            bool trailingTeamIsTeam1 = trailingTeam.Code == matchup.Team1.Code;
+
+            int leadingH2HPts = trailingTeamIsTeam1 ? matchup.Team2Points : matchup.Team1Points;
+            int trailingH2HPts = trailingTeamIsTeam1 ? matchup.Team1Points : matchup.Team2Points;
+            
+            int maxTrailingH2HPts = trailingH2HPts + h2hPtsRemaining;
+
+            if (maxTrailingH2HPts == leadingH2HPts)
+                return CanTrailingTeamCatchUpInH2HRWs(matchup, trailingTeamIsTeam1, h2hGamesRemaining);
+
+            return maxTrailingH2HPts > leadingH2HPts;
+        }
+
+        private bool CanTrailingTeamCatchUpInH2HRWs(HeadToHeadSeries matchup, 
+                                                    bool trailingTeamIsTeam1, int h2hGamesRemaining)
+        {
+            int leadingH2HRWs = trailingTeamIsTeam1 ? matchup.Team2Wins : matchup.Team1Wins;
+            int trailingH2HRWs = trailingTeamIsTeam1 ? matchup.Team1Wins : matchup.Team2Wins;
+
+            int maxTrailingH2HRWs = trailingH2HRWs + h2hGamesRemaining;
+
+            return maxTrailingH2HRWs >= leadingH2HRWs;
         }
 
         /// <summary>

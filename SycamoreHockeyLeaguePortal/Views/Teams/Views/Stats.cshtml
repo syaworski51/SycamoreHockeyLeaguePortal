@@ -1,6 +1,7 @@
 ﻿@model Team
 
 @{
+    const string OVERALL = "overall";
     const string DIVISION = "division";
     const string CONFERENCE = "conference";
     const string INTERCONFERENCE = "inter-conference";
@@ -32,7 +33,7 @@
         return goalDifferential.ToString();
     }
 
-    string GetRecordFormat(int season, Standings teamStats, string type = "overall")
+    string GetRecordFormat(int season, Standings teamStats, string type)
     {
         if (season >= 2021 && season <= 2023)
         {
@@ -41,6 +42,7 @@
                 DIVISION => teamStats.RecordVsDivision_2021Format,
                 CONFERENCE => teamStats.RecordVsConference_2021Format,
                 INTERCONFERENCE => teamStats.InterConfRecord_2021Format,
+                LAST10 => teamStats.RecordInLast10Games_2021Format,
                 _ => teamStats.Record_2021Format
             };
         }
@@ -51,6 +53,7 @@
                 DIVISION => teamStats.RecordVsDivision_2024Format,
                 CONFERENCE => teamStats.RecordVsConference_2024Format,
                 INTERCONFERENCE => teamStats.InterConfRecord_2024Format,
+                LAST10 => teamStats.RecordInLast10Games_2024Format,
                 _ => teamStats.Record_2024Format
             };
         }
@@ -83,7 +86,7 @@
         <div class="col container team-stat">
             <div class="row">
                 <div class="col-4">RECORD</div>
-                <div class="col stat">@GetRecordFormat(season, teamStats)</div>
+                <div class="col stat">@GetRecordFormat(season, teamStats, OVERALL)</div>
             </div>
         </div>
         <div class="col container team-stat">

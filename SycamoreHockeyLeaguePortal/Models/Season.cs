@@ -34,6 +34,10 @@ namespace SycamoreHockeyLeaguePortal.Models
 
         public int PointsPerOTL { get; set; }
 
+        public string PlayoffFormat { get; set; }
+
+        public int PlayoffCutoff { get; set; }
+
         public bool InTestMode => Status == SeasonStatuses.TEST_MODE;
 
         public bool IsLive => Status == SeasonStatuses.LIVE;

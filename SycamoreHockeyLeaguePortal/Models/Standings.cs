@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using SycamoreHockeyLeaguePortal.Models.Exceptions;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SycamoreHockeyLeaguePortal.Models
@@ -46,16 +47,22 @@ namespace SycamoreHockeyLeaguePortal.Models
         public Team Team { get; set; }
 
         [Display(Name = "PS")]
-        public string? PlayoffStatus { get; set; }
+        public string PlayoffStatus { get; set; }
 
         [Display(Name = "GP")]
         public int GamesPlayed { get; set; }
+
+        [Display(Name = "GR")]
+        public int GamesRemaining => Season.GamesPerTeam - GamesPlayed;
 
         [Display(Name = "W")]
         public int Wins { get; set; }
 
         [Display(Name = "OTW")]
         public int OTWins { get; set; }
+
+        [Display(Name = "TW")]
+        public int TotalWins => Wins + OTWins;
 
         [Display(Name = "OTL")]
         public int OTLosses { get; set; }
@@ -219,17 +226,114 @@ namespace SycamoreHockeyLeaguePortal.Models
         [Column(TypeName = "decimal(4,3)")]
         public decimal WinPctInLast10Games { get; set; }
 
+        public string RecordInLast10Games_2021Format => 
+            $"{WinsInLast10Games}-{LossesInLast10Games}-{OTLossesInLast10Games}";
+        
         [Display(Name = "Last 10")]
-        public string RecordInLast10Games_2024Format => $"{WinsInLast10Games}-{LossesInLast10Games}";
+        public string RecordInLast10Games_2024Format => 
+            $"{WinsInLast10Games}-{LossesInLast10Games}";
 
         [Display(Name = "Last 10")]
-        public string RecordInLast10Games_2026Format => $"{WinsInLast10Games}-{OTWinsInLast10Games}-{OTLossesInLast10Games}-{LossesInLast10Games}";
+        public string RecordInLast10Games_2026Format => 
+            $"{WinsInLast10Games}-{OTWinsInLast10Games}-{OTLossesInLast10Games}-{LossesInLast10Games}";
 
 
 
         public override string ToString()
         {
             return $"{Season.Year} - {Team}";
+        }
+
+        private void UpdatePointsPercentage() =>
+            PointsPct = (decimal)Points / (GamesPlayed * Season.PointsPerRW);
+
+        private void UpdatePointsCeiling() => 
+            PointsCeiling = Points + (Season.PointsPerRW * GamesRemaining);
+
+        private void UpdateGoalsForAndAgainst(int goalsFor, int goalsAgainst)
+        {
+            GoalsFor += goalsFor;
+            GoalsAgainst = goalsAgainst;
+            GoalDifferential = GoalsFor - GoalsAgainst;
+        }
+
+        public void Win(int goalsFor, int goalsAgainst)
+        {
+            if (goalsFor == goalsAgainst)
+                throw new TieException();
+            
+            if (goalsFor < goalsAgainst)
+                Win(goalsAgainst, goalsFor);
+            else
+            {
+                GamesPlayed++;
+                Wins++;
+                RegPlusOTWins++;
+                Points += 3;
+
+                UpdatePointsPercentage();
+                UpdatePointsCeiling();
+                UpdateGoalsForAndAgainst(goalsFor, goalsAgainst);
+            }
+        }
+
+        public void OTWin(int goalsFor, int goalsAgainst, bool inShootout)
+        {
+            if (goalsFor == goalsAgainst)
+                throw new TieException();
+
+            if (goalsFor < goalsAgainst)
+                OTWin(goalsAgainst, goalsFor, inShootout);
+            else
+            {
+                GamesPlayed++;
+                OTWins++;
+                Points += 2;
+
+                if (!inShootout)
+                    RegPlusOTWins++;
+
+                UpdatePointsPercentage();
+                UpdatePointsCeiling();
+                UpdateGoalsForAndAgainst(goalsFor, goalsAgainst);
+            } 
+        }
+
+        public void OTLoss(int goalsFor, int goalsAgainst)
+        {
+            if (goalsFor == goalsAgainst)
+                throw new TieException();
+
+            if (goalsFor > goalsAgainst)
+                OTLoss(goalsAgainst, goalsFor);
+            else
+            {
+                GamesPlayed++;
+                OTLosses++;
+                Points += 1;
+
+                UpdatePointsPercentage();
+                UpdatePointsCeiling();
+                UpdateGoalsForAndAgainst(goalsFor, goalsAgainst);
+            }
+        }
+
+        public void Loss(int goalsFor, int goalsAgainst)
+        {
+            if (goalsFor == goalsAgainst)
+                throw new TieException();
+
+            if (goalsFor > goalsAgainst)
+                Loss(goalsAgainst, goalsFor);
+            else
+            {
+                GamesPlayed++;
+                Losses++;
+
+                UpdatePointsPercentage();
+                UpdatePointsCeiling();
+                UpdateGoalsForAndAgainst(goalsFor, goalsAgainst);
+            } 
         }
     }
 }
