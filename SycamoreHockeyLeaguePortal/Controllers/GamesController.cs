@@ -1324,7 +1324,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             await CheckForClinchedPlayoffSpotsAsync(standings);
             await CheckForClinchedHomeIceAsync(standings);
             await CheckForClinchedTopSeedsAsync(standings);
-            await CheckForClinchedPresidentsTrophyAsync(standings);
+            await CheckForClinchedStantonYaworskiTrophyAsync(standings);
 
             await CheckForEliminatedTeamsAsync(standings);
             await CheckForDemotedTeamsAsync(standings);
@@ -1362,10 +1362,10 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                         bool nonPlayoffTeamCanCatchUp = CanTrailingTeamCatchUpInRWs(team, nonPlayoffTeamHighestPC);
 
                         if (!nonPlayoffTeamCanCatchUp)
-                            await UpdatePlayoffStatusAsync(team, "x");
+                            await UpdatePlayoffStatusAsync(team, PlayoffStatuses.PLAYOFF_SPOT);
                     }
                     else
-                        await UpdatePlayoffStatusAsync(team, "x");
+                        await UpdatePlayoffStatusAsync(team, PlayoffStatuses.PLAYOFF_SPOT);
                 }
             }
         }
@@ -1398,10 +1398,10 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                         bool lowerSeedCanCatchUp = CanTrailingTeamCatchUpInRWs(team, lowerSeedHighestPC);
 
                         if (!lowerSeedCanCatchUp)
-                            await UpdatePlayoffStatusAsync(team, "X");
+                            await UpdatePlayoffStatusAsync(team, PlayoffStatuses.HOME_ICE_ADVANTAGE);
                     }
                     else
-                        await UpdatePlayoffStatusAsync(team, "X");
+                        await UpdatePlayoffStatusAsync(team, PlayoffStatuses.HOME_ICE_ADVANTAGE);
                 }
             }
         }
@@ -1429,15 +1429,15 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                         bool trailingTeamCanCatchUp = CanTrailingTeamCatchUpInRWs(leader, trailingTeamHighestPC);
 
                         if (!trailingTeamCanCatchUp)
-                            await UpdatePlayoffStatusAsync(leader, "Y");
+                            await UpdatePlayoffStatusAsync(leader, PlayoffStatuses.CONFERENCE_TOP_SEED);
                     }
                     else
-                        await UpdatePlayoffStatusAsync(leader, "Y");
+                        await UpdatePlayoffStatusAsync(leader, PlayoffStatuses.CONFERENCE_TOP_SEED);
                 }
             }
         }
 
-        private async Task CheckForClinchedPresidentsTrophyAsync(List<Standings> standings)
+        private async Task CheckForClinchedStantonYaworskiTrophyAsync(List<Standings> standings)
         {
             var leader = standings.FirstOrDefault(s => s.LeagueRanking == 1)!;
 
@@ -1455,10 +1455,10 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                     bool trailingTeamCanCatchUp = CanTrailingTeamCatchUpInRWs(leader, trailingTeamHighestPC);
 
                     if (!trailingTeamCanCatchUp)
-                        await UpdatePlayoffStatusAsync(leader, "Z");
+                        await UpdatePlayoffStatusAsync(leader, PlayoffStatuses.STANTON_YAWORSKI_TROPHY);
                 }
                 else
-                    await UpdatePlayoffStatusAsync(leader, "Z");
+                    await UpdatePlayoffStatusAsync(leader, PlayoffStatuses.STANTON_YAWORSKI_TROPHY);
             }
         }
 
@@ -1481,10 +1481,10 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                         bool teamCanCatchUp = CanTrailingTeamCatchUpInRWs(lowestSeed, team);
 
                         if (!teamCanCatchUp)
-                            await UpdatePlayoffStatusAsync(team, "e");
+                            await UpdatePlayoffStatusAsync(team, PlayoffStatuses.ELIMINATED);
                     }
                     else
-                        await UpdatePlayoffStatusAsync(team, "e");
+                        await UpdatePlayoffStatusAsync(team, PlayoffStatuses.ELIMINATED);
                 }
             }
         }
@@ -1508,10 +1508,10 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                         bool lastPlaceCanCatchUp = CanTrailingTeamCatchUpInRWs(secondLastPlace, lastPlace);
 
                         if (!lastPlaceCanCatchUp)
-                            await UpdatePlayoffStatusAsync(lastPlace, "d");
+                            await UpdatePlayoffStatusAsync(lastPlace, PlayoffStatuses.DEMOTED);
                     }
                     else
-                        await UpdatePlayoffStatusAsync(lastPlace, "d");
+                        await UpdatePlayoffStatusAsync(lastPlace, PlayoffStatuses.DEMOTED);
                 }
             }
         }
