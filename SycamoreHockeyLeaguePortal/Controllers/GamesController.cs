@@ -1501,7 +1501,8 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 var lastPlace = confStandings.FirstOrDefault(s => s.ConferenceRanking == lowestRanking)!;
                 var secondLastPlace = confStandings.FirstOrDefault(s => s.ConferenceRanking == lowestRanking - 1)!;
 
-                if (lastPlace.PlayoffStatus != "d" && lastPlace.PointsCeiling <= secondLastPlace.Points)
+                if (lastPlace.PlayoffStatus != PlayoffStatuses.DEMOTED && 
+                    lastPlace.PointsCeiling <= secondLastPlace.Points)
                 {
                     if (lastPlace.PointsCeiling == secondLastPlace.Points)
                     {
