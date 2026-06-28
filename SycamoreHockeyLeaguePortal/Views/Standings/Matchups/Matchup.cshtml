@@ -1,0 +1,44 @@
+﻿@{
+    PlayoffSeries matchup = ViewBag.Matchup;
+
+    const string PLACEHOLDER = "images/playoff-bracket/placeholder.png";
+
+    bool isSycamoreCupFinal = matchup.Round.Index == 4;
+    bool eastChampionIsHigherSeed = matchup.Team1 != null ?
+        isSycamoreCupFinal && matchup.Team1.Conference!.Code == "EAST" : 
+        false;
+    bool swapNeeded = isSycamoreCupFinal && eastChampionIsHigherSeed;
+
+    int? leftSeed = swapNeeded ? matchup.Seed2 : matchup.Seed1;
+    Team? leftTeam = swapNeeded ? matchup.Team2 : matchup.Team1;
+    int leftWins = swapNeeded ? matchup.Team2Wins : matchup.Team1Wins;
+
+    int? rightSeed = swapNeeded ? matchup.Seed1 : matchup.Seed2;
+    Team? rightTeam = swapNeeded ? matchup.Team1 : matchup.Team2;
+    int rightWins = swapNeeded ? matchup.Team1Wins : matchup.Team2Wins;
+
+    string LogoPath(Team? team) => team != null ? team.LogoPath : PLACEHOLDER;
+    string FullTeamName(Team? team) => team != null ? team.FullName : "To Be Determined";
+}
+
+<table class="table">
+    <tbody>
+        <tr>
+            <td>
+                <strong style="font-size: 18pt;">@leftSeed</strong>
+            </td>
+            <td>
+                <img class="team-logo" src="~/@LogoPath(leftTeam)" title="@FullTeamName(leftTeam)" />
+            </td>
+            <td>
+                @($"{leftWins}-{rightWins}")
+            </td>
+            <td>
+                <img class="team-logo" src="~/@LogoPath(rightTeam)" title="@FullTeamName(rightTeam)" />
+            </td>
+            <td>
+                <strong style="font-size: 18pt;">@rightSeed</strong>
+            </td>
+        </tr>
+    </tbody>
+</table>

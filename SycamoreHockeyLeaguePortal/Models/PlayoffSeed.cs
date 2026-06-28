@@ -10,7 +10,7 @@
         public Guid? DivisionId { get; set; }
         public Division? Division { get; set; }
         public int Number { get; set; }
-        public Guid TeamId { get; set; }
-        public Team Team { get; set; }
+        public Guid? TeamId { get; set; }
+        public Team? Team { get; set; }
     }
 }

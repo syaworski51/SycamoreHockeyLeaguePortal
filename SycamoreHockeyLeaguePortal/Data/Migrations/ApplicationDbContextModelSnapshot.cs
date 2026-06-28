@@ -541,7 +541,7 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
                     b.Property<Guid>("SeasonId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid>("TeamId")
+                    b.Property<Guid?>("TeamId")
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
@@ -1659,9 +1659,7 @@ namespace SycamoreHockeyLeaguePortal.Data.Migrations
 
                     b.HasOne("SycamoreHockeyLeaguePortal.Models.Team", "Team")
                         .WithMany()
-                        .HasForeignKey("TeamId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("TeamId");
 
                     b.Navigation("Conference");
 

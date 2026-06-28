@@ -829,3 +829,7 @@ th, .schedule td {
 .current-game {
     background-color: #f2f2f2;
 }
+
+.points-column {
+    font-size: 14pt;
+}

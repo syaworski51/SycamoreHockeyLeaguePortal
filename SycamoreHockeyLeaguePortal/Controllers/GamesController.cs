@@ -2,13 +2,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.Build.Framework;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Identity.Client;
 using Microsoft.IdentityModel.Tokens;
 using MongoDB.Bson;
-using MongoDB.Driver.Core.Configuration;
 using SycamoreHockeyLeaguePortal.Data;
 using SycamoreHockeyLeaguePortal.Models;
 using SycamoreHockeyLeaguePortal.Models.ConstantGroups;
@@ -20,7 +16,6 @@ using SycamoreHockeyLeaguePortal.Models.InputForms;
 using SycamoreHockeyLeaguePortal.Models.ViewModels;
 using SycamoreHockeyLeaguePortal.Services;
 using System.Globalization;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace SycamoreHockeyLeaguePortal.Controllers
 {
@@ -1338,10 +1333,12 @@ namespace SycamoreHockeyLeaguePortal.Controllers
 
         private async Task CheckForClinchedPlayoffSpotsAsync(List<Standings> standings)
         {
+            int spotsClinched = 0;
+            
             foreach (var conference in CONFERENCES)
             {
                 var confStandings = standings.Where(s => s.Conference!.Code == conference);
-                var nonPlayoffTeams = standings.Where(s => s.ConferenceRanking > s.Season.PlayoffCutoff);
+                var nonPlayoffTeams = confStandings.Where(s => s.ConferenceRanking > s.Season.PlayoffCutoff);
 
                 int highestNonPlayoffPC = nonPlayoffTeams
                     .Select(n => n.PointsCeiling)
@@ -1362,12 +1359,105 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                         bool nonPlayoffTeamCanCatchUp = CanTrailingTeamCatchUpInRWs(team, nonPlayoffTeamHighestPC);
 
                         if (!nonPlayoffTeamCanCatchUp)
+                        {
                             await UpdatePlayoffStatusAsync(team, PlayoffStatuses.PLAYOFF_SPOT);
+                            spotsClinched++;
+                        }
                     }
                     else
+                    {
                         await UpdatePlayoffStatusAsync(team, PlayoffStatuses.PLAYOFF_SPOT);
+                        spotsClinched++;
+                    }
                 }
             }
+        }
+
+        private async Task UpdatePlayoffSeedsAsync(List<Standings> standings)
+        {
+            int season = standings[0].Season.Year;
+
+            IQueryable<PlayoffSeed> seeds = _localContext.PlayoffSeeds
+                .Include(s => s.Season)
+                .Include(s => s.Conference)
+                .Include(s => s.Team)
+                .Where(s => s.Season.Year == season)
+                .OrderBy(s => s.Conference.Code)
+                .ThenBy(s => s.Number);
+
+            List<PlayoffSeed> seedsList = seeds.ToList();
+
+            foreach (var conference in CONFERENCES)
+            {
+                var clinchedTeams = standings
+                    .Where(s => s.ConferenceRanking <= s.Season.PlayoffCutoff &&
+                                s.PlayoffStatus != "")
+                    .OrderBy(s => s.ConferenceRanking)
+                    .ToList();
+
+                var conferenceSeeds = seeds
+                    .Where(s => s.Conference.Code == conference)
+                    .ToDictionary(s => s.Number);
+
+                for (int seed = 1; seed <= clinchedTeams.Count; seed++)
+                {
+                    Team team = clinchedTeams[seed - 1].Team;
+
+                    seedsList[seed].TeamId = team.Id;
+                    seedsList[seed].Team = team;
+                }
+            }
+
+            seeds = seeds.Where(s => s.TeamId != null);
+            await UpdateFirstRoundMatchupsAsync(seeds.ToList());
+        }
+
+        private async Task UpdateFirstRoundMatchupsAsync(List<PlayoffSeed> seeds)
+        {
+            int season = seeds[0].Season.Year;
+
+            string[] easternMatchups = { "C", "D", "G", "H" };
+
+            var matchups = _localContext.PlayoffSeries
+                .Include(m => m.Season)
+                .Include(m => m.Round)
+                .Include(m => m.Team1)
+                .Include(m => m.Team2)
+                .Where(m => m.Season.Year == season && m.Round.Index == 1)
+                .OrderByDescending(m => easternMatchups.Contains(m.Index))
+                .ThenBy(m => m.Seed1)
+                .ToDictionary(m => m.Index);
+
+            foreach (var matchup in matchups)
+            {
+                bool isEasternMatchup = easternMatchups.Contains(matchup.Value.Index);
+                string conference = isEasternMatchup ? "EAST" : "WEST";
+
+                Team?[] teams = seeds
+                    .Where(s => s.Conference.Code == conference &&
+                                (s.Number == matchup.Value.Seed1 || s.Number == matchup.Value.Seed2))
+                    .Select(s => s.Team)
+                    .ToArray();
+
+                if (teams[0] == null && teams[1] == null)
+                    continue;
+                else
+                {
+                    if (teams[0] != null)
+                    {
+                        matchup.Value.Team1 = teams[0]!;
+                        matchup.Value.Team1Id = teams[0]!.Id;
+                    }
+
+                    if (teams[1] != null)
+                    {
+                        matchup.Value.Team2 = teams[1]!;
+                        matchup.Value.Team2Id = teams[1]!.Id;
+                    }
+                }
+            }
+
+            await _localContext.SaveChangesAsync();
         }
 
         private async Task CheckForClinchedHomeIceAsync(List<Standings> standings)
@@ -1378,7 +1468,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             {
                 var confStandings = standings.Where(s => s.Conference!.Code == conference);
                 var higherSeeds = confStandings.Where(h => h.ConferenceRanking <= homeIceCutoff);
-                var lowerSeeds = confStandings.Where(l => l.ConferenceRanking >= (homeIceCutoff + 1) && 
+                var lowerSeeds = confStandings.Where(l => l.ConferenceRanking > homeIceCutoff && 
                                                           l.ConferenceRanking <= l.Season.PlayoffCutoff);
 
                 int highestLowerSeedPC = lowerSeeds
