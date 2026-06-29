@@ -646,8 +646,28 @@ th, .schedule td {
 }
 
 .bracket .card {
-    margin: auto
+    margin: auto;
     width: 40%;
+}
+
+.bracket .playoff-matchup {
+    margin: 10px;
+}
+
+.bracket .playoff-matchup .team-logo {
+    width: 35px;
+    height: 35px;
+}
+
+.bracket .playoff-matchup .seed-number {
+    font-family: Aptos;
+    font-weight: bold;
+    font-size: 12pt;
+}
+
+.bracket .playoff-matchup .series-score {
+    font-family: Aptos;
+    font-size: 18pt;
 }
 
 .change-playoff-status {
@@ -751,15 +771,8 @@ th, .schedule td {
     font-weight: bold;
 }
 
-.card .container .playoff-matchup {
-    border-radius: 20px;
+.container .playoff-matchup {
     vertical-align: middle;
-
-    width: 175.5px;
-    height: 130.5px;
-}
-
-.card .container .playoff-matchup .col {
     margin: auto;
 }
 

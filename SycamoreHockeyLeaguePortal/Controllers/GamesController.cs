@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Identity.Client;
 using Microsoft.IdentityModel.Tokens;
 using MongoDB.Bson;
 using SycamoreHockeyLeaguePortal.Data;
@@ -105,7 +106,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 .Distinct()
                 .ToListAsync();
 
-            ScheduleViewModel scheduleViewModel = new ScheduleViewModel
+            ScheduleViewModel scheduleViewModel = new()
             {
                 Season = season,
                 WeekOf = date,
@@ -113,6 +114,15 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 Dates = dates,
                 Games = schedule
             };
+
+            var standings = _localContext.Standings
+                .Include(s => s.Season)
+                .Include(s => s.Conference)
+                .Include(s => s.Team)
+                .Where(s => s.Season.Year == 2026)
+                .OrderBy(s => s.LeagueRanking)
+                .ToList();
+            await UpdatePlayoffStatusesAsync(standings);
 
             return View(scheduleViewModel);
         }
@@ -1340,14 +1350,12 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 var confStandings = standings.Where(s => s.Conference!.Code == conference);
                 var nonPlayoffTeams = confStandings.Where(s => s.ConferenceRanking > s.Season.PlayoffCutoff);
 
-                int highestNonPlayoffPC = nonPlayoffTeams
-                    .Select(n => n.PointsCeiling)
-                    .Max();
+                int highestNonPlayoffPC = nonPlayoffTeams.Max(n => n.PointsCeiling);
 
                 var nonPlayoffTeamHighestPC = nonPlayoffTeams
                     .FirstOrDefault(n => n.PointsCeiling == highestNonPlayoffPC)!;
 
-                var playoffTeamsNearClinching = standings
+                var playoffTeamsNearClinching = confStandings
                     .Where(s => s.ConferenceRanking <= s.Season.PlayoffCutoff &&
                                 s.PlayoffStatus == "" &&
                                 s.Points >= highestNonPlayoffPC);
@@ -1584,9 +1592,7 @@ namespace SycamoreHockeyLeaguePortal.Controllers
             foreach (var conference in CONFERENCES)
             {
                 var confStandings = standings.Where(s => s.Conference!.Code == conference);
-                int lowestRanking = confStandings
-                    .Select(s => s.ConferenceRanking)
-                    .Max();
+                int lowestRanking = confStandings.Max(s => s.ConferenceRanking);
                 
                 var lastPlace = confStandings.FirstOrDefault(s => s.ConferenceRanking == lowestRanking)!;
                 var secondLastPlace = confStandings.FirstOrDefault(s => s.ConferenceRanking == lowestRanking - 1)!;

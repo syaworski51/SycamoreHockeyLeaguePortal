@@ -11,82 +11,70 @@
 
 <div class="container text-center bracket">
     <div class="row">
-        <div class="col">
+        <div class="col container playoff-matchup">
             <h6>West Semifinals</h6>
-        </div>
-        <div class="col">
-            <h6>West Division Final</h6>
-        </div>
-        <div class="col">
-            <h6>Sycamore Cup Final</h6>
-        </div>
-        <div class="col">
-            <h6>East Division Final</h6>
-        </div>
-        <div class="col">
-            <h6>East Semifinals</h6>
-        </div>
-    </div>
-    <div class="row">
-        <div class="col card container playoff-matchup">
             <!-- West Semifinals -- 1 vs 4 -->
             @{
                 ViewBag.Matchup = GetMatchupByIndex("A");
-                <partial name="../Matchups/LeftToRight.cshtml" />
+                <partial name="../Matchups/Matchup.cshtml" />
             }
         </div>
         <div class="col"></div>
         <div class="col"></div>
         <div class="col"></div>
-        <div class="col card container playoff-matchup">
+        <div class="col container playoff-matchup">
+            <h6>East Semifinals</h6>
             <!-- East Semifinals -- 1 vs 4 -->
             @{
                 ViewBag.Matchup = GetMatchupByIndex("C");
-                <partial name="../Matchups/RightToLeft.cshtml" />
+                <partial name="../Matchups/Matchup.cshtml" />
             }
         </div>
     </div>
     <div class="row">
         <div class="col"></div>
-        <div class="col card container playoff-matchup">
+        <div class="col container playoff-matchup">
+            <h6>West Division Final</h6>
             <!-- West Division Final -->
             @{
                 ViewBag.Matchup = GetMatchupByIndex("E");
-                <partial name="../Matchups/LeftToRight.cshtml" />
+                <partial name="../Matchups/Matchup.cshtml" />
             }
         </div>
-        <div class="col card container playoff-matchup">
+        <div class="col container playoff-matchup">
+            <h6>Sycamore Cup Final</h6>
             <!-- Sycamore Cup Final -->
             @{
                 ViewBag.Matchup = GetMatchupByIndex("G");
-                <partial name="../Matchups/LeftToRight.cshtml" />
+                <partial name="../Matchups/Matchup.cshtml" />
             }
         </div>
-        <div class="col card container playoff-matchup">
+        <div class="col container playoff-matchup">
+            <h6>East Division Final</h6>
             <!-- East Division Final -->
             @{
                 ViewBag.Matchup = GetMatchupByIndex("F");
-                <partial name="../Matchups/RightToLeft.cshtml" />
+                <partial name="../Matchups/Matchup.cshtml" />
             }
         </div>
         <div class="col"></div>
     </div>
     <div class="row">
-        <div class="col card container playoff-matchup">
+        <div class="col container playoff-matchup">
             <!-- West Semifinals -- 2 vs 3 -->
             @{
                 ViewBag.Matchup = GetMatchupByIndex("B");
-                <partial name="../Matchups/LeftToRight.cshtml" />
+                <partial name="../Matchups/Matchup.cshtml" />
             }
         </div>
         <div class="col"></div>
         <div class="col"></div>
         <div class="col"></div>
-        <div class="col card container playoff-matchup">
+        <div class="col container playoff-matchup">
             <!-- East Semifinals -- 2 vs 3 -->
             @{
                 ViewBag.Matchup = GetMatchupByIndex("D");
-                <partial name="../Matchups/RightToLeft.cshtml" />
+                <partial name="../Matchups/Matchup.cshtml" />
             }
         </div>
     </div>

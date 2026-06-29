@@ -134,7 +134,9 @@ namespace SycamoreHockeyLeaguePortal.Controllers
                 .Include(ps => ps.Season)
                 .Include(ps => ps.Round)
                 .Include(ps => ps.Team1)
+                    .ThenInclude(t1 => t1!.Conference)
                 .Include(ps => ps.Team2)
+                    .ThenInclude(t2 => t2!.Conference)
                 .Where(ps => ps.Season.Year == season)
                 .OrderBy(ps => ps.Index)
                 .ToListAsync();

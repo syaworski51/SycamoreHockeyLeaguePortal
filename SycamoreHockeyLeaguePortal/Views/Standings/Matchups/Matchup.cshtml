@@ -17,27 +17,28 @@
     Team? rightTeam = swapNeeded ? matchup.Team1 : matchup.Team2;
     int rightWins = swapNeeded ? matchup.Team1Wins : matchup.Team2Wins;
 
-    string LogoPath(Team? team) => team != null ? team.LogoPath : PLACEHOLDER;
+    string LogoPath(Team? team) => team != null ? team.LogoPath! : PLACEHOLDER;
     string FullTeamName(Team? team) => team != null ? team.FullName : "To Be Determined";
+    string SeriesScoreString() => $"{leftWins}-{rightWins}";
 }
 
 <table class="table">
     <tbody>
         <tr>
             <td>
-                <strong style="font-size: 18pt;">@leftSeed</strong>
+                <strong class="seed-number">@leftSeed</strong>
             </td>
             <td>
                 <img class="team-logo" src="~/@LogoPath(leftTeam)" title="@FullTeamName(leftTeam)" />
             </td>
-            <td>
-                @($"{leftWins}-{rightWins}")
+            <td class="series-score">
+                @SeriesScoreString()
             </td>
             <td>
                 <img class="team-logo" src="~/@LogoPath(rightTeam)" title="@FullTeamName(rightTeam)" />
             </td>
             <td>
-                <strong style="font-size: 18pt;">@rightSeed</strong>
+                <strong class="seed-number">@rightSeed</strong>
             </td>
         </tr>
     </tbody>
